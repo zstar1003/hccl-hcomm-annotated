@@ -196,6 +196,9 @@ HcclResult EndpointPair::GetSocket(
         myRank, rmtRank, socketTag, reuseIdx, listenPort, socket, devicePhyId, remoteDevicePhyId, false);
 }
 
+// [中文导读] EndpointPair按Engine和reuseIdx缓存通道。没有可用槽位才调用HcommCollectiveChannelCreate。
+// [中文导读] 复用分支直接取原句柄，并按条件更新第一个句柄之后的附加内存；不等于每个算子都重建连接。
+// [中文导读] channelMtx_保护缓存表，UNREUSE使用新槽位；连接就绪与跨Rank一致性仍需跟踪MyRank后续步骤。
 HcclResult EndpointPair::CreateChannel(
     EndpointHandle endpointHandle, CommEngine engine, u32 reuseIdx, HcommChannelDesc* channelDescs,
     ChannelHandle* channels)

@@ -435,6 +435,8 @@ HcommResult NormalizeHcommChannelDescs(
 } // namespace
 
 // 集合通信使用，待归一到HcommChannelCreate
+// [中文导读] HcclChannelAcquire内部EndpointPair调用的集合通信建链入口：先规范化描述，再交CreateChannelsLoop。
+// [中文导读] 当前不是直接转调下面的HcommChannelCreate；二者共享部分底层逻辑，但句柄准备路径不同。
 HcommResult HcommCollectiveChannelCreate(
     EndpointHandle endpointHandle, CommEngine engine, HcommChannelDesc* channelDescs, uint32_t channelNum,
     ChannelHandle* channels)
@@ -458,6 +460,7 @@ HcommResult HcommCollectiveChannelCreate(
     return ret;
 }
 
+// [中文导读] 为已有Channel更新注册内存信息，供复用通道绑定附加内存；不负责申请用户数据缓冲区。
 HcommResult HcommChannelUpdateMemInfo(HcommMemHandle* memHandles, uint32_t memHandleNum, ChannelHandle channelHandle)
 {
     CHK_PTR_NULL(memHandles);
@@ -486,6 +489,8 @@ HcommResult CreatePluginChannels(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 底层通信资源的公开创建入口：规范化请求，插件Endpoint走插件分支，普通分支创建后准备用户句柄。
+// [中文导读] 本次HCCL集合通信链从EndpointPair进入Collective版本，不要把两个Create画成连续必经步骤。
 HcommResult HcommChannelCreate(
     EndpointHandle endpointHandle, CommEngine engine, HcommChannelDesc* channelDescs, uint32_t channelNum,
     ChannelHandle* channels)

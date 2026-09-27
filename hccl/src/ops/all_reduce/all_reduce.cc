@@ -20,6 +20,9 @@ using namespace std;
 using namespace ops_hccl;
 extern "C" unsigned int LaunchAicpuKernel(OpParam* param);
 
+// [中文导读] AllReduce按op合并各Rank对应位置的数据，并让各Rank得到归约结果。
+// [中文导读] count是本次参与归约的元素数量，dataType和op共同限定合法运算；不是原始字节长度。
+// [中文导读] 入口通过版本/设备判定选择新旧流程，再交AllReduceOutPlace；归约任务不在这里展开。
 HcclResult HcclAllReduce(
     void* sendBuf, void* recvBuf, uint64_t count, HcclDataType dataType, HcclReduceOp op, HcclComm comm,
     aclrtStream stream)

@@ -21,6 +21,7 @@
 
 using namespace hccl;
 
+// [中文导读] 查询通道可用的通知槽位数量，不创建通知、不发送通知；V2和兼容域由不同实现提供结果。
 HcclResult HcclChannelGetNotifyNum(HcclComm comm, ChannelHandle channel, uint32_t* notifyNum)
 {
     CHK_PTR_NULL(notifyNum);
@@ -80,6 +81,8 @@ HcclResult CommChannelDestroy(HcclComm comm, ChannelHandle* channelList, uint32_
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 取得此Channel对应Peer的CCL区地址和容量，供算法构造远端读写切片。
+// [中文导读] 返回的是远端内存描述，不是把对端CCL内容复制回本机，也不是重新分配一块本地缓冲区。
 HcclResult HcclChannelGetHcclBuffer(HcclComm comm, ChannelHandle channel, void** buffer, uint64_t* size)
 {
     CHK_PTR_NULL(comm);
@@ -127,6 +130,9 @@ HcclResult HcclChannelGetHcclBuffer(HcclComm comm, ChannelHandle channel, void**
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 查询建链交换得到的远端内存集合及标签；AIV等路径用它定位对端的通信信息/标记区。
+// [中文导读] 本函数并不把这些内存交给调用方独立拥有，不应自行free返回的内部列表。
+// [中文导读] 旧实现可用固定标签代替真实tag，读取代码时必须区分V2与兼容分支。
 HcclResult
 HcclChannelGetRemoteMems(HcclComm comm, ChannelHandle channel, uint32_t* memNum, CommMem** remoteMems, char*** memTags)
 {

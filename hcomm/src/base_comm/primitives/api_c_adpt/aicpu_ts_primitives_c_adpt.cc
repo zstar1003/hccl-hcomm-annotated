@@ -124,6 +124,8 @@ HcclResult HcclDfxRegOpInfoByCommIdImpl(char* commId, void* hcclDfxOpInfo)
 }
 } // namespace
 
+// [中文导读] 数据搬运原语：在给定Thread排入本地src→dst的len字节拷贝，不需要跨Rank通道。
+// [中文导读] AddThread登记本次提交涉及的Thread；A5分支交Thread::LocalCopy，旧分支使用Stream适配接口。
 int32_t HcommLocalCopyOnThread(ThreadHandle thread, void* dst, const void* src, uint64_t len)
 {
     PLF_CONFIG_INFO(
@@ -153,6 +155,8 @@ int32_t HcommLocalCopyOnThread(ThreadHandle thread, void* dst, const void* src, 
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 数据计算原语：按dataType/reduceOp将源数据归约到目标；count是元素数，内部换算为字节len。
+// [中文导读] 这是供算法组合的局部能力，不是一次完整AllReduce；调用者仍负责Rank间通信及依赖关系。
 int32_t HcommLocalReduceOnThread(
     ThreadHandle thread, void* dst, const void* src, uint64_t count, HcommDataType dataType, HcommReduceOp reduceOp)
 {
@@ -197,6 +201,8 @@ int32_t HcommLocalReduceOnThread(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 本地Thread间同步：在thread的执行序列上，向dstThread拥有的dstNotifyIdx通知槽发信号。
+// [中文导读] A5分支先将通知槽索引解析为notifyId，再交LocalNotifyRecord；索引和硬件ID不是同一参数。
 int32_t HcommThreadNotifyRecordOnThread(ThreadHandle thread, ThreadHandle dstThread, uint32_t dstNotifyIdx)
 {
     PLF_CONFIG_INFO(
@@ -233,6 +239,7 @@ int32_t HcommThreadNotifyRecordOnThread(ThreadHandle thread, ThreadHandle dstThr
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 在本Thread排入等待自己notifyIdx槽位的任务，timeOut以秒表示；与另一Thread的Record配对。
 int32_t HcommThreadNotifyWaitOnThread(ThreadHandle thread, uint32_t notifyIdx, uint32_t timeOut)
 {
     PLF_CONFIG_INFO(
@@ -492,6 +499,9 @@ int32_t HcommThreadNotifyWaitOnThreadWithDefaultTimeout(ThreadHandle thread, uin
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 跨Rank写：src为本地地址，dst为远端地址，len是字节数；Channel必须已准备好访问所需资源。
+// [中文导读] A5路径解包通道、构造本地RMA描述，再经BaseTransportLiteImpl::Write在StreamLite上组织传输。
+// [中文导读] 本函数不包含上层ACK/DATA_SIGNAL协议；不能以一次Write返回代替接收端可消费数据的同步。
 int32_t HcommWriteOnThread(ThreadHandle thread, ChannelHandle channel, void* dst, const void* src, uint64_t len)
 {
     PLF_CONFIG_INFO(
@@ -776,6 +786,8 @@ int32_t HcommWriteReduceWithNotifyOnThread(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 跨Rank读：src为远端地址，dst为本地地址，len为字节数；方向与Write的本地/远端角色相反。
+// [中文导读] A5分支给本地dst构造RMA描述，远端src包装为Buffer，再交BaseTransportLiteImpl::Read组织读取。
 int32_t HcommReadOnThread(ThreadHandle thread, ChannelHandle channel, void* dst, const void* src, uint64_t len)
 {
     CHK_PTR_NULL(dst);
@@ -1003,6 +1015,8 @@ int32_t HcommReadNbi(ChannelHandle channel, void* dst, const void* src, uint64_t
     return HCCL_E_NOT_SUPPORT;
 }
 
+// [中文导读] 跨Rank通知：经channel向远端remoteNotifyIdx槽位发信号，A5落到BaseTransportLiteImpl::Post。
+// [中文导读] 它和ThreadNotifyRecord的目标不同：前者使用远端通道，后者使用本地目标Thread。
 int32_t HcommChannelNotifyRecordOnThread(ThreadHandle thread, ChannelHandle channel, uint32_t remoteNotifyIdx)
 {
     CHK_RET(UnwrapChannelHandle(channel));
@@ -1048,6 +1062,8 @@ int32_t HcommChannelNotifyRecord(ChannelHandle channel, uint32_t remoteNotifyIdx
     return HCCL_E_NOT_SUPPORT;
 }
 
+// [中文导读] 等待此通道本地localNotifyIdx槽位被远端通知；A5交WaitWithTimeout，timeOut以秒表示。
+// [中文导读] 发送端的remoteNotifyIdx应与接收端localNotifyIdx按同一协议配对，ACK与数据完成槽不能混用。
 int32_t
 HcommChannelNotifyWaitOnThread(ThreadHandle thread, ChannelHandle channel, uint32_t localNotifyIdx, uint32_t timeOut)
 {
@@ -1111,10 +1127,14 @@ int32_t HcommSetLaunchMode(const char* launchTag, HcommLaunchMode mode)
     return g_threadLaunchCtx.SetLaunchMode(launchTag, mode);
 }
 
+// [中文导读] 执行控制：将当前launch上下文切换为以batchTag标识的批量模式，不负责创建通信域或通道。
 int32_t HcommBatchModeStart(const char* batchTag) { return HcommSetLaunchMode(batchTag, HCOMM_LAUNCH_MODE_BATCH); }
 
+// [中文导读] 恢复EAGER提交模式；提交细节由LaunchContext处理，不应将返回值解释为全设备同步完成。
 int32_t HcommBatchModeEnd(const char* batchTag) { return HcommSetLaunchMode(batchTag, HCOMM_LAUNCH_MODE_EAGER); }
 
+// [中文导读] 取得已存在的设备侧通信域供本次展开使用；950/960走AcquireCommForUse，不是从零建域。
+// [中文导读] 正常路径应与ReleaseComm配对，防止域在任务展开期间被管理操作提前回收。
 int32_t HcommAcquireComm(const char* commId)
 {
     CHK_PTR_NULL(commId);
@@ -1176,6 +1196,7 @@ int32_t HcommNewThreadRegisterGetLatestDfxOpInfo(ThreadHandle thread, std::funct
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 结束本次对设备侧通信域的使用，与AcquireComm配对；不是要求销毁可供后续算子复用的整个域。
 int32_t HcommReleaseComm(const char* commId)
 {
     CHK_PTR_NULL(commId);

@@ -145,6 +145,9 @@ ValidateThreadAcquireParams(CommEngine engine, ThreadType type, const ThreadConf
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 控制面按ThreadConfig数组申请执行Thread，每条Thread可有不同通知数；出参threads返回执行句柄。
+// [中文导读] 此接口用CPU/AICPU配合THREAD_TYPE_TS表达TS线程，校验不接受旧CPU_TS/AICPU_TS枚举。
+// [中文导读] 新通信域经CommEngineResMgr::HcclThreadAcquireV2管理资源，随后注册DFX信息；不是创建OS业务线程。
 HcclResult HcclThreadAcquireWithConfig(
     HcclComm comm, CommEngine engine, uint32_t threadNum, ThreadType type, const ThreadConfig* config,
     ThreadHandle* threads)
@@ -210,6 +213,8 @@ static CommEngine ConvertEngineToTsType(CommEngine engine)
     return engine;
 }
 
+// [中文导读] 兼容形态的线程申请：所有Thread采用相同notifyNumPerThread，内部转换为ThreadConfig数组。
+// [中文导读] CPU_TS/AICPU_TS分别映射为CPU/AICPU，并设置THREAD_TYPE_TS，再交域内Engine资源管理器。
 HcclResult HcclThreadAcquire(
     HcclComm comm, CommEngine engine, uint32_t threadNum, uint32_t notifyNumPerThread, ThreadHandle* threads)
 {
@@ -309,6 +314,7 @@ HcclResult HcclThreadAcquireWithStreamDfx(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 把已有用户stream纳入通信Thread抽象，附带通知资源；stream由调用者传入，不是此处新建用户流。
 HcclResult HcclThreadAcquireWithStream(
     HcclComm comm, CommEngine engine, aclrtStream stream, uint32_t notifyNum, ThreadHandle* thread)
 {

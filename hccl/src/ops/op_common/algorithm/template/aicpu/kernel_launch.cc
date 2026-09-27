@@ -272,6 +272,8 @@ inline HcclResult EnforceLaunchTask(const char* algTag)
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 新流程的设备侧展开入口：设置超时和批传输能力，先排入等待Host输入就绪的通知任务。
+// [中文导读] 随后按opType和algName创建executor并调用Orchestrate；算法模板在这里之后才生成搬运/同步任务。
 inline HcclResult
 OpOrchestrate(OpParam* param, const AlgResourceCtxSerializable* resCtxPtr, ThreadHandle thread, std::string& algName)
 {
@@ -340,6 +342,9 @@ static HcclResult HcclOrderLaunchNotifyRecord(const OpParam* param)
     return HCCL_SUCCESS;
 }
 
+// [中文导读] Host下发的AICPU入口，不是上层HcclAlltoAll API本身。param携带算子参数及设备可读的资源描述。
+// [中文导读] 新流程依次取得通信域使用引用、恢复资源/变长参数、展开或回放任务，最后排入完成通知并释放引用。
+// [中文导读] 下文还保留旧流程；不要将两个分支连成同一次算子的必经步骤。错误路径会提前返回。
 extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
 {
     // 修改当前进程的调度策略和优先级
@@ -411,6 +416,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             }
         }
 
+        // [中文导读] 此缓存保存反序列化后的资源上下文，与下方缓存SQE/task的机制不同；命中仍需校验可复用性。
         std::shared_ptr<const AlgResourceCtxSerializable> cachedResCtxHolder;
         std::unique_ptr<AlgResourceCtxSerializable> resCtx;
         const AlgResourceCtxSerializable* resCtxPtr{nullptr};
@@ -451,6 +457,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             resCtxPtr = resCtx.get();
         }
 
+        // [中文导读] AllToAll系列恢复counts/displacements等描述的可用指针，不是在这里交换各Rank的用户数据。
         // 还原变长指针
         HcclResult ret = HCCL_SUCCESS;
         if (param->opType == HCCL_CMD_BATCH_SEND_RECV) {
@@ -513,6 +520,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             static_cast<uint32_t>(param->opMode), param->algName, param->isZeroCopy,
             static_cast<uint32_t>(param->commOpExpansionMode), enableCache);
 
+        // [中文导读] task缓存未命中才调用OpOrchestrate生成任务；命中则更新本次用户地址并回放，可能看不到模板调用。
         if (enableCache) { // 使能aicpu task cache
             // 注意: OpOrchestrate尚未调用, 首个NotifyWait与算子展开相关的task尚未生成, AicpuTsThread中一定无SQE
             // 因此, 无需通过强制下发SQE, 来避免cache miss下缓存算法无关的task 或 cache hit下task下发乱序
@@ -595,6 +603,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             CHK_RET(OpOrchestrate(param, resCtxPtr, thread, algName));
         }
 
+        // [中文导读] 算法任务之后排入对用户流所导出Thread的通知，与Host侧的等待配对；API返回不等于设备已执行完。
         constexpr u32 DEFAULT_NOTIFY_IDX = 0;
         HCCL_DEBUG(
             "[%s]Notify record on srcThread[%llu], dstThread[%llu], notifyIdx[%u]", __func__, thread,
@@ -615,6 +624,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             return 1;
         }
 
+        // [中文导读] 结束本tag的批量提交模式；这是执行控制，不能替代数据完成所需的流/通知依赖。
         if (HcommBatchModeEnd(param->algTag) != HCCL_SUCCESS) {
             HCCL_ERROR("failed set eager mode, tag is %s.", param->algTag);
             return 1;

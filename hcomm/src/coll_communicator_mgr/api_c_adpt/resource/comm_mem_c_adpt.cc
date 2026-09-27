@@ -146,6 +146,9 @@ HcclResult GetHcclBufferWithClearFlag(HcclComm comm, void** buffer, uint64_t* si
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 取得域管理的本地CCL中转区地址及字节容量，不是取得远端CCL，也不是交换用户张量。
+// [中文导读] 新流程通过CommMems获取；单Rank可成功返回nullptr和0，不能把“成功”一概等同于存在非空中转区。
+// [中文导读] 内存生命周期交域/内存管理器，调用者不应把返回指针当成自己本次单独分配的内存去释放。
 HcclResult HcclGetHcclBuffer(HcclComm comm, void** buffer, uint64_t* size)
 {
     CHK_PRT_RET(buffer == nullptr, HCCL_ERROR("[%s] buffer is null", __func__), HCCL_E_PTR);

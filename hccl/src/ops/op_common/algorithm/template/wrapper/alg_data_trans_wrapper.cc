@@ -20,6 +20,8 @@
 namespace ops_hccl {
 
 namespace {
+    // [中文导读] 这里的同名Wait是HCCL局部包装，实际经Default适配层选择HCOMM能力与超时策略。
+    // [中文导读] 查调用链时应继续进入hcomm_primitives_dl.cc，不要把这个局部函数当作底层实现。
     HcclResult
     HcommChannelNotifyWaitOnThread(ThreadHandle thread, ChannelHandle channel, u32 localNotifyIdx, u32 timeout)
     {
@@ -363,6 +365,8 @@ bool IsHcommBatchTransferOnThreadSupported()
     return g_hcommBatchTransferSupportState.load() == HCOMM_BATCH_TRANSFER_SUPPORTED;
 }
 
+// [中文导读] 发送侧Write协议：等待对端ACK允许写入，逐片从本地src写到远端dst，再通知DATA_SIGNAL。
+// [中文导读] size_是字节数；零长片不搬运，但前后握手仍存在。远端dst来自预先建立的Channel/内存描述。
 HcclResult SendWrite(const DataInfo& sendInfo, const ThreadHandle& thread)
 {
     const std::vector<DataSlice> srcSlices = sendInfo.slices_.srcSlices_;
@@ -408,6 +412,7 @@ HcclResult SendBatchWrite(const DataInfo& sendInfo, const ThreadHandle& thread)
     return DoSendBatchTx(sendInfo, thread, "SendBatchWrite", "BATCH_WRITE", processSlice, SendWrite);
 }
 
+// [中文导读] 被写入的一侧只发送ACK并等待DATA_SIGNAL，数据由对端Write送来；没有再调用一次Read。
 HcclResult RecvWrite(const DataInfo& recvInfo, const ThreadHandle& thread)
 {
     const ChannelInfo& recvChannel = recvInfo.channel_;
@@ -425,6 +430,8 @@ HcclResult RecvWrite(const DataInfo& recvInfo, const ThreadHandle& thread)
  因此对于rank 0来说需要向rank 1 record告诉rank 1自己准备好了可以写了，
  而rank 0也需要wait一下rank 1的record知道rank 1那边也可以写了。
 */
+// [中文导读] 同一Thread既收又发：向接收通道对端发ACK→等发送通道ACK→逐片Write→发完成→等接收完成。
+// [中文导读] tx/rx可以指向不同Peer。顺序约束通过通知任务表达，不是Host在每一步同步阻塞。
 HcclResult SendRecvWrite(const SendRecvInfo& sendRecvInfo, const ThreadHandle& thread)
 {
     const std::vector<DataSlice> srcSlices = sendRecvInfo.sendRecvSlices_.txSlicesList_.srcSlices_;
@@ -593,6 +600,7 @@ HcclResult SendRecvWriteReduce(const SendRecvReduceInfo& sendRecvInfo, const Thr
     return HCCL_SUCCESS;
 }
 
+// [中文导读] Read协议的数据提供方：通知对端数据可读，再等对端读完。真正的数据Read由接收方发起。
 HcclResult SendRead(const DataInfo& sendInfo, const ThreadHandle& thread)
 {
     const ChannelInfo& sendChannel = sendInfo.channel_;
@@ -604,6 +612,7 @@ HcclResult SendRead(const DataInfo& sendInfo, const ThreadHandle& thread)
     return HCCL_SUCCESS;
 }
 
+// [中文导读] Read协议的接收方：等远端ACK后把远端src逐片读入本地dst，最后发DATA_SIGNAL允许对端继续。
 HcclResult RecvRead(const DataInfo& recvInfo, const ThreadHandle& thread)
 {
     const std::vector<DataSlice> srcSlices = recvInfo.slices_.srcSlices_;
@@ -877,6 +886,8 @@ HcclResult SendRecvBatchReadReduce(const SendRecvReduceInfo& sendRecvInfo, const
         sendRecvInfo, thread, "SendRecvBatchReadReduce", "BATCH_READ_REDUCE", processSlice, SendRecvReadReduce);
 }
 
+// [中文导读] 本地片间拷贝：检查非零且等长，地址为base+offset，然后排入HcommLocalCopyOnThread。
+// [中文导读] 可用于自身Rank数据或CCL中转区与用户区之间的搬运；没有跨Rank的Channel参数。
 HcclResult LocalCopy(const ThreadHandle& thread, const DataSlice& srcSlice, const DataSlice& dstSlice)
 {
     CHK_PRT_RET(
@@ -898,6 +909,8 @@ HcclResult LocalCopy(const ThreadHandle& thread, const DataSlice& srcSlice, cons
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 本地归约和普通拷贝不同：HcommLocalReduceOnThread接收元素count及类型/归约运算。
+// [中文导读] 指定64位类型或PROD在本包装层转入AicpuReduce，不能假定所有类型都落到同一硬件归约原语。
 HcclResult LocalReduce(
     const ThreadHandle& thread, const DataSlice& srcSlice, const DataSlice& dstSlice, const HcclDataType dataType,
     const HcclReduceOp reduceOp)
@@ -1007,6 +1020,7 @@ bool IsContinuousSlice(const DataSlice& nxtSlice, const DataSlice& currSlice)
     return true;
 }
 
+// [中文导读] 主从Thread前同步：主Thread分别Record，每个从Thread在自己的队列Wait，形成并行工作起点。
 HcclResult PreSyncInterThreads(
     const ThreadHandle& mainThread, const std::vector<ThreadHandle>& subThreads,
     const std::vector<u32>& notifyIdxMainToSub)
@@ -1042,6 +1056,8 @@ HcclResult PreSyncInterThreads(
     return HcclResult::HCCL_SUCCESS;
 }
 
+// [中文导读] 主从Thread后同步：主Thread排入各从Thread的完成等待，从Thread在各自队列发回Record。
+// [中文导读] C++先写主Thread的Wait不构成Host死锁：这些调用组织不同任务队列上的执行依赖。
 HcclResult PostSyncInterThreads(
     const ThreadHandle& mainThread, const std::vector<ThreadHandle>& subThreads,
     const std::vector<u32>& notifyIdxSubToMain)

@@ -50,6 +50,8 @@ MemHandle TaggedMemMap::RemoveTag(const std::string& tag)
     return handle;
 }
 
+// [中文导读] 先清理端点关联的内存注册记录，再销毁端点，保留注销操作所需的有效Endpoint句柄。
+// [中文导读] 资源由管理器缓存并统一释放，单次算子返回不代表这些可复用资源立即销毁。
 EndpointMgr::~EndpointMgr()
 {
     endpointTagMemMap_.clear();
@@ -64,6 +66,8 @@ EndpointMgr::~EndpointMgr()
     taggedEndpointMap_.clear();
 }
 
+// [中文导读] 按EndpointDesc查询缓存。命中直接返回同一Endpoint，未命中才调用HcommEndpointCreate。
+// [中文导读] 这正是域级“申请通道”未必触发“创建端点”的原因，测创建需显式准备未命中的场景。
 HcclResult EndpointMgr::Get(EndpointDesc epDesc, EndpointHandle& handle)
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -115,6 +119,9 @@ HcclResult EndpointMgr::GetWithTag(EndpointDesc epDesc, const std::string& share
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 将域内CCL等内存登记到具体Endpoint，得到后续建链可携带的MemHandle。
+// [中文导读] 先比较域内存版本，再按tag跳过已注册项；注册描述不等于分配或复制用户内存。
+// [中文导读] 只有当前批次顺利处理完才更新记录版本，HCCL_E_AGAIN可表示底层已有对应注册。
 HcclResult EndpointMgr::RegisterMemory(
     EndpointHandle epHandle, const std::vector<std::string>& memTag, const std::vector<HcclMem>& memVec,
     uint64_t commMemsVersion)
@@ -161,6 +168,8 @@ HcclResult EndpointMgr::RegisterMemory(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 把上层选择的内存tag转换成此Endpoint下的注册句柄，保留请求顺序；不存在则返回错误。
+// [中文导读] 这是“选择要交换哪些已注册内存”，不是让所有注册内存无条件出现在每条Channel上。
 HcclResult EndpointMgr::GetMemHandlesByTags(
     EndpointHandle epHandle, const std::vector<std::string>& memTags, std::vector<MemHandle>& memHandleVec)
 {

@@ -672,6 +672,9 @@ HcclResult MyRank::CheckChannelParam(CommEngine engine, const HcclChannelDesc* c
 }
 
 // 批量创建channels，如果CCU资源不足（如Xn, Cke, channel ctx, jetty ctx, wqebb）会失败，返回HCCL_E_UNAVAIL
+// [中文导读] 一批通道的本地资源准备：取得/复用Endpoint、准备监听、注册所需内存，再取得EndpointPair槽位。
+// [中文导读] EndpointPair按Engine与槽位决定复用还是HcommCollectiveChannelCreate，数量由请求决定。
+// [中文导读] 创建句柄与等待连接完成是两个阶段，后者在CreateChannels中的BatchConnectChannels处理。
 HcclResult MyRank::BatchCreateChannels(
     CommEngine engine, const HcclChannelDesc* channelDescs, uint32_t channelNum,
     std::vector<HcommChannelDesc>& hcommDescs, ChannelHandle* channelHandles,
@@ -732,6 +735,8 @@ HcclResult MyRank::BatchCreateChannels(
             "[%s][%u/%u] remoteRank[%u] epHandle[%p] protocol[%d]", __func__, i + 1, channelNum, remoteRank, epHandle,
             localEndpointDesc.protocol);
 
+        // [中文导读] allHandles保存本Channel所需注册句柄，hcommDescs引用它参与后续资源描述交换。
+        // [中文导读] exchangeAllMems=false表示按显式列表选择，避免把端点上全部内存隐式打包。
         // 注册内存
         CHK_RET(PrepareMemHandles(epHandle, channelDescs[i].memHandles, channelDescs[i].memHandleNum, allHandles[i]));
         HCCL_INFO(
@@ -1225,6 +1230,9 @@ HcclResult MyRank::FinalizeChannelsByEngine(
     return HCCL_E_NOT_SUPPORT;
 }
 
+// [中文导读] 建链主干：整理描述 -> Socket准备 -> 本地Channel创建/复用 -> 按需等待连接 -> 一致性交换。
+// [中文导读] 末尾FinalizeChannelsByEngine把Host控制对象转换/整理为调用Engine需要的句柄表示。
+// [中文导读] 只有本轮存在新建Channel才进入连接等待，不能将复用路径也画成完整新建流程。
 HcclResult MyRank::CreateChannels(
     CommEngine engine, const std::string& commTag, const HcclChannelDesc* channelDescs, uint32_t channelNum,
     ChannelHandle* channelHandles)
@@ -1291,6 +1299,8 @@ HcclResult MyRank::CreateChannels(
             "[MyRank][CreateChannels] CreateChannels Time Elapsed [%lld]us, channelNum [%u]", duration, channelNum);
     }
 
+    // [中文导读] 此处交换的是通信配置和上层登记的算子一致性描述，独立于通道内部的内存访问描述交换。
+    // [中文导读] 即使本次Channel复用，也不能仅凭“未创建”推断这一步一定被跳过。
     // 借用hcommDescs.socket，完成一致性校验必要的数据交换
     CHK_RET(BatchExchangeAndCheckConsistency(channelDescs, hcommDescs, channelNum, newChannels_, engine));
 
@@ -1300,6 +1310,8 @@ HcclResult MyRank::CreateChannels(
     return FinalizeChannelsByEngine(engine, commTag, channelNum, hcommDescs, hostChannelHandleList, channelHandles);
 }
 
+// [中文导读] 从远端注册内存列表定位HcclBuffer标签，返回其地址/长度给HCCL算法。
+// [中文导读] 无标签的AicpuTsHccsChannel按约定取第0项；不能对所有后端都假定第0项就是任意用户内存。
 HcclResult MyRank::ChannelGetHcclBuffer(ChannelHandle channel, void** buffer, uint64_t* size)
 {
     CHK_PTR_NULL(buffer);

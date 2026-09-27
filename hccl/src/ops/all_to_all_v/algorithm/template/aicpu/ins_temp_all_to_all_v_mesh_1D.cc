@@ -59,6 +59,8 @@ InsTempAlltoAllVMesh1D::InsTempAlltoAllVMesh1D(
 
 InsTempAlltoAllVMesh1D::~InsTempAlltoAllVMesh1D() {}
 
+// [中文导读] Host侧资源计算：选择本层Peer通道，按并发Peer数和每Peer通道数计算从Thread/通知需求。
+// [中文导读] 此函数填resourceRequest，不直接调用HCOMM创建物理Channel；申请由公共资源层完成。
 HcclResult InsTempAlltoAllVMesh1D::CalcRes(
     HcclComm comm, const OpParam& param, const TopoInfoWithNetLayerDetails* topoInfo,
     AlgResourceRequest& resourceRequest)
@@ -164,6 +166,9 @@ void InsTempAlltoAllVMesh1D::CalcCclBuffIdx(u32 remoteRank, u32& myRankCclBuffId
     return;
 }
 
+// [中文导读] 设备模板入口，接收已准备好的Thread、Channel和当前数据块描述。
+// [中文导读] 检测到PCIe链路时当前模板采用Read模式，否则采用Write；不能把同一模板固定解释为远端写。
+// [中文导读] 本Rank编号先映射到子通信域中的算法Rank，再按轮次与Peer展开任务。
 HcclResult InsTempAlltoAllVMesh1D::KernelRun(
     const OpParam& param, const TemplateDataParams& tempAlgParams, TemplateResource& templateResource)
 {
@@ -195,6 +200,8 @@ HcclResult InsTempAlltoAllVMesh1D::KernelRun(
     return HcclResult::HCCL_SUCCESS;
 }
 
+// [中文导读] 发给自己的那一份不经过远端Channel，按发送/接收位移在本地Thread上复制到输出。
+// [中文导读] 数量为零时不提交复制；DataSlice同时保存字节长度和元素数量，二者不要混淆。
 HcclResult InsTempAlltoAllVMesh1D::LocalCopyForMyRank(
     const TemplateDataParams& tempAlgParams, const ThreadHandle& thread, const u32 myAlgRank, const u32 queIdx) const
 {
@@ -214,6 +221,9 @@ HcclResult InsTempAlltoAllVMesh1D::LocalCopyForMyRank(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 这是一个模板数据块内的Peer轮次循环，不是整个算子按CCL容量分块的最外层循环。
+// [中文导读] 主从前同步放行从Thread，后同步汇合从Thread，保证最终完成通知不越过未完成的分支。
+// [中文导读] Read中转路径先准备可供Peer读取的CCL数据，Write路径则在收取后按需复制到用户输出。
 HcclResult InsTempAlltoAllVMesh1D::RunALLtoALL(
     const std::map<u32, std::vector<ChannelInfo>>& channels, const std::vector<ThreadHandle>& threads,
     const TemplateDataParams& tempAlgParams, const u32 myAlgRank)
@@ -268,6 +278,8 @@ HcclResult InsTempAlltoAllVMesh1D::RunALLtoALL(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 一轮内遍历Peer，为每个Peer取出Channel列表，再把该Peer的发送/接收数据分别按端口分片。
+// [中文导读] 一条API调用不一定对应一个Peer的全部数据；多Channel时每条链承载各自偏移和长度。
 HcclResult InsTempAlltoAllVMesh1D::RunSendRecvByLoop(
     const std::vector<u32>& commRanks, const TemplateDataParams& tempAlgParams,
     const std::map<u32, std::vector<ChannelInfo>>& channels, const std::vector<ThreadHandle>& threads,
@@ -324,6 +336,9 @@ HcclResult InsTempAlltoAllVMesh1D::PostSyncInterThreadsPerRank(
     return HcclResult::HCCL_SUCCESS;
 }
 
+// [中文导读] 选定当前Peer的CCL槽位及Thread组，逐Channel构造切片并提交对应的收发协议。
+// [中文导读] 普通Write中转路径接收数据先落本地CCL，收发依赖之后才执行PostCopy到用户输出。
+// [中文导读] enableRemoteMemAccess_分支可直接访问已准备的远端用户内存，不执行同样的中转复制。
 HcclResult InsTempAlltoAllVMesh1D::RunSendRecvByChannel(
     const TemplateDataParams& tempAlgParams, const u32 roundIdx, const u32 curValidChannelsSize,
     const std::vector<ChannelInfo>& curChannels, const u32 remoteRank, const std::vector<ThreadHandle>& threads,
@@ -380,6 +395,8 @@ HcclResult InsTempAlltoAllVMesh1D::RunSendRecvByChannel(
     return HcclResult::HCCL_SUCCESS;
 }
 
+// [中文导读] 按Read/Write模式以及本Channel的收发长度选择双向、仅发送、仅接收或无数据分支。
+// [中文导读] Send/Recv包装还负责协议同步，不能只统计Write调用就判断AllToAll的完整执行覆盖。
 HcclResult InsTempAlltoAllVMesh1D::RunSendRecv(
     const SendRecvInfo& sendRecvInfo, const DataInfo& sendInfo, const DataInfo& recvInfo, const ThreadHandle& thread,
     const u32 channelId) const
@@ -421,6 +438,8 @@ HcclResult InsTempAlltoAllVMesh1D::RunSendRecv(
     return HcclResult::HCCL_SUCCESS;
 }
 
+// [中文导读] 普通Write切片指向本端input和远端CCL；普通Read切片指向远端CCL和本端output。
+// [中文导读] 位移包含Peer布局、CCL槽位与Channel分片偏移，远端地址必须来自对应Channel的交换结果。
 HcclResult InsTempAlltoAllVMesh1D::BuildDataSlices(
     const TemplateDataParams& tempAlgParams, const u32 remoteRank, const ChannelInfo& channelSend,
     const ChannelInfo& channelRecv, const u32 channelId, const u32 remoteCclBuffIdx,

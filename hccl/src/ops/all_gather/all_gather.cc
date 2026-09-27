@@ -19,6 +19,9 @@ using namespace std;
 using namespace ops_hccl;
 extern "C" unsigned int LaunchAicpuKernel(OpParam* param);
 
+// [中文导读] AllGather把各Rank的等长输入收集到每个Rank的输出，sendCount是本Rank的元素数量。
+// [中文导读] 本入口负责版本/设备分流与参数检查，实际算法位于AllGatherOutPlace之后的调度和模板。
+// [中文导读] 与AllToAll共用资源框架不表示数据切片和原语相同；本算子没有归约运算参数。
 HcclResult HcclAllGather(
     void* sendBuf, void* recvBuf, uint64_t sendCount, HcclDataType dataType, HcclComm comm, aclrtStream stream)
 {

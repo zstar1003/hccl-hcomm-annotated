@@ -20,6 +20,9 @@ using namespace std;
 using namespace ops_hccl;
 extern "C" unsigned int LaunchAicpuKernel(OpParam* param);
 
+// [中文导读] 单算子等长AllToAll入口：每个Peer的数量相同，后续转换为AllToAllV的数量/位移数组。
+// [中文导读] comm表示已存在的通信域，stream承载异步任务；成功返回不能当作跨Rank数据已经到齐。
+// [中文导读] 先按HCOMM版本和设备分流。下方新流程不是所有设备、所有版本都必经的路径。
 HcclResult HcclAlltoAll(
     const void* sendBuf, uint64_t sendCount, HcclDataType sendType, const void* recvBuf, uint64_t recvCount,
     HcclDataType recvType, HcclComm comm, aclrtStream stream)
@@ -55,6 +58,8 @@ HcclResult HcclAlltoAll(
     CHK_RET(CheckCount(recvCount));
     CHK_RET(CheckDataType(recvType, false));
 
+    // [中文导读] 数量和位移先按元素计数；算法构造字节切片时再乘数据类型大小。
+    // [中文导读] 这里整理的是Host侧描述数组，并没有搬运sendBuf中的用户数据。
     // 构造四个矩阵，适配alltoallV的逻辑
     std::vector<u64> sdispls(rankSize, 0);
     std::vector<u64> rdispls(rankSize, 0);
@@ -81,6 +86,8 @@ HcclResult HcclAlltoAll(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 变长入口：sendCounts/sdispls描述发给各Peer的数据，recvCounts/rdispls描述本端接收布局。
+// [中文导读] 不同Peer可有不同数量，包括零长度；后续模板据此决定双向交换、单向发送或单向接收。
 HcclResult HcclAlltoAllV(
     const void* sendBuf, const void* sendCounts, const void* sdispls, HcclDataType sendType, const void* recvBuf,
     const void* recvCounts, const void* rdispls, HcclDataType recvType, HcclComm comm, aclrtStream stream)
@@ -593,6 +600,8 @@ HcclResult CheckBufNullptr(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 取max(displacement + count)得到包含间隔的元素跨度，而不是简单求数量总和。
+// [中文导读] 输入输出可含空洞，此跨度用于后续参数/内存处理，不代表这些空洞都要参与通信。
 HcclResult CalcInputOutputSize(
     const u64* sendCountsData, const u64* recvCountsData, const u64* sdisplsData, const u64* rdisplsData,
     const u32 userRankSize, u64& inputSize, u64& outputSize)
@@ -610,6 +619,8 @@ HcclResult CalcInputOutputSize(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 将四组数量/位移写入OpParam尾部的连续变长区，便于把参数整体交给设备入口。
+// [中文导读] 此处复制的是u64描述信息，不是用户张量；数组位置由各IDX常量共同约定。
 HcclResult ConstructVarData(
     const u64* sendCountsData, const u64* recvCountsData, const u64* sdisplsData, const u64* rdisplsData,
     const u32 userRankSize, const u32 rankSize, OpParam& param)
@@ -638,6 +649,8 @@ HcclResult ConstructVarData(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 封装统一OpParam：绑定流、模式、用户地址、类型和变长描述，并建立描述数组指针。
+// [中文导读] 对称内存AllToAllVC可额外携带对端接收位移，不能把普通四数组布局套到所有分支。
 HcclResult AlltoAllVConstructOpParam(
     const void* sendBuf, const void* sendCounts, const void* sdispls, const void* recvBuf, const void* recvCounts,
     const void* rdispls, HcclDataType dataType, HcclComm comm, aclrtStream stream, const std::string& tag,
@@ -727,6 +740,9 @@ HcclResult PreCheckSymmetricMemory(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 调度分岔点：兼容回退、CCU快速发射、AIV缓存重放、单Rank处理均可提前返回。
+// [中文导读] 普通多Rank路径先由Selector确定拓扑与算法，再交HcclExecOp申请资源和执行。
+// [中文导读] 因而不能把下方所有分支画成一串必经调用，也不能用一次trace代表全部展开方式。
 HcclResult AlltoAllVExecDispatch(
     HcclComm comm, OpParam& param, const OpParam& probeParam, OpMode opMode, u32 rankSize, bool& useInnerOp,
     const ResPackGraphMode& resPack)
@@ -778,6 +794,8 @@ HcclResult AlltoAllVExecDispatch(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] 单算子与图模式的参数组织公共层：探测内存条件、分配OpParam及尾部描述、确定展开模式。
+// [中文导读] unique_ptr的定制删除器成对执行析构与free，CHK_RET提前返回时也释放本地参数块。
 HcclResult AlltoAllVOutPlaceCommon(
     const void* sendBuf, const void* sendCounts, const void* sdispls, const void* recvBuf, const void* recvCounts,
     const void* rdispls, HcclDataType dataType, HcclComm comm, aclrtStream stream, const std::string& tag,

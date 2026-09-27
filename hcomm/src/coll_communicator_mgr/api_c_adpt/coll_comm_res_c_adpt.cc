@@ -752,6 +752,10 @@ static HcclResult CheckChannelResParams(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] HCOMM域级控制面入口，虽然名称以Hccl开头，实现在HCOMM而非HCCL算子仓。
+// [中文导读] 输入为每条链的Peer、Endpoint、协议和内存句柄，输出为适配所选Engine的ChannelHandle。
+// [中文导读] V2域规范请求后委托MyRank；非V2域通常走兼容管理器，但满足CPU连接模式条件时也走MyRank。
+// [中文导读] Acquire不保证每次新建物理Channel，也不执行本次算子的用户数据传输。
 HcclResult HcclChannelAcquire(
     HcclComm comm, CommEngine engine, const HcclChannelDesc* channelDescs, uint32_t channelNum, ChannelHandle* channels)
 {
@@ -805,6 +809,8 @@ HcclResult HcclChannelAcquire(
             "hasSymmetricMemHandles[%d], mergedMemHandleGroups[%zu].",
             commTag.c_str(), engine, channelNum, hasSymmetricMemHandles, mergedMemHandles.size());
 
+        // [中文导读] 此处跨入域内建链编排：Socket、Endpoint、内存注册、Channel状态和一致性交换。
+        // [中文导读] AGAIN/UNAVAIL向上保留，让调用方识别可重试或资源不足的情形。
         ret = myRank->CreateChannels(engine, commTag, channelDescFinals.data(), channelNum, channels);
         CHK_PRT_RET(
             (ret == HCCL_E_AGAIN || ret == HCCL_E_UNAVAIL),
