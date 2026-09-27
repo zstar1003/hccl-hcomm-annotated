@@ -1,0 +1,14 @@
+{
+    "name": "insight",
+    "version": "1.0.0",
+    "entry": "python3 server.py",
+    "dependency": {
+        "min_core_version": "1.0.0"
+    },
+    "setting": {
+        "dist_path": "./dist",
+        "data_path": "../../checker/data/insight",
+        "topo_config_path": "../../../../asset/cluster_model/config/cluster",
+        "port": 8080
+    }
+}

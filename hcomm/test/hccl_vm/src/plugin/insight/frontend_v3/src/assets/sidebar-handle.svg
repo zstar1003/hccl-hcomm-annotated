@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="90" viewBox="0 0 18 90" fill="none">
+  <path
+    d="M1 1
+       L9.7 8.4
+       C13.1 11.7 15.4 15.9 16.5 21.8
+       C17.2 26.6 17.2 33.4 17.2 45
+       C17.2 56.6 17.2 63.4 16.5 68.2
+       C15.4 74.1 13.1 78.3 9.7 81.6
+       L1 89
+       Z"
+    fill="rgba(57,57,57,1)"
+    vector-effect="non-scaling-stroke"
+  />
+  <path
+    d="M10.8 38.5 L6.7 45 L10.8 51.5"
+    stroke="rgba(216,216,216,1)"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    vector-effect="non-scaling-stroke"
+  />
+</svg>

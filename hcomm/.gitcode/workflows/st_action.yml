@@ -1,0 +1,49 @@
+name: st_action
+
+on:
+  workflow_call:
+    inputs:
+      image_version:
+        required: true
+        type: string
+
+jobs:
+  JOB_st:
+    name: ST
+    needs: []
+    steps:
+      -
+        name: Checkout
+        identifier: process_checkout
+        uses: checkout
+        with:
+          ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
+          token: ${{ secrets.GIT_TOKEN }}
+      -
+        name: download
+        uses: obs-download
+        with:
+          endpoint: "https://obs.cn-north-4.myhuaweicloud.com"
+          bucket: "ascend-ci"
+          access-key: ${{ secrets.AK }}
+          secret-key: ${{ secrets.SK }}
+          key: |
+            ${{ env.obs_path }}/pr_filelist.txt
+            ${{ env.obs_path }}/pr_filelist_mod.txt
+            ${{ env.obs_path }}/st.sh
+          path: ${{ steps.process_checkout.outputs.path }}
+      - 
+        name: redis-cache
+        uses: cann/.gitcode/actions/redis-cache@master
+      -
+        name: st_acc
+        identifier: st
+        run: |
+          export WORKSPACE=${{ steps.process_checkout.outputs.path }}
+          cd ${{ steps.process_checkout.outputs.path }}
+          export obs_path=${{ env.obs_path }}
+          bash st.sh
+    if: "${{ default() }}"
+    runs-on: ["self-hosted", "arch=x64", "spec=2xlarge"]
+    container:
+      image: swr.cn-north-4.myhuaweicloud.com/ci_cann/${{ inputs.image_version }}

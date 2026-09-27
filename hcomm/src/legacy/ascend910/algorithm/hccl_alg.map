@@ -1,0 +1,222 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+# hccl_alg 导出符号白名单
+{
+global:
+    DetectCallBack;
+    RegisterGetAicpuTaskExceptionCallBack;
+    RegisterGetErrStatusVecCallBack;
+    RegisterHeartBeatCallBack;
+    UnregisterGetAicpuTaskExceptionCallBack;
+    extern "C++" {
+        "AddStreamToModel(void*, void*&)";  # _Z16AddStreamToModelPvRS_
+        "CheckAlgoConfigValid(std::vector<std::string, std::allocator<std::string> >&, bool&, bool&)";  # _Z20CheckAlgoConfigValidRSt6vectorISsSaISsEERbS3_
+        "GetExternalInputHcclAlgoConfig(HcclCMDType)";  # _Z30GetExternalInputHcclAlgoConfig11HcclCMDType
+        "GetInternalExecTimeOut()";  # _Z22GetInternalExecTimeOutv
+        "GetModelId(void*&, unsigned long long&)";  # _Z10GetModelIdRPvRy
+        "GetStreamCaptureInfo(void*, void*&, bool&)";  # _Z20GetStreamCaptureInfoPvRS_Rb
+        "ParseAlgoString(std::string, std::string&, std::vector<HcclAlgoType, std::allocator<HcclAlgoType> >&)";  # _Z15ParseAlgoStringSsRSsRSt6vectorI12HcclAlgoTypeSaIS1_EE
+        "SetCommonAlgType(std::vector<std::string, std::allocator<std::string> >&)";  # _Z16SetCommonAlgTypeRSt6vectorISsSaISsEE
+        "SetSpecificAlgType(std::vector<std::string, std::allocator<std::string> >&)";  # _Z18SetSpecificAlgTypeRSt6vectorISsSaISsEE
+        "SplitHcclOpType(std::string const&, std::vector<std::string, std::allocator<std::string> >&)";  # _Z15SplitHcclOpTypeRKSsRSt6vectorISsSaISsEE
+        "hccl::AlgTypeToStr(TagAlgType)";  # _ZN4hccl12AlgTypeToStrE10TagAlgType
+        "hccl::AlgWrap::GetInstance()";  # _ZN4hccl7AlgWrap11GetInstanceEv
+        "hccl::AlgWrap::RegisterAlgCallBack(std::string const&, void*, void (*)(void*, void*, unsigned int), int)";  # _ZN4hccl7AlgWrap19RegisterAlgCallBackERKSsPvPFvS3_S3_jEi
+        "hccl::AlgWrap::UnregisterAlgCallBack(std::string const&)";  # _ZN4hccl7AlgWrap21UnregisterAlgCallBackERKSs
+        "hccl::AlltoAllOperator::GetAlltoAllStagedWorkSpaceMemSize(hccl::OpParam const&, unsigned long long&)";  # _ZN4hccl16AlltoAllOperator33GetAlltoAllStagedWorkSpaceMemSizeERKNS_7OpParamERy
+        "hccl::AlltoAllOperator::IsSatisfy91093OffloadCondition()";  # _ZN4hccl16AlltoAllOperator30IsSatisfy91093OffloadConditionEv
+        "hccl::AlltoAllOperator::IsSatisfyA2AContinuousPipelineFor91093Condition(hccl::OpParam const&)";  # _ZN4hccl16AlltoAllOperator47IsSatisfyA2AContinuousPipelineFor91093ConditionERKNS_7OpParamE
+        "hccl::AlltoAllOperator::IsSatisfyAlltoAllAivCondition(hccl::OpParam const&)";  # _ZN4hccl16AlltoAllOperator29IsSatisfyAlltoAllAivConditionERKNS_7OpParamE
+        "hccl::AlltoAllOperator::IsSatisfyAlltoallContinuousPipelineCondition(hccl::OpParam const&)";  # _ZN4hccl16AlltoAllOperator44IsSatisfyAlltoallContinuousPipelineConditionERKNS_7OpParamE
+        "hccl::AlltoAllOperator::JudgeIfNeedPreProcessAndGetParam(hccl::OpParam const&, std::unique_ptr<hccl::PreProcessMetaInfo, std::default_delete<hccl::PreProcessMetaInfo> >&)";  # _ZN4hccl16AlltoAllOperator32JudgeIfNeedPreProcessAndGetParamERKNS_7OpParamERSt10unique_ptrINS_18PreProcessMetaInfoESt14default_deleteIS5_EE
+        "hccl::AlltoAllOperator::PrepareAlltoAllAddrInfo(void const*, void const*, HcclDataType, void const*, void const*, HcclDataType, std::unique_ptr<hccl::PreProcessMetaInfo, std::default_delete<hccl::PreProcessMetaInfo> >&)";  # _ZN4hccl16AlltoAllOperator23PrepareAlltoAllAddrInfoEPKvS2_12HcclDataTypeS2_S2_S3_RSt10unique_ptrINS_18PreProcessMetaInfoESt14default_deleteIS5_EE
+        "hccl::AlltoAllOperator::PreparePreOpParam(hccl::OpParam&, std::unique_ptr<hccl::PreProcessMetaInfo, std::default_delete<hccl::PreProcessMetaInfo> > const&, hccl::Stream&)";  # _ZN4hccl16AlltoAllOperator17PreparePreOpParamERNS_7OpParamERKSt10unique_ptrINS_18PreProcessMetaInfoESt14default_deleteIS4_EERNS_6StreamE
+        "hccl::AlltoAllOperator::SetPreProcessResult(hccl::HostMem)";  # _ZN4hccl16AlltoAllOperator19SetPreProcessResultENS_7HostMemE
+        "hccl::CCLBufferManager::CCLBufferManager()";  # _ZN4hccl16CCLBufferManagerC1Ev
+        "hccl::CCLBufferManager::CleanCCLbuffer()";  # _ZN4hccl16CCLBufferManager14CleanCCLbufferEv
+        "hccl::CCLBufferManager::ClearCommAIVbuffer()";  # _ZN4hccl16CCLBufferManager18ClearCommAIVbufferEv
+        "hccl::CCLBufferManager::CreateCommAIVbuffer(bool)";  # _ZN4hccl16CCLBufferManager19CreateCommAIVbufferEb
+        "hccl::CCLBufferManager::CreateCommCCLbuffer(std::string const&)";  # _ZN4hccl16CCLBufferManager19CreateCommCCLbufferERKSs
+        "hccl::CCLBufferManager::CreateCommInfoAIVbuffer()";  # _ZN4hccl16CCLBufferManager23CreateCommInfoAIVbufferEv
+        "hccl::CCLBufferManager::GetAivCommInfoBuffer()";  # _ZN4hccl16CCLBufferManager20GetAivCommInfoBufferEv
+        "hccl::CCLBufferManager::GetCommCCLBuffer()";  # _ZN4hccl16CCLBufferManager16GetCommCCLBufferEv
+        "hccl::CCLBufferManager::GetCommExpBuffer()";  # _ZN4hccl16CCLBufferManager16GetCommExpBufferEv
+        "hccl::CCLBufferManager::GetExpBufferSize() const";  # _ZNK4hccl16CCLBufferManager16GetExpBufferSizeEv
+        "hccl::CCLBufferManager::GetInAivOffloadbuffer()";  # _ZN4hccl16CCLBufferManager21GetInAivOffloadbufferEv
+        "hccl::CCLBufferManager::GetInAivOpbaseBuffer()";  # _ZN4hccl16CCLBufferManager20GetInAivOpbaseBufferEv
+        "hccl::CCLBufferManager::GetInAlltoAllvParaBuffer()";  # _ZN4hccl16CCLBufferManager24GetInAlltoAllvParaBufferEv
+        "hccl::CCLBufferManager::GetInCCLbuffer()";  # _ZN4hccl16CCLBufferManager14GetInCCLbufferEv
+        "hccl::CCLBufferManager::GetInCCLbuffer(void*&, unsigned long long&)";  # _ZN4hccl16CCLBufferManager14GetInCCLbufferERPvRy
+        "hccl::CCLBufferManager::GetInCCLbufferSize() const";  # _ZNK4hccl16CCLBufferManager18GetInCCLbufferSizeEv
+        "hccl::CCLBufferManager::GetIndependentOpCCLbuffer(void*&, unsigned long&)";  # _ZN4hccl16CCLBufferManager25GetIndependentOpCCLbufferERPvRm
+        "hccl::CCLBufferManager::GetOutAivOffloadbuffer()";  # _ZN4hccl16CCLBufferManager22GetOutAivOffloadbufferEv
+        "hccl::CCLBufferManager::GetOutAivOpbaseBuffer()";  # _ZN4hccl16CCLBufferManager21GetOutAivOpbaseBufferEv
+        "hccl::CCLBufferManager::GetOutAlltoAllvParaBuffer()";  # _ZN4hccl16CCLBufferManager25GetOutAlltoAllvParaBufferEv
+        "hccl::CCLBufferManager::GetOutCCLbuffer()";  # _ZN4hccl16CCLBufferManager15GetOutCCLbufferEv
+        "hccl::CCLBufferManager::GetOutCCLbuffer(void*&, unsigned long long&)";  # _ZN4hccl16CCLBufferManager15GetOutCCLbufferERPvRy
+        "hccl::CCLBufferManager::GetOutCCLbufferSize() const";  # _ZNK4hccl16CCLBufferManager19GetOutCCLbufferSizeEv
+        "hccl::CCLBufferManager::InitAlltoAllvParaBuffer(unsigned long long, unsigned long long)";  # _ZN4hccl16CCLBufferManager23InitAlltoAllvParaBufferEyy
+        "hccl::CCLBufferManager::InitCCLbuffer(unsigned long long, unsigned long long)";  # _ZN4hccl16CCLBufferManager13InitCCLbufferEyy
+        "hccl::CCLBufferManager::ReleaseAlltoAllvParaBuffer()";  # _ZN4hccl16CCLBufferManager26ReleaseAlltoAllvParaBufferEv
+        "hccl::CCLBufferManager::ReleaseCommCCLbuffer()";  # _ZN4hccl16CCLBufferManager20ReleaseCommCCLbufferEv
+        "hccl::CCLBufferManager::~CCLBufferManager()";  # _ZN4hccl16CCLBufferManagerD1Ev
+        "hccl::CalGCD(std::vector<unsigned int, std::allocator<unsigned int> >&)";  # _ZN4hccl6CalGCDERSt6vectorIjSaIjEE
+        "hccl::CalculatePiplineSliceNum(HcclCMDType, unsigned long long, TagAlgType, DevType, unsigned int, unsigned int)";  # _ZN4hccl24CalculatePiplineSliceNumE11HcclCMDTypey10TagAlgType7DevTypejj
+        "hccl::CollAlgOperator::CalNumBlocks(std::string&, hccl::OpParam const&, unsigned int&, int)";  # _ZN4hccl15CollAlgOperator12CalNumBlocksERSsRKNS_7OpParamERji
+        "hccl::CollAlgOperator::CalcIncreLinkRequest(std::string const&, hccl::OpParam const&, std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> >&, hccl::AlgResourceRequest&, bool&)";  # _ZN4hccl15CollAlgOperator20CalcIncreLinkRequestERKSsRKNS_7OpParamERSt3setIjSt4lessIjESaIjEERNS_18AlgResourceRequestERb
+        "hccl::CollAlgOperator::GetAivExecParam(std::string&, hccl::OpParam const&, hccl::AlgResourceResponse&, hccl::AivSuperKernelArgsDef&)";  # _ZN4hccl15CollAlgOperator15GetAivExecParamERSsRKNS_7OpParamERNS_19AlgResourceResponseERNS_21AivSuperKernelArgsDefE
+        "hccl::CollAlgOperator::GetAlgType()";  # _ZN4hccl15CollAlgOperator10GetAlgTypeEv
+        "hccl::CollAlgOperator::GetCache(hccl::HcclCacheInfo&)";  # _ZN4hccl15CollAlgOperator8GetCacheERNS_13HcclCacheInfoE
+        "hccl::CollAlgOperator::GetNumBlocks(unsigned int&)";  # _ZN4hccl15CollAlgOperator12GetNumBlocksERj
+        "hccl::CollAlgOperator::PrepareCommInfoToDevice(std::string const&, hccl::AlgResourceResponse&)";  # _ZN4hccl15CollAlgOperator23PrepareCommInfoToDeviceERKSsRNS_19AlgResourceResponseE
+        "hccl::CollAlgOperator::SelectAlg(std::string const&, hccl::OpParam const&, hccl::ResourceLimit const&, std::string&, hccl::AlgDesc&, std::string&)";  # _ZN4hccl15CollAlgOperator9SelectAlgERKSsRKNS_7OpParamERKNS_13ResourceLimitERSsRNS_7AlgDescES9_
+        "hccl::CollAlgOperator::SetAivClearEnable(bool)";  # _ZN4hccl15CollAlgOperator17SetAivClearEnableEb
+        "hccl::CollAlgOperator::SetNumBlocks(unsigned int const&)";  # _ZN4hccl15CollAlgOperator12SetNumBlocksERKj
+        "hccl::CollAlgOperator::SetOpCounter(OpCounterInfo const&)";  # _ZN4hccl15CollAlgOperator12SetOpCounterERK13OpCounterInfo
+        "hccl::CollAlgOperator::SetRetryEnable(bool)";  # _ZN4hccl15CollAlgOperator14SetRetryEnableEb
+        "hccl::CollAlgOperator::SetRmaInfo(void*)";  # _ZN4hccl15CollAlgOperator10SetRmaInfoEPv
+        "hccl::CollAlgOperator::SupportRetryWithInplaceCheck(HcclCMDType const&, hccl::OpParam&, std::string&, unsigned char&, hccl::InplaceSupportRetryStatus&)";  # _ZN4hccl15CollAlgOperator28SupportRetryWithInplaceCheckERK11HcclCMDTypeRNS_7OpParamERSsRhRNS_25InplaceSupportRetryStatusE
+        "hccl::CommBase::GetTransportByRank(unsigned int)";  # _ZN4hccl8CommBase18GetTransportByRankEj
+        "hccl::DlProfFunction::DlProfFunctionInit()";  # _ZN4hccl14DlProfFunction18DlProfFunctionInitEv
+        "hccl::DlProfFunction::GetInstance()";  # _ZN4hccl14DlProfFunction11GetInstanceEv
+        "hccl::ExecuteKernelLaunch(hccl::AivOpArgs const&, hccl::AivTopoArgs const&, hccl::AivResourceArgs const&, hccl::AivAlgArgs const&, hccl::AivProfilingInfo&)";  # _ZN4hccl19ExecuteKernelLaunchERKNS_9AivOpArgsERKNS_11AivTopoArgsERKNS_15AivResourceArgsERKNS_10AivAlgArgsERNS_16AivProfilingInfoE
+        "hccl::ExecuteKernelLaunch(hccl::AivOpArgs const&, hccl::AivTopoArgs const&, hccl::AivResourceArgs const&, hccl::AivAlgArgs const&, hccl::AlltoAllExtraArgs const&, hccl::AivProfilingInfo&)";  # _ZN4hccl19ExecuteKernelLaunchERKNS_9AivOpArgsERKNS_11AivTopoArgsERKNS_15AivResourceArgsERKNS_10AivAlgArgsERKNS_17AlltoAllExtraArgsERNS_16AivProfilingInfoE
+        "hccl::FullmeshPairwiseSatisfyHighPerfAlltoallMeshCondition(DevType, unsigned int, bool, std::vector<HcclAlgoType, std::allocator<HcclAlgoType> >)";  # _ZN4hccl52FullmeshPairwiseSatisfyHighPerfAlltoallMeshConditionE7DevTypejbSt6vectorI12HcclAlgoTypeSaIS2_EE
+        "hccl::HcclAlg::Break()";  # _ZN4hccl7HcclAlg5BreakEv
+        "hccl::HcclAlg::ClearOpResource(std::string const&)";  # _ZN4hccl7HcclAlg15ClearOpResourceERKSs
+        "hccl::HcclAlg::CreateComm(std::string const&, hccl::DeviceMem&, hccl::DeviceMem&, TagAlgType, std::unique_ptr<hccl::TagCommInfo, std::default_delete<hccl::TagCommInfo> >&, unsigned int, bool, bool)";  # _ZN4hccl7HcclAlg10CreateCommERKSsRNS_9DeviceMemES4_10TagAlgTypeRSt10unique_ptrINS_11TagCommInfoESt14default_deleteIS7_EEjbb
+        "hccl::HcclAlg::CreateMutiStreamRes(std::string const&, hccl::Stream&, hccl::Level1StreamInfo&, TagAlgType, bool)";  # _ZN4hccl7HcclAlg19CreateMutiStreamResERKSsRNS_6StreamERNS_16Level1StreamInfoE10TagAlgTypeb
+        "hccl::HcclAlg::GetAHCAlgOption(std::map<hccl::AHCConcOpTypeDef, hccl::TemplateType, std::less<hccl::AHCConcOpTypeDef>, std::allocator<std::pair<hccl::AHCConcOpTypeDef const, hccl::TemplateType> > >&)";  # _ZN4hccl7HcclAlg15GetAHCAlgOptionERSt3mapINS_16AHCConcOpTypeDefENS_12TemplateTypeESt4lessIS2_ESaISt4pairIKS2_S3_EEE
+        "hccl::HcclAlg::GetAivModeConfig() const";  # _ZNK4hccl7HcclAlg16GetAivModeConfigEv
+        "hccl::HcclAlg::GetAlgOperator(HcclCMDType const&, HcclWorkflowMode)";  # _ZN4hccl7HcclAlg14GetAlgOperatorERK11HcclCMDType16HcclWorkflowMode
+        "hccl::HcclAlg::GetAlgType(TagAlgType&, HcclCMDType)";  # _ZN4hccl7HcclAlg10GetAlgTypeER10TagAlgType11HcclCMDType
+        "hccl::HcclAlg::GetAllReduceScratchSize(unsigned long long, HcclDataType, unsigned long long&)";  # _ZN4hccl7HcclAlg23GetAllReduceScratchSizeEy12HcclDataTypeRy
+        "hccl::HcclAlg::GetAlltoAllStagedWorkSpaceMemSize(std::vector<SendRecvInfo, std::allocator<SendRecvInfo> >&, unsigned long long&)";  # _ZN4hccl7HcclAlg33GetAlltoAllStagedWorkSpaceMemSizeERSt6vectorI12SendRecvInfoSaIS2_EERy
+        "hccl::HcclAlg::GetCommPlaneRanks(std::vector<std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > >, std::allocator<std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > > > >&)";  # _ZN4hccl7HcclAlg17GetCommPlaneRanksERSt6vectorIS1_IS1_IjSaIjEESaIS3_EESaIS5_EE
+        "hccl::HcclAlg::GetCommPlaneSubGroupVector(std::vector<std::vector<std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > >, std::allocator<std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > > > >, std::allocator<std::vector<std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > >, std::allocator<std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > > > > > >&)";  # _ZN4hccl7HcclAlg26GetCommPlaneSubGroupVectorERSt6vectorIS1_IS1_IS1_IjSaIjEESaIS3_EESaIS5_EESaIS7_EE
+        "hccl::HcclAlg::GetCommPlaneVector(std::vector<std::vector<std::vector<hccl::TagRankInfo, std::allocator<hccl::TagRankInfo> >, std::allocator<std::vector<hccl::TagRankInfo, std::allocator<hccl::TagRankInfo> > > >, std::allocator<std::vector<std::vector<hccl::TagRankInfo, std::allocator<hccl::TagRankInfo> >, std::allocator<std::vector<hccl::TagRankInfo, std::allocator<hccl::TagRankInfo> > > > > >&)";  # _ZN4hccl7HcclAlg18GetCommPlaneVectorERSt6vectorIS1_IS1_INS_11TagRankInfoESaIS2_EESaIS4_EESaIS6_EE
+        "hccl::HcclAlg::GetDeterministicConfig() const";  # _ZNK4hccl7HcclAlg22GetDeterministicConfigEv
+        "hccl::HcclAlg::GetIsBridgeVector(std::vector<bool, std::allocator<bool> >&)";  # _ZN4hccl7HcclAlg17GetIsBridgeVectorERSt6vectorIbSaIbEE
+        "hccl::HcclAlg::GetIsUsedRdmaMap(std::unordered_map<unsigned int, bool, std::hash<unsigned int>, std::equal_to<unsigned int>, std::allocator<std::pair<unsigned int const, bool> > >&)";  # _ZN4hccl7HcclAlg16GetIsUsedRdmaMapERSt13unordered_mapIjbSt4hashIjESt8equal_toIjESaISt4pairIKjbEEE
+        "hccl::HcclAlg::GetRankVecInfo(std::vector<std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > >, std::allocator<std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > > > >&)";  # _ZN4hccl7HcclAlg14GetRankVecInfoERSt6vectorIS1_IS1_IjSaIjEESaIS3_EESaIS5_EE
+        "hccl::HcclAlg::GetTinyMem(hccl::DeviceMem&)";  # _ZN4hccl7HcclAlg10GetTinyMemERNS_9DeviceMemE
+        "hccl::HcclAlg::GetTopoType(TopoType&)";  # _ZN4hccl7HcclAlg11GetTopoTypeER8TopoType
+        "hccl::HcclAlg::HcclAlg(hccl::CCLBufferManager&, void*, void*)";  # _ZN4hccl7HcclAlgC1ERNS_16CCLBufferManagerEPvS3_
+        "hccl::HcclAlg::Init(std::unique_ptr<hccl::WorkspaceResource, std::default_delete<hccl::WorkspaceResource> >&, std::unique_ptr<hccl::NotifyPool, std::default_delete<hccl::NotifyPool> > const&, std::map<hccl::HcclIpAddress, void*, std::less<hccl::HcclIpAddress>, std::allocator<std::pair<hccl::HcclIpAddress const, void*> > >&, std::unique_ptr<hccl::QueueNotifyManager, std::default_delete<hccl::QueueNotifyManager> > const&, hccl::HcclAlgoAttrDef&, hccl::HcclTopoAttr&, bool)";  # _ZN4hccl7HcclAlg4InitERSt10unique_ptrINS_17WorkspaceResourceESt14default_deleteIS2_EERKS1_INS_10NotifyPoolES3_IS7_EERSt3mapINS_13HcclIpAddressEPvSt4lessISD_ESaISt4pairIKSD_SE_EEERKS1_INS_18QueueNotifyManagerES3_ISN_EERNS_15HcclAlgoAttrDefERNS_12HcclTopoAttrEb
+        "hccl::HcclAlg::ReleaseCommInfos()";  # _ZN4hccl7HcclAlg16ReleaseCommInfosEv
+        "hccl::HcclAlg::SetAicpuUnfoldConfig(bool)";  # _ZN4hccl7HcclAlg20SetAicpuUnfoldConfigEb
+        "hccl::HcclAlg::SetAivModeConfig(bool)";  # _ZN4hccl7HcclAlg16SetAivModeConfigEb
+        "hccl::HcclAlg::SetAlgoConfig(std::map<HcclCMDType, std::vector<HcclAlgoType, std::allocator<HcclAlgoType> >, std::less<HcclCMDType>, std::allocator<std::pair<HcclCMDType const, std::vector<HcclAlgoType, std::allocator<HcclAlgoType> > > > > const&)";  # _ZN4hccl7HcclAlg13SetAlgoConfigERKSt3mapI11HcclCMDTypeSt6vectorI12HcclAlgoTypeSaIS4_EESt4lessIS2_ESaISt4pairIKS2_S6_EEE
+        "hccl::HcclAlg::SetDeterministicConfig(unsigned char)";  # _ZN4hccl7HcclAlg22SetDeterministicConfigEh
+        "hccl::HcclAlg::SetExecTimeOutConfig(int)";  # _ZN4hccl7HcclAlg20SetExecTimeOutConfigEi
+        "hccl::HcclAlg::SetHDCModeInfo(std::unordered_map<std::string, std::map<unsigned int, hccl::HcclIpAddress, std::less<unsigned int>, std::allocator<std::pair<unsigned int const, hccl::HcclIpAddress> > >, std::hash<std::string>, std::equal_to<std::string>, std::allocator<std::pair<std::string const, std::map<unsigned int, hccl::HcclIpAddress, std::less<unsigned int>, std::allocator<std::pair<unsigned int const, hccl::HcclIpAddress> > > > > >&, std::vector<unsigned int, std::allocator<unsigned int> >&, std::vector<unsigned int, std::allocator<unsigned int> >&, bool, bool)";  # _ZN4hccl7HcclAlg14SetHDCModeInfoERSt13unordered_mapISsSt3mapIjNS_13HcclIpAddressESt4lessIjESaISt4pairIKjS3_EEESt4hashISsESt8equal_toISsESaIS6_IKSsSA_EEERSt6vectorIjSaIjEESN_bb
+        "hccl::HcclAlg::SetOnlyAivModeConfig(bool)";  # _ZN4hccl7HcclAlg20SetOnlyAivModeConfigEb
+        "hccl::HcclAlg::SupportDeterministicOptim(bool&)";  # _ZN4hccl7HcclAlg25SupportDeterministicOptimERb
+        "hccl::HcclSocketManager::AbortAndDeleteSocket(std::string const&, hccl::HcclSocketRole, std::map<unsigned int, std::vector<std::shared_ptr<hccl::HcclSocket>, std::allocator<std::shared_ptr<hccl::HcclSocket> > >, std::less<unsigned int>, std::allocator<std::pair<unsigned int const, std::vector<std::shared_ptr<hccl::HcclSocket>, std::allocator<std::shared_ptr<hccl::HcclSocket> > > > > > const&)";  # _ZN4hccl17HcclSocketManager20AbortAndDeleteSocketERKSsNS_14HcclSocketRoleERKSt3mapIjSt6vectorISt10shared_ptrINS_10HcclSocketEESaIS8_EESt4lessIjESaISt4pairIKjSA_EEE
+        "hccl::HcclSocketManager::AddWhiteList(std::string const&, void*, hccl::HcclRankLinkInfoDef)";  # _ZN4hccl17HcclSocketManager12AddWhiteListERKSsPvNS_19HcclRankLinkInfoDefE
+        "hccl::HcclSocketManager::CreateSingleLinkSocket(std::string const&, void*, hccl::HcclRankLinkInfoDef, std::vector<std::shared_ptr<hccl::HcclSocket>, std::allocator<std::shared_ptr<hccl::HcclSocket> > >&, bool, bool, int, unsigned int)";  # _ZN4hccl17HcclSocketManager22CreateSingleLinkSocketERKSsPvNS_19HcclRankLinkInfoDefERSt6vectorISt10shared_ptrINS_10HcclSocketEESaIS8_EEbbij
+        "hccl::HcclSocketManager::DestroySockets()";  # _ZN4hccl17HcclSocketManager14DestroySocketsEv
+        "hccl::HcclSocketManager::DestroySockets(std::string const&)";  # _ZN4hccl17HcclSocketManager14DestroySocketsERKSs
+        "hccl::HcclSocketManager::GetStopFlag()";  # _ZN4hccl17HcclSocketManager11GetStopFlagEv
+        "hccl::HcclSocketManager::HcclSocketManager(NICDeployment, int, unsigned int, unsigned int)";  # _ZN4hccl17HcclSocketManagerC1E13NICDeploymentijj
+        "hccl::HcclSocketManager::ServerDeInit(hccl::HcclIpAddress const&, unsigned int)";  # _ZN4hccl17HcclSocketManager12ServerDeInitERKNS_13HcclIpAddressEj
+        "hccl::HcclSocketManager::ServerDeInit(void*, unsigned int)";  # _ZN4hccl17HcclSocketManager12ServerDeInitEPvj
+        "hccl::HcclSocketManager::ServerInit(void*, unsigned int)";  # _ZN4hccl17HcclSocketManager10ServerInitEPvj
+        "hccl::HcclSocketManager::SetStopFlag(bool)";  # _ZN4hccl17HcclSocketManager11SetStopFlagEb
+        "hccl::HcclSocketManager::WaitLinkEstablish(std::shared_ptr<hccl::HcclSocket>, std::function<bool ()>, int) const";  # _ZNK4hccl17HcclSocketManager17WaitLinkEstablishESt10shared_ptrINS_10HcclSocketEESt8functionIFbvEEi
+        "hccl::HcclSocketManager::WaitLinksEstablishCompleted(hccl::HcclSocketRole, std::map<unsigned int, std::vector<std::shared_ptr<hccl::HcclSocket>, std::allocator<std::shared_ptr<hccl::HcclSocket> > >, std::less<unsigned int>, std::allocator<std::pair<unsigned int const, std::vector<std::shared_ptr<hccl::HcclSocket>, std::allocator<std::shared_ptr<hccl::HcclSocket> > > > > >&, std::map<unsigned int, unsigned int, std::less<unsigned int>, std::allocator<std::pair<unsigned int const, unsigned int> > >&, hccl::TagRankInfo const&, hccl::TagRankInfo const&, void* const&)";  # _ZN4hccl17HcclSocketManager27WaitLinksEstablishCompletedENS_14HcclSocketRoleERSt3mapIjSt6vectorISt10shared_ptrINS_10HcclSocketEESaIS6_EESt4lessIjESaISt4pairIKjS8_EEERS2_IjjSA_SaISB_ISC_jEEERKNS_11TagRankInfoESN_RKPv
+        "hccl::Is310P3Common(bool, DevType)";  # _ZN4hccl13Is310P3CommonEb7DevType
+        "hccl::IsConfigAHCAlgo(std::map<HcclCMDType, std::vector<HcclAlgoType, std::allocator<HcclAlgoType> >, std::less<HcclCMDType>, std::allocator<std::pair<HcclCMDType const, std::vector<HcclAlgoType, std::allocator<HcclAlgoType> > > > >)";  # _ZN4hccl15IsConfigAHCAlgoESt3mapI11HcclCMDTypeSt6vectorI12HcclAlgoTypeSaIS3_EESt4lessIS1_ESaISt4pairIKS1_S5_EEE
+        "hccl::IsHcclOpInplace(HcclCMDType const&, hccl::OpParam const&, unsigned int, unsigned int, unsigned char&)";  # _ZN4hccl15IsHcclOpInplaceERK11HcclCMDTypeRKNS_7OpParamEjjRh
+        "hccl::LoadBinaryFromFile(char const*, aclrtBinaryLoadOptionType, unsigned int, void*&)";  # _ZN4hccl18LoadBinaryFromFileEPKc25aclrtBinaryLoadOptionTypejRPv
+        "hccl::OpBaseStreamManager::AllocSlaves(hccl::StreamType, unsigned int)";  # _ZN4hccl19OpBaseStreamManager11AllocSlavesENS_10StreamTypeEj
+        "hccl::OpBaseStreamManager::OpBaseStreamManager()";  # _ZN4hccl19OpBaseStreamManagerC1Ev
+        "hccl::OpBaseStreamManager::RegisterMaster(hccl::Stream)";  # _ZN4hccl19OpBaseStreamManager14RegisterMasterENS_6StreamE
+        "hccl::OpBaseStreamManager::~OpBaseStreamManager()";  # _ZN4hccl19OpBaseStreamManagerD1Ev
+        "hccl::ProfilerBase::AddGroupRankInfo(std::string const&, unsigned int, unsigned int, bool, unsigned int)";  # _ZN4hccl12ProfilerBase16AddGroupRankInfoERKSsjjbj
+        "hccl::ProfilerBase::AddGroupUdi(std::string const&, std::string const&)";  # _ZN4hccl12ProfilerBase11AddGroupUdiERKSsS2_
+        "hccl::ProfilerBase::AddOpData(std::string const&, unsigned long long, void const*, void const*, HcclDataType, unsigned int, std::string const&, HcclReduceOp)";  # _ZN4hccl12ProfilerBase9AddOpDataERKSsyPKvS4_12HcclDataTypejS2_12HcclReduceOp
+        "hccl::ProfilerBase::AddStream(int, std::string const&, int, TagAlgType const&)";  # _ZN4hccl12ProfilerBase9AddStreamEiRKSsiRK10TagAlgType
+        "hccl::ProfilerBase::AddTag(std::string const&, std::string const&, HcclWorkflowMode const&, bool, bool)";  # _ZN4hccl12ProfilerBase6AddTagERKSsS2_RK16HcclWorkflowModebb
+        "hccl::ProfilerBase::DelGroupRankInfo(std::string const&)";  # _ZN4hccl12ProfilerBase16DelGroupRankInfoERKSs
+        "hccl::ProfilerBase::DelGroupUdi(std::string const&)";  # _ZN4hccl12ProfilerBase11DelGroupUdiERKSs
+        "hccl::ProfilerBase::DelOpData(std::string const&)";  # _ZN4hccl12ProfilerBase9DelOpDataERKSs
+        "hccl::ProfilerBase::DelStream(int)";  # _ZN4hccl12ProfilerBase9DelStreamEi
+        "hccl::ProfilerBase::DelTag(std::string const&)";  # _ZN4hccl12ProfilerBase6DelTagERKSs
+        "hccl::ProfilerBase::GetSubmittedOpCnt(unsigned int&)";  # _ZN4hccl12ProfilerBase17GetSubmittedOpCntERj
+        "hccl::ProfilerManager::GetandClearOverFlowTasks(std::vector<hccl::HcclDumpInfo, std::allocator<hccl::HcclDumpInfo> >&)";  # _ZN4hccl15ProfilerManager24GetandClearOverFlowTasksERSt6vectorINS_12HcclDumpInfoESaIS2_EE
+        "hccl::ProfilerManager::InitProfiler()";  # _ZN4hccl15ProfilerManager12InitProfilerEv
+        "hccl::ProfilerManager::ProfilerManager(int, int, unsigned int, unsigned int)";  # _ZN4hccl15ProfilerManagerC1Eiijj
+        "hccl::ProfilerManager::TaskAivProfilerHandle(void*, unsigned int)";  # _ZN4hccl15ProfilerManager21TaskAivProfilerHandleEPvj
+        "hccl::ProfilerManager::TaskProfilerHandle(void*, unsigned int)";  # _ZN4hccl15ProfilerManager18TaskProfilerHandleEPvj
+        "hccl::ProfilerManager::~ProfilerManager()";  # _ZN4hccl15ProfilerManagerD1Ev
+        "hccl::ProfilingManager::CallMsprofReportHostApi(HcclCMDType, unsigned long, unsigned long long, HcclDataType, TagAlgType, unsigned long, unsigned int) const";  # _ZNK4hccl16ProfilingManager23CallMsprofReportHostApiE11HcclCMDTypemy12HcclDataType10TagAlgTypemj
+        "hccl::ProfilingManager::Instance()";  # _ZN4hccl16ProfilingManager8InstanceEv
+        "hccl::ProfilingManagerPub::CallMsprofReportHostApi(HcclCMDType, unsigned long, unsigned long long, HcclDataType, TagAlgType, unsigned long, unsigned int)";  # _ZN4hccl19ProfilingManagerPub23CallMsprofReportHostApiE11HcclCMDTypemy12HcclDataType10TagAlgTypemj
+        "hccl::ProfilingManagerPub::CallMsprofReportMc2CommInfo(unsigned long, void const*, int)";  # _ZN4hccl19ProfilingManagerPub27CallMsprofReportMc2CommInfoEmPKvi
+        "hccl::ProfilingManagerPub::CallMsprofReportNodeInfo(unsigned long, unsigned long, std::string, unsigned int)";  # _ZN4hccl19ProfilingManagerPub24CallMsprofReportNodeInfoEmmSsj
+        "hccl::ProfilingManagerPub::ClearStoragedProfilingInfo()";  # _ZN4hccl19ProfilingManagerPub26ClearStoragedProfilingInfoEv
+        "hccl::ProfilingManagerPub::DeleteThreadCaptureStatus(int)";  # _ZN4hccl19ProfilingManagerPub25DeleteThreadCaptureStatusEi
+        "hccl::ProfilingManagerPub::GetAdditionInfoState()";  # _ZN4hccl19ProfilingManagerPub20GetAdditionInfoStateEv
+        "hccl::ProfilingManagerPub::GetAllState()";  # _ZN4hccl19ProfilingManagerPub11GetAllStateEv
+        "hccl::ProfilingManagerPub::GetTaskApiState()";  # _ZN4hccl19ProfilingManagerPub15GetTaskApiStateEv
+        "hccl::ProfilingManagerPub::SetThreadCaptureStatus(int, bool)";  # _ZN4hccl19ProfilingManagerPub22SetThreadCaptureStatusEib
+        "hccl::QueueNotifyManager::Alloc(std::string const&, unsigned int, std::vector<std::shared_ptr<hccl::LocalNotify>, std::allocator<std::shared_ptr<hccl::LocalNotify> > >&, hccl::NotifyLoadType)";  # _ZN4hccl18QueueNotifyManager5AllocERKSsjRSt6vectorISt10shared_ptrINS_11LocalNotifyEESaIS6_EENS_14NotifyLoadTypeE
+        "hccl::QueueNotifyManager::Init()";  # _ZN4hccl18QueueNotifyManager4InitEv
+        "hccl::QueueNotifyManager::QueueNotifyManager()";  # _ZN4hccl18QueueNotifyManagerC1Ev
+        "hccl::QueueNotifyManager::ResetNotify()";  # _ZN4hccl18QueueNotifyManager11ResetNotifyEv
+        "hccl::QueueNotifyManager::~QueueNotifyManager()";  # _ZN4hccl18QueueNotifyManagerD1Ev
+        "hccl::RankConsistentcyChecker::CalcStringCrc(char const*, unsigned int&)";  # _ZN4hccl23RankConsistentcyChecker13CalcStringCrcEPKcRj
+        "hccl::RankConsistentcyChecker::CheckFrameRecv(unsigned char const*, unsigned int, std::string const&)";  # _ZN4hccl23RankConsistentcyChecker14CheckFrameRecvEPKhjRKSs
+        "hccl::RankConsistentcyChecker::ClearCheckInfo()";  # _ZN4hccl23RankConsistentcyChecker14ClearCheckInfoEv
+        "hccl::RankConsistentcyChecker::DelOpPara(std::string const&)";  # _ZN4hccl23RankConsistentcyChecker9DelOpParaERKSs
+        "hccl::RankConsistentcyChecker::GetCheckFrame(unsigned char*, unsigned long long, std::string const&)";  # _ZN4hccl23RankConsistentcyChecker13GetCheckFrameEPhyRKSs
+        "hccl::RankConsistentcyChecker::GetInstance(int)";  # _ZN4hccl23RankConsistentcyChecker11GetInstanceEi
+        "hccl::RankConsistentcyChecker::GetRankConsistentDataLength()";  # _ZN4hccl23RankConsistentcyChecker27GetRankConsistentDataLengthEv
+        "hccl::RankConsistentcyChecker::RecordOpPara(HcclCMDType, std::string const&, unsigned long long, HcclDataType, HcclReduceOp, unsigned int, unsigned long long, unsigned long long, char const*, unsigned int, unsigned char, unsigned int)";  # _ZN4hccl23RankConsistentcyChecker12RecordOpParaE11HcclCMDTypeRKSsy12HcclDataType12HcclReduceOpjyyPKcjhj
+        "hccl::RankConsistentcyChecker::RecordOpPara(HcclCMDType, std::string const&, unsigned long long, HcclDataType, unsigned int, unsigned int, unsigned int, unsigned long long, unsigned long long, char const*, unsigned int)";  # _ZN4hccl23RankConsistentcyChecker12RecordOpParaE11HcclCMDTypeRKSsy12HcclDataTypejjjyyPKcj
+        "hccl::RankConsistentcyChecker::RecordOpPara(HcclCMDType, std::string const&, unsigned long long, unsigned long long, char const*, unsigned int)";  # _ZN4hccl23RankConsistentcyChecker12RecordOpParaE11HcclCMDTypeRKSsyyPKcj
+        "hccl::RankConsistentcyChecker::RecordOpPara(HcclCMDType, std::string const&, void const*, void const*, unsigned int, HcclDataType, HcclReduceOp, unsigned long long, unsigned long long, char const*, unsigned int, unsigned char, unsigned int)";  # _ZN4hccl23RankConsistentcyChecker12RecordOpParaE11HcclCMDTypeRKSsPKvS5_j12HcclDataType12HcclReduceOpyyPKcjhj
+        "hccl::RankConsistentcyChecker::RecordVerInfo(std::string const&)";  # _ZN4hccl23RankConsistentcyChecker13RecordVerInfoERKSs
+        "hccl::RankConsistentcyChecker::SetCheckCannVersionSwitch(bool)";  # _ZN4hccl23RankConsistentcyChecker25SetCheckCannVersionSwitchEb
+        "hccl::RegisterKernel(DevType)";  # _ZN4hccl14RegisterKernelE7DevType
+        "hccl::SatisfyIntraSuperPod(DevType, unsigned int, bool, unsigned int)";  # _ZN4hccl20SatisfyIntraSuperPodE7DevTypejbj
+        "hccl::ShareCCLbufferMgr::CheckCCLbuffConflict(std::string const&, int)";  # _ZN4hccl17ShareCCLbufferMgr20CheckCCLbuffConflictERKSsi
+        "hccl::ShareCCLbufferMgr::FreeShareCCLbuffer(std::string const&)";  # _ZN4hccl17ShareCCLbufferMgr18FreeShareCCLbufferERKSs
+        "hccl::ShareCCLbufferMgr::GetInstance()";  # _ZN4hccl17ShareCCLbufferMgr11GetInstanceEv
+        "hccl::ShareCCLbufferMgr::RecordShareCCLbuffer(std::string const&)";  # _ZN4hccl17ShareCCLbufferMgr20RecordShareCCLbufferERKSs
+        "hccl::StreamActiveManager::GetInstance(int)";  # _ZN4hccl19StreamActiveManager11GetInstanceEi
+        "hccl::StreamActiveManager::Init()";  # _ZN4hccl19StreamActiveManager4InitEv
+        "hccl::StreamActiveManager::StreamsUnactive(std::vector<hccl::Stream, std::allocator<hccl::Stream> > const&)";  # _ZN4hccl19StreamActiveManager15StreamsUnactiveERKSt6vectorINS_6StreamESaIS2_EE
+        "hccl::TaskExceptionHandler::DeInit()";  # _ZN4hccl20TaskExceptionHandler6DeInitEv
+        "hccl::TaskExceptionHandler::Init()";  # _ZN4hccl20TaskExceptionHandler4InitEv
+        "hccl::ThreadManage::Init()";  # _ZN4hccl12ThreadManage4InitEv
+        "hccl::ThreadManage::ThreadManage(int, unsigned int, void*)";  # _ZN4hccl12ThreadManageC1EijPv
+        "hccl::ThreadManage::~ThreadManage()";  # _ZN4hccl12ThreadManageD1Ev
+        "hccl::WorkspaceResource::AllocDeviceMem(std::string const&, unsigned long long)";  # _ZN4hccl17WorkspaceResource14AllocDeviceMemERKSsy
+        "hccl::WorkspaceResource::AllocSlaveStreams(std::string const&, unsigned int)";  # _ZN4hccl17WorkspaceResource17AllocSlaveStreamsERKSsj
+        "hccl::WorkspaceResource::CreateOpBasedResources(HcclCMDType const&, std::string const&, HcomCollOpInfo const&)";  # _ZN4hccl17WorkspaceResource22CreateOpBasedResourcesERK11HcclCMDTypeRKSsRK14HcomCollOpInfo
+        "hccl::WorkspaceResource::CreateRemoteOpBasedResources(unsigned long long, std::string const&)";  # _ZN4hccl17WorkspaceResource28CreateRemoteOpBasedResourcesEyRKSs
+        "hccl::WorkspaceResource::DestroyRemoteOpBasedMem(std::string const&)";  # _ZN4hccl17WorkspaceResource23DestroyRemoteOpBasedMemERKSs
+        "hccl::WorkspaceResource::DestroyWorkspaceResource(std::string const&)";  # _ZN4hccl17WorkspaceResource24DestroyWorkspaceResourceERKSs
+        "hccl::WorkspaceResource::GetWorkspaceMemSize(std::string const&, unsigned long long, HcclDataType, unsigned int, unsigned long long&, DevType) const";  # _ZNK4hccl17WorkspaceResource19GetWorkspaceMemSizeERKSsy12HcclDataTypejRy7DevType
+        "hccl::WorkspaceResource::SetWorkspaceResource(std::string const&, void*, unsigned long long&, std::vector<void*, std::allocator<void*> >&)";  # _ZN4hccl17WorkspaceResource20SetWorkspaceResourceERKSsPvRyRSt6vectorIS3_SaIS3_EE
+        "hccl::WorkspaceResource::WorkspaceResource(unsigned int, int, hccl::CCLBufferManager*)";  # _ZN4hccl17WorkspaceResourceC1EjiPNS_16CCLBufferManagerE
+        "hccl::WorkspaceResource::~WorkspaceResource()";  # _ZN4hccl17WorkspaceResourceD1Ev
+        "hrtMsprofGetHashId(char const*, unsigned int)";  # _Z18hrtMsprofGetHashIdPKcj
+        "hrtMsprofSysCycleTime()";  # _Z21hrtMsprofSysCycleTimev
+        "typeinfo for hccl::AlltoAllOperator";  # _ZTIN4hccl16AlltoAllOperatorE
+        "typeinfo for hccl::CollAlgOperator";  # _ZTIN4hccl15CollAlgOperatorE
+        "vtable for hccl::CollAlgOperator";  # _ZTVN4hccl15CollAlgOperatorE
+    };
+local:
+    *;
+};

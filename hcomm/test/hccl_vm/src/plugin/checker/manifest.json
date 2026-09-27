@@ -1,0 +1,15 @@
+{
+    "name": "checker",
+    "version": "1.0.0",
+    "entry": "./checker",
+    "dependency": {
+        "min_core_version": "1.0.0"
+    },
+    "setting": {
+        "enable_new_checker": true,
+        "enable_old_checker": false,
+        "enable_big_graph_checker": true,
+        "enable_insight_dump": false,
+        "enable_memory_snapshot_dump": false
+    }
+}

@@ -1,0 +1,93 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+# 设置 makeself 路径
+set(MAKESELF_EXE ${CPACK_3RD_LIB_PATH}/makeself/makeself.sh)
+set(MAKESELF_HEADER_EXE ${CPACK_3RD_LIB_PATH}/makeself/makeself-header.sh)
+if(NOT MAKESELF_EXE)
+    message(FATAL_ERROR "makeself not found")
+endif()
+
+# 创建临时安装目录
+set(STAGING_DIR "${CPACK_CMAKE_BINARY_DIR}/_CPack_Packages/makeself_staging")
+file(MAKE_DIRECTORY "${STAGING_DIR}")
+
+# 执行安装到临时目录
+execute_process(
+    COMMAND "${CMAKE_COMMAND}" --install "${CPACK_CMAKE_BINARY_DIR}" --prefix "${STAGING_DIR}" --component hccl
+    RESULT_VARIABLE INSTALL_RESULT
+    ERROR_VARIABLE  INSTALL_ERROR
+)
+if(NOT INSTALL_RESULT EQUAL 0)
+    message(FATAL_ERROR "Installation to staging directory failed: ${INSTALL_ERROR}")
+endif()
+
+# 设置压缩工具
+set(COMPRESSION_TOOLS pigz gzip bzip2 xz)
+unset(COMPRESSION_OPTION)
+foreach(tool IN LISTS COMPRESSION_TOOLS)
+    find_program(TOOL_PATH ${tool})
+    if(TOOL_PATH)
+        set(COMPRESSION_OPTION "--${tool}")
+        break()
+    endif()
+endforeach()
+if(NOT COMPRESSION_OPTION)
+    message(FATAL_ERROR "Make sure at least one of the following compression tools is available: ${COMPRESSION_TOOLS}")
+endif()
+
+# 设置压缩格式
+find_program(BSDTAR_PATH bsdtar)
+if(BSDTAR_PATH)
+    set(TAR_FORMAT "ustar")
+else()
+    set(TAR_FORMAT "gnu")
+endif()
+
+# makeself打包
+set(package_path "${STAGING_DIR}")
+set(package_name "cann-hccl_custom_${CPACK_CUSTOM_OPS_NAME}_linux-${CPACK_ARCH}.run")
+set(package_label "CANN_HCCL_RUN_PACKAGE")
+set(makeself_param
+    ${COMPRESSION_OPTION}
+    "--complevel" "4"
+    "--nomd5"
+    "--sha256"
+    "--nooverwrite"
+    "--chown"
+    "--tar-format" "${TAR_FORMAT}"
+    "--tar-extra"
+    "--numeric-owner"
+    "--tar-quietly"
+)
+
+execute_process(COMMAND bash ${MAKESELF_EXE}
+        --header ${MAKESELF_HEADER_EXE}
+        --help-header ${CPACK_CUSTOM_OPS_OPP_SCRIPTS_PATH}/help.info
+        ${makeself_param}
+        ${package_path}         # 打包的源目录
+        ${package_name}         # 生成的归档文件名
+        ${package_label}        # 标签
+        ${CPACK_CUSTOM_OPS_OPP_SCRIPTS_PATH}/install.sh   # 启动脚本
+        WORKING_DIRECTORY ${STAGING_DIR}
+        RESULT_VARIABLE EXEC_RESULT
+        ERROR_VARIABLE  EXEC_ERROR
+)
+
+if(NOT EXEC_RESULT EQUAL 0)
+    message(FATAL_ERROR "makeself packaging failed: ${EXEC_ERROR}")
+endif()
+
+execute_process(
+    COMMAND mkdir -p ${CPACK_PACKAGE_DIRECTORY}
+    COMMAND mv ${STAGING_DIR}/${package_name} ${CPACK_PACKAGE_DIRECTORY}/
+    COMMAND echo "Move ${STAGING_DIR}/${package_name} to ${CPACK_PACKAGE_DIRECTORY}/"
+    WORKING_DIRECTORY ${STAGING_DIR}
+)

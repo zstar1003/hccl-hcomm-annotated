@@ -1,0 +1,216 @@
+{
+  "schema_version": "1.0",
+  "project": "disp_probe",
+  "default_prefix": "/usr/local/third_lib",
+  "layout": {
+    "include": "include",
+    "library": "lib",
+    "python_venv": "python/venv",
+    "metadata": "share/disp_probe/third_party"
+  },
+  "toolchain": {
+    "cmake_minimum": "3.16",
+    "cxx_standard": "17",
+    "required_tools": [
+      "cmake",
+      "g++",
+      "git",
+      "make",
+      "python3",
+      "ssh",
+      "scp"
+    ]
+  },
+  "components": [
+    {
+      "name": "CLI11",
+      "version": "2.5.0",
+      "category": "cpp-header-only",
+      "required": true,
+      "used_by": [
+        "src/*.cpp",
+        "src/util/*/*_test.cpp"
+      ],
+      "fetch": {
+        "type": "git",
+        "url": "https://github.com/CLIUtils/CLI11.git",
+        "tag": "v2.5.0",
+        "build": "cmake",
+        "cmake_args": [
+          "-DCLI11_BUILD_TESTS=OFF",
+          "-DCLI11_BUILD_EXAMPLES=OFF",
+          "-DCLI11_BUILD_DOCS=OFF"
+        ]
+      },
+      "verify": [
+        "include/CLI/CLI.hpp"
+      ]
+    },
+    {
+      "name": "nlohmann_json",
+      "version": "3.12.0",
+      "category": "cpp-header-only",
+      "required": true,
+      "used_by": [
+        "topology parsing",
+        "probe helpers",
+        "tracert result processing"
+      ],
+      "fetch": {
+        "type": "git",
+        "url": "https://github.com/nlohmann/json.git",
+        "tag": "v3.12.0",
+        "build": "cmake",
+        "cmake_args": [
+          "-DJSON_BuildTests=OFF"
+        ]
+      },
+      "verify": [
+        "include/nlohmann/json.hpp"
+      ]
+    },
+    {
+      "name": "Eigen",
+      "version": "3.4.0",
+      "category": "cpp-header-only",
+      "required": true,
+      "used_by": [
+        "src/util/helper/probe_helper.cpp"
+      ],
+      "fetch": {
+        "type": "git",
+        "url": "https://gitlab.com/libeigen/eigen.git",
+        "tag": "3.4.0",
+        "build": "cmake",
+        "cmake_args": [
+          "-DEIGEN_BUILD_DOC=OFF",
+          "-DBUILD_TESTING=OFF"
+        ]
+      },
+      "verify": [
+        "include/eigen3/Eigen/Dense"
+      ]
+    },
+    {
+      "name": "rpclib",
+      "version": "2.3.0",
+      "category": "cpp-static-library",
+      "required": true,
+      "used_by": [
+        "rpc_host",
+        "controller",
+        "proxy_call"
+      ],
+      "fetch": {
+        "type": "git",
+        "url": "https://github.com/rpclib/rpclib.git",
+        "tag": "v2.3.0",
+        "build": "cmake",
+        "cmake_args": [
+          "-DRPCLIB_BUILD_TESTS=OFF",
+          "-DRPCLIB_BUILD_EXAMPLES=OFF"
+        ]
+      },
+      "verify": [
+        "include/rpc/client.h",
+        "lib/librpc.a"
+      ]
+    },
+    {
+      "name": "fmt",
+      "version": "12.0.0",
+      "category": "cpp-header-only",
+      "required": false,
+      "used_by": [
+        "available as a vendored support library",
+        "spdlog external-fmt mode"
+      ],
+      "fetch": {
+        "type": "git",
+        "url": "https://github.com/fmtlib/fmt.git",
+        "tag": "12.0.0",
+        "build": "cmake",
+        "cmake_args": [
+          "-DFMT_TEST=OFF",
+          "-DFMT_DOC=OFF"
+        ]
+      },
+      "verify": [
+        "include/fmt/format.h"
+      ]
+    },
+    {
+      "name": "spdlog",
+      "version": "1.15.3",
+      "category": "cpp-header-only",
+      "required": false,
+      "used_by": [
+        "available as a vendored support library"
+      ],
+      "fetch": {
+        "type": "git",
+        "url": "https://github.com/gabime/spdlog.git",
+        "tag": "v1.15.3",
+        "build": "cmake",
+        "cmake_args": [
+          "-DSPDLOG_BUILD_TESTS=OFF",
+          "-DSPDLOG_BUILD_EXAMPLE=OFF",
+          "-DSPDLOG_BUILD_BENCH=OFF"
+        ]
+      },
+      "verify": [
+        "include/spdlog/spdlog.h"
+      ]
+    }
+  ],
+  "python": {
+    "minimum": "3.9",
+    "requirements": "third_party/python/requirements.txt",
+    "venv": "python/venv",
+    "direct_dependencies": [
+      {
+        "name": "paramiko",
+        "used_by": "dispatcher ssh execution and copy helpers"
+      },
+      {
+        "name": "scp",
+        "used_by": "dispatcher/disp_file_scp.py"
+      },
+      {
+        "name": "matplotlib",
+        "used_by": "plot/plot_lat.py and plot/topo_plot.py"
+      }
+    ]
+  },
+  "external_prerequisites": [
+    {
+      "name": "Ascend CANN/HCCL/ACL",
+      "category": "vendor-runtime",
+      "required": true,
+      "headers": [
+        "acl/acl.h",
+        "acl/acl_rt.h",
+        "hccl/hccn_rping.h"
+      ],
+      "libraries": [
+        "libhccl.so",
+        "libhccl_plf.so",
+        "libascendcl.so"
+      ],
+      "env": "ASCEND_CANN_PATH",
+      "home_env": "ASCEND_HOME_PATH",
+      "default_home": "/usr/local/Ascend"
+    },
+    {
+      "name": "hccn_tool",
+      "category": "vendor-runtime-command",
+      "required": true,
+      "command": "hccn_tool",
+      "used_by": [
+        "src/util/tool/hccn_pingpong/hccn_pingpong.cpp",
+        "src/util/tool/tracert/tracert.cpp",
+        "src/util/tool/pfc_counter/pfc_counter.cpp"
+      ]
+    }
+  ]
+}

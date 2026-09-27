@@ -1,0 +1,36 @@
+{
+  "name": "hvrm_insight",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "backend": "python3 ../server.py",
+    "test:e2e": "playwright test",
+    "test:e2e:functional": "playwright test tests/e2e",
+    "test:e2e:visual": "playwright test tests/visual",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:update-snapshots": "playwright test --update-snapshots",
+    "test:e2e:report": "playwright show-report"
+  },
+  "dependencies": {
+    "@msgpack/msgpack": "^3.1.3",
+    "@sigma/edge-curve": "^3.1.0",
+    "@tanstack/vue-virtual": "^3.13.24",
+    "element-plus": "^2.13.7",
+    "flatbush": "^4.5.1",
+    "graphology": "^0.26.0",
+    "pixi.js": "^8.18.1",
+    "sigma": "^3.0.3",
+    "vue": "^3.5.32"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "vite": "^8.0.4"
+  }
+}

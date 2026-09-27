@@ -1,0 +1,77 @@
+name: "Help Wanted|任务认领"
+description: 适用于社区开发者认领的功能开发、Bug修复或性能优化任务
+title: "[Help Wanted|任务认领]: "
+labels: ["help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您关注本项目！
+        在开始认领任务前，请确保您已经阅读了本项目的[贡献指南](../blob/master/CONTRIBUTING.md)。
+
+  - type: input
+    id: task_title
+    attributes:
+      label: 任务标题
+      description: 用一句话概括这个任务
+      placeholder: 例如：实现建链优化功能
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 任务背景
+      description: 请说明任务的具体内容、背景和目的
+      placeholder: 描述需要完成的工作，以及为什么它很重要...
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 任务目标
+      description: 请列出要实现的具体功能点与目标
+      placeholder: "1. 增加XXX功能；2. 实现XXX特性；3. 单元测试"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 验收标准
+      description: 任务完成需要满足哪些条件？（建议使用清单格式）
+      placeholder: |
+        - [ ] 条件 1
+        - [ ] 条件 2
+        - [ ] 条件 3
+      value: "- [ ] \n- [ ] \n- [ ] "
+
+  - type: textarea
+    id: resources
+    attributes:
+      label: 参考资料
+      description: 相关的文档、代码位置、设计稿或外部链接
+      placeholder: |
+        - 相关代码文件：`src/core/xxx.cc`
+        - 参考文档：[项目贡献指南](...)
+
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: 难度级别
+      description: 适合什么样的贡献者？
+      options:
+        - 新手友好
+        - 中等难度
+        - 高级挑战
+    default: 0
+    validations:
+      required: true
+
+  - type: input
+    id: mentor
+    attributes:
+      label: 指导者（可选）
+      description: 如果指定了指导者，可以在此填写其 GitCode 用户名
+      placeholder: "@username"

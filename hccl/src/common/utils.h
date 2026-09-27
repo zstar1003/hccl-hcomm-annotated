@@ -1,0 +1,62 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#ifndef UTILS_H
+#define UTILS_H
+
+#include <cmath>
+#include <string>
+#include <vector>
+#include <sstream>
+#include "securec.h"
+#include "hccl_common.h"
+#include "log.h"
+
+namespace ops_hccl {
+
+constexpr double FLOAT_COMPARE_EPSILON = 1e-9;
+
+static inline bool IsFloatEqual(float a, float b)
+{
+    return std::abs(static_cast<double>(a) - static_cast<double>(b)) < FLOAT_COMPARE_EPSILON;
+}
+
+static inline bool IsDoubleEqual(double a, double b) { return std::abs(a - b) < FLOAT_COMPARE_EPSILON; }
+
+HcclMem HcclMemRange(HcclMem inMem, u64 offset, u64 size);
+
+static inline u64 RoundUpWithDivisor(u64 value, u64 divisor)
+{
+    if ((value == 0) || (divisor == 0)) {
+        return divisor;
+    }
+    // divisor必须大于等于1, 返回value向上取divisor的整数倍的值
+    return ((value + (divisor - 1)) / divisor) * divisor;
+}
+
+template <typename... Args>
+inline std::string StringFormat(const char* format, Args... args)
+{
+    using namespace std;
+    constexpr size_t bufSize = BUFSIZ;
+    char buffer[bufSize];
+    size_t actualSize = snprintf_s(&buffer[0], bufSize, bufSize, format, args...);
+    actualSize++;
+
+    if (actualSize > bufSize) {
+        std::vector<char> newbuffer(actualSize);
+        snprintf_s(newbuffer.data(), actualSize, actualSize, format, args...);
+        return newbuffer.data();
+    }
+    return buffer;
+}
+} // namespace ops_hccl
+
+#endif

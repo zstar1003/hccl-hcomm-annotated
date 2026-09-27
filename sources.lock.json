@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "purpose": "用于昇腾/CANN通信软件开发的非官方中文源码注释版",
+  "hccl": {
+    "official": "https://gitcode.com/cann/hccl.git",
+    "clone": "https://github.com/hicann/hccl.git",
+    "commit": "170ddeec539b4d693028ce6e0cf5c58933e4d46d",
+    "tree": "cb3f081d11415e96699b9e6d68833cb3d2c34cc8",
+    "license": "hccl/LICENSE"
+  },
+  "hcomm": {
+    "official": "https://gitcode.com/cann/hcomm.git",
+    "clone": "https://github.com/hicann/hcomm.git",
+    "commit": "87ce550f8f7c584e0ed89b0ec56699553d9c332d",
+    "tree": "15a18eae56df6401e42c1bfc6bd8be85c1356dcb",
+    "license": "hcomm/LICENSE"
+  }
+}

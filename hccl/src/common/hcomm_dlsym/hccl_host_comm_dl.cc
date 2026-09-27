@@ -1,0 +1,43 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#include "hccl_host_comm_dl.h"
+#include <dlfcn.h>
+#include <cstdio>
+#include <cstdlib>
+
+DEFINE_WEAK_FUNC(HcclResult, HcclCommGetStatus, const char* commId, HcclCommStatus* status);
+
+DEFINE_WEAK_FUNC(HcclResult, HcclConfigGetInfo, HcclComm comm, HcclConfigType cfgType, uint32_t infoLen, void* info);
+
+DEFINE_WEAK_FUNC(HcclResult, HcclGroupStatusGet, bool* isGroupEnabled);
+
+DEFINE_WEAK_FUNC(
+    HcclResult, HcclAicpuKernelLaunch, HcclComm comm, const HcclOpDesc* opInfo, const HcclKernelFuncInfo* funcInfo,
+    ThreadHandle aicpuThreadHandle, aclrtStream userStream, const HcclKernelLaunchCfg* kernelLaunchCfg);
+
+DEFINE_WEAK_FUNC(HcclResult, HcclCommRegCommStateCallback, const char* regName, HcclCommStateCallback cb, void* args);
+
+DEFINE_WEAK_FUNC(
+    HcclResult, HcclCommSymWinGet, HcclComm comm, void* ptr, size_t size, HcclCommSymWindow* winHandle, size_t* offset);
+
+DEFINE_WEAK_FUNC(HcclResult, HcclCommResume, HcclComm comm);
+
+// 初始化
+void HcclCommDlInit(void* libHcommHandle)
+{
+    INIT_SUPPORT_FLAG(libHcommHandle, HcclCommGetStatus);
+    INIT_SUPPORT_FLAG(libHcommHandle, HcclConfigGetInfo);
+    INIT_SUPPORT_FLAG(libHcommHandle, HcclGroupStatusGet);
+    INIT_SUPPORT_FLAG(libHcommHandle, HcclAicpuKernelLaunch);
+    INIT_SUPPORT_FLAG(libHcommHandle, HcclCommRegCommStateCallback);
+    INIT_SUPPORT_FLAG(libHcommHandle, HcclCommSymWinGet);
+    INIT_SUPPORT_FLAG(libHcommHandle, HcclCommResume);
+}

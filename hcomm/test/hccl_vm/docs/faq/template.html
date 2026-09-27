@@ -1,0 +1,1178 @@
+<!--
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+-->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCCL-VM FAQ 文档站</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #f7f7f8;
+            --surface: #ffffff;
+            --surface-subtle: #fbfbfc;
+            --surface-muted: #f3f4f6;
+            --border: #e5e7eb;
+            --border-strong: #d1d5db;
+            --text: #1f2937;
+            --text-soft: #4b5563;
+            --text-muted: #6b7280;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+            --accent-green: #059669;
+            --accent-green-soft: #ecfdf5;
+            --code-bg: #111827;
+            --code-border: #1f2937;
+            --code-text: #e5e7eb;
+            --sidebar-width: 320px;
+            --radius-lg: 6px;
+            --radius-md: 4px;
+            --radius-sm: 3px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        button, input, select { font: inherit; }
+        .app-shell {
+            min-height: 100vh;
+        }
+        .frame {
+            max-width: 1440px;
+            margin: 0 auto;
+            background: var(--surface);
+            min-height: 100vh;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            padding: 16px 24px 12px;
+            background: rgba(255, 255, 255, 0.94);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        .topbar-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .brand h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .breadcrumb {
+            margin-top: 10px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            min-height: 24px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .crumb {
+            color: var(--text-soft);
+        }
+        .crumb.current {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .crumb-sep {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(280px, var(--sidebar-width)) minmax(0, 1fr);
+            min-height: calc(100vh - 96px);
+        }
+        .sidebar {
+            background: #fafafa;
+            border-right: 1px solid var(--border);
+        }
+        .sidebar-inner {
+            position: sticky;
+            top: 96px;
+            max-height: calc(100vh - 96px);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+        }
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0;
+        }
+        .filter-panel {
+            padding: 7px 10px;
+            display: grid;
+            gap: 8px;
+            flex: none;
+        }
+        .filter-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .search-note {
+            display: none;
+        }
+        .filter-body {
+            display: grid;
+            gap: 8px;
+        }
+        .control-group {
+            min-width: 0;
+        }
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .filter-grid .control-group:last-child {
+            grid-column: 1 / -1;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-soft);
+        }
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 0;
+            padding: 7px 9px;
+            min-height: 34px;
+            font-size: 12px;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+        }
+        .btn {
+            border: 1px solid var(--border);
+            border-radius: 0;
+            padding: 7px 10px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--surface);
+            color: var(--text-soft);
+            font-size: 12px;
+            transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+        }
+        .btn:hover {
+            border-color: var(--border-strong);
+            background: var(--surface-subtle);
+            color: var(--text);
+        }
+        .filter-clear-btn {
+            width: auto;
+            flex: none;
+            padding: 4px 8px;
+        }
+        .directory-panel {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .directory-head {
+            padding: 9px 12px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .directory-head h2 {
+            font-size: 13px;
+            color: var(--text);
+            font-weight: 600;
+        }
+        .match-pill {
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            color: var(--text-soft);
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .directory-tree {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 6px;
+        }
+        .directory-empty {
+            padding: 20px 14px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.7;
+            font-size: 13px;
+        }
+        .nav-module + .nav-module {
+            margin-top: 4px;
+        }
+        .module-toggle,
+        .submodule-toggle,
+        .nav-faq {
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            background: none;
+        }
+        .module-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 6px;
+            border-radius: 0;
+            color: var(--text);
+        }
+        .module-toggle:hover {
+            background: var(--surface-muted);
+        }
+        .nav-chevron {
+            width: 14px;
+            flex: none;
+            color: #9ca3af;
+            font-size: 11px;
+        }
+        .toggle-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .toggle-title {
+            display: block;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .toggle-subtitle {
+            display: none;
+        }
+        .count-badge {
+            flex: none;
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .module-content {
+            padding: 1px 0 0 9px;
+        }
+        .submodule-block + .submodule-block {
+            margin-top: 1px;
+        }
+        .submodule-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 6px;
+            border-radius: 0;
+            color: var(--text-soft);
+        }
+        .submodule-toggle:hover {
+            background: var(--surface-muted);
+        }
+        .submodule-content {
+            padding: 1px 0 1px 10px;
+            display: grid;
+            gap: 0;
+        }
+        .nav-faq {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 19px;
+            padding: 1px 4px;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 12px;
+            line-height: 1.35;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .nav-faq:hover {
+            background: var(--surface-muted);
+            color: var(--accent);
+        }
+        .nav-faq.active {
+            background: rgba(37, 99, 235, 0.06);
+            color: var(--accent);
+        }
+        .nav-faq-id {
+            display: inline;
+            flex: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.01em;
+        }
+        .nav-faq-title {
+            display: block;
+            min-width: 0;
+            margin-top: 0;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-faq-code {
+            display: none;
+            margin-top: 0;
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            color: var(--text-soft);
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .content {
+            min-width: 0;
+            background: var(--surface-subtle);
+        }
+        .content-inner {
+            padding: 20px;
+        }
+        .detail-card {
+            min-height: calc(100vh - 144px);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0;
+            overflow: hidden;
+        }
+        .detail-empty {
+            padding: 56px 40px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        .detail-empty h2 {
+            color: var(--text);
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .detail-empty p {
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .detail-header {
+            padding: 24px 28px 18px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .detail-eyebrow {
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+        .detail-title {
+            margin-top: 10px;
+            font-size: 28px;
+            line-height: 1.2;
+            color: var(--text);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .detail-summary {
+            margin-top: 12px;
+            color: var(--text-soft);
+            font-size: 15px;
+            max-width: 920px;
+        }
+        .detail-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            border-radius: 0;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-soft);
+        }
+        .tag-path {
+            background: var(--accent-soft);
+            border-color: #dbeafe;
+            color: var(--accent);
+        }
+        .detail-body {
+            padding: 20px 28px 28px;
+        }
+        .section-grid {
+            display: grid;
+            gap: 14px;
+        }
+        .detail-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0;
+            padding: 18px 20px;
+        }
+        .detail-section h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        .detail-section p,
+        .detail-section ul {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-soft);
+        }
+        .detail-section ul {
+            padding-left: 18px;
+        }
+        .detail-section li + li {
+            margin-top: 6px;
+        }
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            border: 1px solid var(--code-border);
+            padding: 14px 16px;
+            border-radius: 0;
+            font-family: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .diagram-container {
+            background: var(--surface);
+            padding: 16px;
+            border-radius: 0;
+            border: 1px solid var(--border);
+            overflow: auto;
+        }
+        .diagram-container img {
+            max-width: 100%;
+            border-radius: 0;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        @media (max-width: 1100px) {
+            .workspace {
+                grid-template-columns: 280px minmax(0, 1fr);
+            }
+            .detail-title {
+                font-size: 26px;
+            }
+        }
+        @media (max-width: 960px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            .sidebar-inner {
+                position: static;
+                top: auto;
+                max-height: none;
+            }
+            .detail-card {
+                min-height: auto;
+            }
+        }
+        @media (max-width: 720px) {
+            .topbar {
+                padding: 14px 16px 12px;
+            }
+            .brand h1 {
+                font-size: 20px;
+            }
+            .sidebar-inner,
+            .content-inner {
+                padding: 16px;
+            }
+            .detail-header,
+            .detail-body,
+            .detail-empty {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+            .detail-title {
+                font-size: 21px;
+            }
+        }
+        @media (max-width: 480px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <div class="frame">
+            <header class="topbar">
+                <div class="topbar-main">
+                    <div class="brand">
+                        <h1>HCCL-VM FAQ 文档站</h1>
+                    </div>
+                </div>
+                <nav class="breadcrumb" id="breadcrumbNav"></nav>
+            </header>
+            <div class="workspace">
+                <aside class="sidebar">
+                    <div class="sidebar-inner">
+                        <section class="panel filter-panel">
+                            <div class="filter-head">
+                                <h2 class="panel-title">搜索与筛选</h2>
+                                <button class="btn filter-clear-btn" id="clearBtn">清空</button>
+                            </div>
+                            <div class="filter-body" id="filterBody">
+                                <p class="search-note">输入即过滤目录，无需额外点击搜索。筛选后会自动定位到第一条可见 FAQ。</p>
+                                <div class="control-group">
+                                    <label for="keywordInput">关键词</label>
+                                    <input type="text" id="keywordInput" placeholder="函数名、日志片段、错误码、问题描述">
+                                </div>
+                                <div class="filter-grid">
+                                    <div class="control-group">
+                                        <label for="moduleFilter">模块</label>
+                                        <select id="moduleFilter">
+                                            <option value="">全部模块</option>
+                                        </select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="submoduleFilter">子模块</label>
+                                        <select id="submoduleFilter">
+                                            <option value="">全部子模块</option>
+                                        </select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="errorCodeFilter">错误码</label>
+                                        <select id="errorCodeFilter">
+                                            <option value="">全部错误码</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="panel directory-panel">
+                            <div class="directory-head">
+                                <div>
+                                    <h2>目录</h2>
+                                </div>
+                                <span class="match-pill" id="matchInfo">0 条</span>
+                            </div>
+                            <div class="directory-tree" id="directoryTree">
+                                <div class="directory-empty">目录准备中...</div>
+                            </div>
+                        </section>
+                    </div>
+                </aside>
+                <main class="content">
+                    <div class="content-inner">
+                        <article class="detail-card" id="detailContainer">
+                            <div class="detail-empty">
+                                <h2>准备加载 FAQ 内容</h2>
+                                <p>左侧目录会自动按模块和子模块展开，选择任意条目后，中间区域会展示完整详情、关键日志和 Mermaid 图示。</p>
+                            </div>
+                        </article>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const faqData = {{FAQ_DATA}};
+        const modules = {{MODULES}};
+        const submodules = {{SUBMODULES}};
+        const errorCodes = {{ERROR_CODES}};
+        const state = {
+            keyword: '',
+            moduleFilter: '',
+            submoduleFilter: '',
+            errorCodeFilter: '',
+            activeFaqId: ''
+        };
+        const expandedModules = new Set();
+        const expandedSubmodules = new Set();
+        const hasMermaid = typeof window.mermaid !== 'undefined';
+
+        if (hasMermaid) {
+            mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        }
+
+        function initModuleFilter() {
+            const select = document.getElementById('moduleFilter');
+            select.innerHTML = '<option value="">全部模块</option>';
+            modules.forEach(moduleName => {
+                const option = document.createElement('option');
+                option.value = moduleName;
+                option.textContent = moduleName;
+                select.appendChild(option);
+            });
+        }
+
+        function collectSubmoduleOptions(moduleName) {
+            if (moduleName && submodules[moduleName]) {
+                return submodules[moduleName];
+            }
+            const seen = [];
+            faqData.forEach(item => {
+                if (item.submodule && !seen.includes(item.submodule)) {
+                    seen.push(item.submodule);
+                }
+            });
+            return seen;
+        }
+
+        function initSubmoduleFilter(moduleName) {
+            const select = document.getElementById('submoduleFilter');
+            const previousValue = select.value;
+            select.innerHTML = '<option value="">全部子模块</option>';
+            collectSubmoduleOptions(moduleName).forEach(submoduleName => {
+                const option = document.createElement('option');
+                option.value = submoduleName;
+                option.textContent = submoduleName;
+                select.appendChild(option);
+            });
+            if (Array.from(select.options).some(option => option.value === previousValue)) {
+                select.value = previousValue;
+            }
+        }
+
+        function initErrorCodeFilter() {
+            const select = document.getElementById('errorCodeFilter');
+            select.innerHTML = '<option value="">全部错误码</option>';
+            errorCodes.forEach(code => {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = code;
+                select.appendChild(option);
+            });
+        }
+
+        function seedExpandedState() {
+            modules.forEach(moduleName => expandedModules.add(moduleName));
+            faqData.forEach(item => {
+                if (item.module && item.submodule) {
+                    expandedSubmodules.add(makeSubmoduleKey(item.module, item.submodule));
+                }
+            });
+        }
+
+        function applyStateToControls() {
+            document.getElementById('keywordInput').value = state.keyword;
+            document.getElementById('moduleFilter').value = state.moduleFilter;
+            initSubmoduleFilter(state.moduleFilter);
+            document.getElementById('submoduleFilter').value = state.submoduleFilter;
+            document.getElementById('errorCodeFilter').value = state.errorCodeFilter;
+        }
+
+        function syncStateFromControls() {
+            state.keyword = document.getElementById('keywordInput').value.trim();
+            state.moduleFilter = document.getElementById('moduleFilter').value;
+            state.submoduleFilter = document.getElementById('submoduleFilter').value;
+            state.errorCodeFilter = document.getElementById('errorCodeFilter').value;
+        }
+
+        function getFilteredFaqs() {
+            const keyword = state.keyword.toLowerCase();
+            return faqData.filter(item => {
+                if (state.moduleFilter && item.module !== state.moduleFilter) return false;
+                if (state.submoduleFilter && item.submodule !== state.submoduleFilter) return false;
+                if (state.errorCodeFilter) {
+                    const matchesErrorCode =
+                        (item.errorCode && item.errorCode.includes(state.errorCodeFilter)) ||
+                        (item.errorCodeGroup && item.errorCodeGroup === state.errorCodeFilter);
+                    if (!matchesErrorCode) return false;
+                }
+                if (!keyword) return true;
+                const searchFields = [
+                    item.title,
+                    item.errorCode,
+                    item.errorCodeGroup,
+                    item.id,
+                    item.module,
+                    item.submodule,
+                    item.symptom,
+                    ...(item.errorFunctions || []),
+                    ...(item.keywords || []),
+                    ...(item.logPatterns || []),
+                    item.guidance || ''
+                ].join(' ').toLowerCase();
+                return searchFields.includes(keyword);
+            });
+        }
+
+        function findFaqById(faqId) {
+            return faqData.find(item => item.id === faqId) || null;
+        }
+
+        function getFaqIdFromHash() {
+            return decodeURIComponent(window.location.hash.replace(/^#/, '').trim());
+        }
+
+        function setHash(faqId) {
+            const nextUrl = faqId
+                ? `${window.location.pathname}${window.location.search}#${encodeURIComponent(faqId)}`
+                : `${window.location.pathname}${window.location.search}`;
+            window.history.replaceState(null, '', nextUrl);
+        }
+
+        function makeSubmoduleKey(moduleName, submoduleName) {
+            return `${moduleName}:::${submoduleName}`;
+        }
+
+        function expandPath(item) {
+            if (!item) return;
+            if (item.module) expandedModules.add(item.module);
+            if (item.module && item.submodule) {
+                expandedSubmodules.add(makeSubmoduleKey(item.module, item.submodule));
+            }
+        }
+
+        function ensureActiveFaq(filteredFaqs) {
+            if (filteredFaqs.length === 0) {
+                state.activeFaqId = '';
+                setHash('');
+                return null;
+            }
+
+            const filteredIds = new Set(filteredFaqs.map(item => item.id));
+            const hashFaqId = getFaqIdFromHash();
+
+            if (state.activeFaqId && filteredIds.has(state.activeFaqId)) {
+                const activeItem = findFaqById(state.activeFaqId);
+                expandPath(activeItem);
+                setHash(state.activeFaqId);
+                return activeItem;
+            }
+
+            if (hashFaqId && filteredIds.has(hashFaqId)) {
+                state.activeFaqId = hashFaqId;
+                const activeItem = findFaqById(state.activeFaqId);
+                expandPath(activeItem);
+                setHash(state.activeFaqId);
+                return activeItem;
+            }
+
+            state.activeFaqId = filteredFaqs[0].id;
+            const fallbackItem = filteredFaqs[0];
+            expandPath(fallbackItem);
+            setHash(state.activeFaqId);
+            return fallbackItem;
+        }
+
+        function groupFaqs(items) {
+            const grouped = {};
+            items.forEach(item => {
+                const moduleName = item.module || '未分类模块';
+                const submoduleName = item.submodule || '其他';
+                if (!grouped[moduleName]) grouped[moduleName] = {};
+                if (!grouped[moduleName][submoduleName]) grouped[moduleName][submoduleName] = [];
+                grouped[moduleName][submoduleName].push(item);
+            });
+            return grouped;
+        }
+
+        function getOrderedModules(grouped) {
+            const ordered = modules.filter(moduleName => grouped[moduleName]);
+            Object.keys(grouped)
+                .filter(moduleName => !modules.includes(moduleName))
+                .forEach(moduleName => ordered.push(moduleName));
+            return ordered;
+        }
+
+        function getOrderedSubmodules(moduleName, groupedModule) {
+            const known = submodules[moduleName] || [];
+            const ordered = known.filter(submoduleName => groupedModule[submoduleName]);
+            Object.keys(groupedModule)
+                .filter(submoduleName => !known.includes(submoduleName))
+                .forEach(submoduleName => ordered.push(submoduleName));
+            return ordered;
+        }
+
+        function updateSummary(filteredFaqs, activeItem) {
+            document.getElementById('matchInfo').textContent = `${filteredFaqs.length} 条`;
+        }
+
+        function renderBreadcrumb(activeItem) {
+            const breadcrumbNav = document.getElementById('breadcrumbNav');
+            if (!activeItem) {
+                breadcrumbNav.innerHTML = '<span class="crumb current">没有可显示的 FAQ</span>';
+                return;
+            }
+
+            const crumbs = [
+                '<span class="crumb">FAQ</span>',
+                activeItem.module ? `<span class="crumb">${escapeHtml(activeItem.module)}</span>` : '',
+                activeItem.submodule ? `<span class="crumb">${escapeHtml(activeItem.submodule)}</span>` : '',
+                `<span class="crumb current">${escapeHtml(activeItem.id)}</span>`
+            ].filter(Boolean);
+
+            breadcrumbNav.innerHTML = crumbs.join('<span class="crumb-sep">/</span>');
+        }
+
+        function renderSidebar(filteredFaqs) {
+            const directoryTree = document.getElementById('directoryTree');
+            if (filteredFaqs.length === 0) {
+                directoryTree.innerHTML = '<div class="directory-empty">没有命中结果。<br>可以尝试放宽关键词或清空筛选。</div>';
+                return;
+            }
+
+            const grouped = groupFaqs(filteredFaqs);
+            const moduleOrder = getOrderedModules(grouped);
+            let html = '';
+
+            moduleOrder.forEach(moduleName => {
+                const submoduleMap = grouped[moduleName];
+                const moduleCount = Object.values(submoduleMap).reduce((sum, items) => sum + items.length, 0);
+                const moduleOpen = expandedModules.has(moduleName);
+                html += `<section class="nav-module">
+                    <button class="module-toggle" data-action="toggle-module" data-module="${encodeAttr(moduleName)}">
+                        <span class="nav-chevron">${moduleOpen ? '▾' : '▸'}</span>
+                        <span class="toggle-text">
+                            <span class="toggle-title">${formatText(moduleName)}</span>
+                            <span class="toggle-subtitle">模块级目录导航</span>
+                        </span>
+                        <span class="count-badge">${moduleCount}</span>
+                    </button>`;
+
+                if (moduleOpen) {
+                    html += '<div class="module-content">';
+                    getOrderedSubmodules(moduleName, submoduleMap).forEach(submoduleName => {
+                        const items = submoduleMap[submoduleName];
+                        const submoduleKey = makeSubmoduleKey(moduleName, submoduleName);
+                        const submoduleOpen = expandedSubmodules.has(submoduleKey);
+                        html += `<div class="submodule-block">
+                            <button class="submodule-toggle" data-action="toggle-submodule" data-module="${encodeAttr(moduleName)}" data-submodule="${encodeAttr(submoduleName)}">
+                                <span class="nav-chevron">${submoduleOpen ? '▾' : '▸'}</span>
+                                <span class="toggle-text">
+                                    <span class="toggle-title">${formatText(submoduleName)}</span>
+                                </span>
+                                <span class="count-badge">${items.length}</span>
+                            </button>`;
+
+                        if (submoduleOpen) {
+                            html += '<div class="submodule-content">';
+                            items.forEach(item => {
+                                const activeClass = item.id === state.activeFaqId ? ' active' : '';
+                                html += `<button class="nav-faq${activeClass}" data-action="select-faq" data-faq-id="${encodeAttr(item.id)}" title="${escapeHtml(item.title || item.id)}">
+                                    <span class="nav-faq-id">${escapeHtml(item.id)}</span>
+                                    <span class="nav-faq-title">${formatText(item.title || item.id)}</span>
+                                </button>`;
+                            });
+                            html += '</div>';
+                        }
+
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                html += '</section>';
+            });
+
+            directoryTree.innerHTML = html;
+        }
+
+        function renderDetailSection(title, bodyHtml) {
+            return `<section class="detail-section"><h3>${title}</h3>${bodyHtml}</section>`;
+        }
+
+        function renderList(items) {
+            return `<ul>${items.map(item => `<li>${formatText(item)}</li>`).join('')}</ul>`;
+        }
+
+        function renderCodeBlocks(blocks) {
+            return blocks.map(block => `<div class="code-block">${formatCode(block)}</div>`).join('');
+        }
+
+        function renderDetail(activeItem, filteredFaqs) {
+            const detailContainer = document.getElementById('detailContainer');
+            if (!activeItem) {
+                detailContainer.innerHTML = `<div class="detail-empty">
+                    <h2>没有可显示的 FAQ</h2>
+                    <p>当前筛选条件下没有匹配结果。你可以放宽关键词、切换模块，或者点击“清空筛选”回到完整目录。</p>
+                </div>`;
+                return;
+            }
+
+            const tags = [
+                activeItem.module ? `<span class="tag tag-path">${escapeHtml(activeItem.module)}</span>` : '',
+                activeItem.submodule ? `<span class="tag tag-path">${escapeHtml(activeItem.submodule)}</span>` : ''
+            ].filter(Boolean).join('');
+
+            const sections = [];
+            sections.push(renderDetailSection(
+                '所属位置',
+                `<p><strong>${escapeHtml(activeItem.module || '未分类模块')}</strong>${activeItem.submodule ? ` / ${escapeHtml(activeItem.submodule)}` : ''}</p>`
+            ));
+
+            if (activeItem.errorCode || activeItem.errorCodeGroup) {
+                sections.push(renderDetailSection(
+                    '错误信息',
+                    `<p>${activeItem.errorCode ? formatText(activeItem.errorCode) : formatText(activeItem.errorCodeGroup)}</p>`
+                ));
+            }
+            if (activeItem.errorFunctions && activeItem.errorFunctions.length > 0) {
+                sections.push(renderDetailSection('错误函数', renderList(activeItem.errorFunctions)));
+            }
+            if (activeItem.logPatterns && activeItem.logPatterns.length > 0) {
+                sections.push(renderDetailSection('关键日志', renderCodeBlocks(activeItem.logPatterns)));
+            }
+            if (activeItem.symptom) {
+                sections.push(renderDetailSection('问题现象', `<p>${formatText(activeItem.symptom)}</p>`));
+            }
+            if (activeItem.guidance) {
+                sections.push(renderDetailSection('定位指导', renderCodeBlocks([activeItem.guidance])));
+            }
+            if (activeItem.diagram) {
+                const diagramBody = activeItem.diagramType === 'mermaid'
+                    ? (hasMermaid
+                        ? `<div class="diagram-container"><pre class="mermaid">${escapeHtml(activeItem.diagram)}</pre></div>`
+                        : '<div class="diagram-container"><p>当前浏览器无法加载 Mermaid，流程图暂时无法显示。</p></div>')
+                    : `<div class="diagram-container"><img src="${escapeHtml(activeItem.diagram)}" alt="示意图"></div>`;
+                sections.push(renderDetailSection('图示说明', diagramBody));
+            }
+
+            detailContainer.innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-eyebrow">${escapeHtml(activeItem.id)}</div>
+                    <h2 class="detail-title">${formatText(activeItem.title || activeItem.id)}</h2>
+                    <p class="detail-summary">${activeItem.symptom ? formatText(activeItem.symptom) : '当前 FAQ 没有单独描述问题现象，请结合下方日志和定位指导阅读。'}</p>
+                    <div class="detail-tags">${tags}</div>
+                </div>
+                <div class="detail-body">
+                    <div class="section-grid">
+                        ${sections.join('')}
+                    </div>
+                </div>`;
+
+            renderMermaidIn(detailContainer);
+        }
+
+        async function renderMermaidIn(container) {
+            if (!hasMermaid || !container) return;
+            const diagrams = Array.from(container.querySelectorAll('.mermaid:not([data-mermaid-rendered])'));
+            for (const diagram of diagrams) {
+                const originalSource = diagram.textContent;
+                try {
+                    await mermaid.run({ nodes: [diagram] });
+                    diagram.dataset.mermaidRendered = 'true';
+                } catch (error) {
+                    diagram.dataset.mermaidRendered = 'error';
+                    diagram.classList.remove('mermaid');
+                    diagram.classList.add('code-block');
+                    diagram.textContent = `Mermaid 渲染失败，请检查图语法。\n\n${originalSource}`;
+                    console.error('Mermaid render failed:', error);
+                }
+            }
+        }
+
+        function renderApp() {
+            const filteredFaqs = getFilteredFaqs();
+            const activeItem = ensureActiveFaq(filteredFaqs);
+            updateSummary(filteredFaqs, activeItem);
+            renderBreadcrumb(activeItem);
+            renderSidebar(filteredFaqs);
+            renderDetail(activeItem, filteredFaqs);
+        }
+
+        function extractErrorCode(codeStr) {
+            const match = codeStr.match(/HCCL_SIM_\w+/);
+            return match ? match[0] : codeStr;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        function highlightText(text) {
+            if (!state.keyword || !text) return text;
+            const regex = new RegExp(escapeRegExp(state.keyword), 'gi');
+            return text.replace(regex, match => `<span class="highlight">${match}</span>`);
+        }
+
+        function formatText(value) {
+            return highlightText(escapeHtml(value));
+        }
+
+        function formatCode(value) {
+            return highlightText(escapeHtml(value));
+        }
+
+        function encodeAttr(value) {
+            return encodeURIComponent(value || '');
+        }
+
+        function escapeRegExp(value) {
+            return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function clearFilters() {
+            state.keyword = '';
+            state.moduleFilter = '';
+            state.submoduleFilter = '';
+            state.errorCodeFilter = '';
+            applyStateToControls();
+            renderApp();
+        }
+
+        function handleModuleChange() {
+            const moduleSelect = document.getElementById('moduleFilter');
+            initSubmoduleFilter(moduleSelect.value);
+            document.getElementById('submoduleFilter').value = '';
+            syncStateFromControls();
+            renderApp();
+        }
+
+        function handleDirectoryClick(event) {
+            const actionElement = event.target.closest('[data-action]');
+            if (!actionElement) return;
+
+            const action = actionElement.dataset.action;
+            if (action === 'toggle-module') {
+                const moduleName = decodeURIComponent(actionElement.dataset.module || '');
+                if (expandedModules.has(moduleName)) {
+                    expandedModules.delete(moduleName);
+                } else {
+                    expandedModules.add(moduleName);
+                }
+                renderSidebar(getFilteredFaqs());
+                return;
+            }
+
+            if (action === 'toggle-submodule') {
+                const moduleName = decodeURIComponent(actionElement.dataset.module || '');
+                const submoduleName = decodeURIComponent(actionElement.dataset.submodule || '');
+                const submoduleKey = makeSubmoduleKey(moduleName, submoduleName);
+                if (expandedSubmodules.has(submoduleKey)) {
+                    expandedSubmodules.delete(submoduleKey);
+                } else {
+                    expandedSubmodules.add(submoduleKey);
+                }
+                renderSidebar(getFilteredFaqs());
+                return;
+            }
+
+            if (action === 'select-faq') {
+                state.activeFaqId = decodeURIComponent(actionElement.dataset.faqId || '');
+                expandPath(findFaqById(state.activeFaqId));
+                setHash(state.activeFaqId);
+                renderApp();
+                if (window.innerWidth < 980) {
+                    document.getElementById('detailContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+
+        function handleHashChange() {
+            const faqId = getFaqIdFromHash();
+            const targetItem = findFaqById(faqId);
+            if (!targetItem) return;
+            state.keyword = '';
+            state.moduleFilter = '';
+            state.submoduleFilter = '';
+            state.errorCodeFilter = '';
+            state.activeFaqId = faqId;
+            expandPath(targetItem);
+            applyStateToControls();
+            renderApp();
+        }
+
+        function bindEvents() {
+            document.getElementById('moduleFilter').addEventListener('change', handleModuleChange);
+            document.getElementById('submoduleFilter').addEventListener('change', () => {
+                syncStateFromControls();
+                renderApp();
+            });
+            document.getElementById('errorCodeFilter').addEventListener('change', () => {
+                syncStateFromControls();
+                renderApp();
+            });
+            document.getElementById('keywordInput').addEventListener('input', () => {
+                syncStateFromControls();
+                renderApp();
+            });
+            document.getElementById('clearBtn').addEventListener('click', clearFilters);
+            document.getElementById('directoryTree').addEventListener('click', handleDirectoryClick);
+            window.addEventListener('hashchange', handleHashChange);
+        }
+
+        window.onload = function() {
+            initModuleFilter();
+            initErrorCodeFilter();
+            initSubmoduleFilter('');
+            seedExpandedState();
+            const hashFaqId = getFaqIdFromHash();
+            if (hashFaqId && findFaqById(hashFaqId)) {
+                state.activeFaqId = hashFaqId;
+            }
+            applyStateToControls();
+            bindEvents();
+            renderApp();
+        };
+    </script>
+</body>
+</html>

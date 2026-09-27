@@ -1,0 +1,518 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+# ccl_kernel_plf 导出符号白名单
+{
+global:
+    AddRetryPreamble;
+    CreateDispatcherCtx;
+    DestroyDispatcherCtx;
+    FindDispatcherByCommId;
+    ForceProfOn;
+    GetDispatcherCtx;
+    HcclD2DMemcpyAsync;
+    HcclDispatcherAicpuInit;
+    HcclDispatcherDestroy;
+    HcclDispatcherInit;
+    HcclDispatcherWaitValue;
+    HcclDispatcherWriteValue;
+    HcclGetCallbackResult;
+    HcclGetNotifyWaitMode;
+    HcclLocalBareNotifyRecord;
+    HcclLocalBareNotifyWait;
+    HcclLocalCopy;
+    HcclLocalCopyReduce;
+    HcclLocalNotifyRecord;
+    HcclLocalNotifyWait;
+    HcclMemcpyAsync;
+    HcclReduceAsync;
+    HcclRemoteDrain;
+    HcclRemoteFence;
+    HcclRemoteNotifyRecord;
+    HcclRemoteNotifyWait;
+    HcclRemoteRead;
+    HcclRemoteReadReduce;
+    HcclRemoteWrite;
+    HcclRemoteWriteReduce;
+    HcclRemoteWriteReduceWithNotify;
+    HcclRemoteWriteWithNotify;
+    HcclSetExecTimeOut;
+    HcclSetGlobalWorkSpace;
+    HcclSetGrpIdCallback;
+    HcclSetNotifyWaitMode;
+    HcclSetOpExecStatusCallback;
+    HcclSetOpRingBufferIdx;
+    HcclSetSqFullWaitTimeOut;
+    HcclSetSqeTimeOut;
+    HcclSignalRecord;
+    HcclSignalWait;
+    HcclTaskClear;
+    HcclTaskLaunch;
+    HcclTaskPrepare;
+    InitTask;
+    LaunchTask;
+    LaunchTaskExtend;
+    PrintMemoryAttr;
+    RegisterInitTaskCallBack;
+    RegisterLaunchTaskCallBack;
+    RegisterLoadTaskCallBack;
+    SalLog2;
+    SetDispatcherCtx;
+    SetDispatcherCtxOpIdx;
+    SetMultiQpMode;
+    SetNormalMode;
+    hrtCtxGetOverflowAddr;
+    hrtEventDestroy;
+    hrtFree;
+    hrtGetDevice;
+    hrtGetDeviceCount;
+    hrtGetDeviceIndexByPhyId;
+    hrtGetDeviceInfo;
+    hrtGetDevicePhyIdByIndex;
+    hrtGetDeviceRefresh;
+    hrtGetDeviceSatMode;
+    hrtGetDeviceType;
+    hrtGetDeviceTypeBySocVersion;
+    hrtGetHccsPortNum;
+    hrtGetPairDevicePhyId;
+    hrtGetStreamAvailableNum;
+    hrtGetTaskIdAndStreamID;
+    hrtMalloc;
+    hrtMemAsyncCopy;
+    hrtMemSet;
+    hrtMemSyncCopy;
+    hrtMemcpyAddrAsync;
+    hrtProcessReport;
+    hrtRegTaskFailCallbackByModule;
+    hrtResourceClean;
+    hrtSetLocalDeviceSatMode;
+    hrtSetWorkModeAicpu;
+    hrtSetlocalDevice;
+    hrtSetlocalDeviceType;
+    hrtSubscribeReport;
+    hrtTaskAbortHandleCallback;
+    extern "C++" {
+        "AddOneEventRecordSqeV1(unsigned short, int, unsigned short, unsigned char const*, unsigned char*)";  # _Z22AddOneEventRecordSqeV1titPKhPh
+        "AddOneEventRecordSqeV2(unsigned short, int, unsigned short, unsigned char const*, unsigned char*)";  # _Z22AddOneEventRecordSqeV2titPKhPh
+        "AddOneEventResetSqeV1(unsigned short, int, unsigned short, long, long, unsigned long long, unsigned char const*, unsigned char*)";  # _Z21AddOneEventResetSqeV1titllyPKhPh
+        "AddOneEventResetSqeV2(unsigned short, int, unsigned short, long, long, unsigned long long, unsigned char const*, unsigned char*)";  # _Z21AddOneEventResetSqeV2titllyPKhPh
+        "AddOneEventWaitSqeV1(unsigned short, int, unsigned short, unsigned char const*, unsigned char*)";  # _Z20AddOneEventWaitSqeV1titPKhPh
+        "AddOneEventWaitSqeV2(unsigned short, int, unsigned short, unsigned char const*, unsigned char*)";  # _Z20AddOneEventWaitSqeV2titPKhPh
+        "AddOneFlipPlaceHolderSqeV1(unsigned short, unsigned short, unsigned short, unsigned char const*, unsigned char*)";  # _Z26AddOneFlipPlaceHolderSqeV1tttPKhPh
+        "AddOneMemcpySqeV1(unsigned short, unsigned short, void const*, unsigned int, aclDataType, aclrtReduceKind, void const*, unsigned int, unsigned int, unsigned int, unsigned long long, unsigned char, unsigned char const*, unsigned char*, unsigned int)";  # _Z17AddOneMemcpySqeV1ttPKvj11aclDataType15aclrtReduceKindS0_jjjyhPKhPhj
+        "AddOneMemcpySqeV2(unsigned short, unsigned short, void const*, unsigned int, aclDataType, aclrtReduceKind, void const*, unsigned int, unsigned int, unsigned int, unsigned long long, unsigned char, unsigned char const*, unsigned char*, unsigned int)";  # _Z17AddOneMemcpySqeV2ttPKvj11aclDataType15aclrtReduceKindS0_jjjyhPKhPhj
+        "AddOneNotifyWaitSqeV1(unsigned short, unsigned short, unsigned long long, unsigned char const*, unsigned char*, dfx::DfxTimeOutConfig const&)";  # _Z21AddOneNotifyWaitSqeV1ttyPKhPhRKN3dfx16DfxTimeOutConfigE
+        "AddOneNotifyWaitSqeV2(unsigned short, unsigned short, unsigned long long, unsigned char const*, unsigned char*, dfx::DfxTimeOutConfig const&)";  # _Z21AddOneNotifyWaitSqeV2ttyPKhPhRKN3dfx16DfxTimeOutConfigE
+        "AddOneRdmaDbSendSqeV1(unsigned short, unsigned short, unsigned long, unsigned long, unsigned int, unsigned char, unsigned char const*, unsigned char*)";  # _Z21AddOneRdmaDbSendSqeV1ttmmjhPKhPh
+        "AddOneRecordSqeV1(unsigned short, unsigned short, unsigned long long, unsigned char const*, unsigned char*)";  # _Z17AddOneRecordSqeV1ttyPKhPh
+        "AddOneRecordSqeV2(unsigned short, unsigned short, unsigned long long, unsigned char const*, unsigned char*)";  # _Z17AddOneRecordSqeV2ttyPKhPh
+        "AddOneWaitStartSqe(unsigned short, unsigned short, unsigned long long, unsigned long long, bool, rtStarsCcoreWaitStartSqe_t*, unsigned char*)";  # _Z18AddOneWaitStartSqettyybP26rtStarsCcoreWaitStartSqe_tPh
+        "AddOneWriteValueRecordSqeV1(unsigned short, unsigned short, unsigned long long, unsigned char const*, unsigned char*)";  # _Z27AddOneWriteValueRecordSqeV1ttyPKhPh
+        "AddOneWriteValueRecordSqeV2(unsigned short, unsigned short, unsigned long long, unsigned char const*, unsigned char*)";  # _Z27AddOneWriteValueRecordSqeV2ttyPKhPh
+        "AddOneWriteValueStartSqe(unsigned short, unsigned short, unsigned long long, unsigned long long, rtStarsCcoreWriteValueSqe_t*, unsigned char*)";  # _Z24AddOneWriteValueStartSqettyyP27rtStarsCcoreWriteValueSqe_tPh
+        "ConfigSqStatusByType(unsigned int, unsigned int, tagDrvSqCqPropType, unsigned int)";  # _Z20ConfigSqStatusByTypejj18tagDrvSqCqPropTypej
+        "CqReportRecv(dfx::CqeQueryInput const&, rtLogicCqReport_t&)";  # _Z12CqReportRecvRKN3dfx13CqeQueryInputER17rtLogicCqReport_t
+        "DeviceQuery(unsigned int, unsigned int, unsigned int)";  # _Z11DeviceQueryjjj
+        "GetCurAicpuTimestamp()";  # _Z20GetCurAicpuTimestampv
+        "GetExternalInputAicpuCacheEnable()";  # _Z32GetExternalInputAicpuCacheEnablev
+        "GetExternalInputCCLBuffSize()";  # _Z27GetExternalInputCCLBuffSizev
+        "GetExternalInputCannVersion[abi:cxx11]()";  # _Z27GetExternalInputCannVersionB5cxx11v
+        "GetExternalInputHcclAicpuUnfold()";  # _Z31GetExternalInputHcclAicpuUnfoldv
+        "GetExternalInputHcclAivMode()";  # _Z27GetExternalInputHcclAivModev
+        "GetExternalInputHcclDeterministicV2()";  # _Z35GetExternalInputHcclDeterministicV2v
+        "GetExternalInputHcclDumpDebug()";  # _Z29GetExternalInputHcclDumpDebugv
+        "GetExternalInputHcclEnableEntryLog()";  # _Z34GetExternalInputHcclEnableEntryLogv
+        "GetExternalInputHcclEnableFfts()";  # _Z30GetExternalInputHcclEnableFftsv
+        "GetExternalInputHcclEnablePipline()";  # _Z33GetExternalInputHcclEnablePiplinev
+        "GetExternalInputHcclEnableWhitelist()";  # _Z35GetExternalInputHcclEnableWhitelistv
+        "GetExternalInputHcclExecTimeOut()";  # _Z31GetExternalInputHcclExecTimeOutv
+        "GetExternalInputHcclExecTimeoutSet()";  # _Z34GetExternalInputHcclExecTimeoutSetv
+        "GetExternalInputHcclIfBasePort()";  # _Z30GetExternalInputHcclIfBasePortv
+        "GetExternalInputHcclIsTcpMode()";  # _Z29GetExternalInputHcclIsTcpModev
+        "GetExternalInputHcclLinkTimeOut()";  # _Z31GetExternalInputHcclLinkTimeOutv
+        "GetExternalInputHcclSocketFamily()";  # _Z32GetExternalInputHcclSocketFamilyv
+        "GetExternalInputInterHccsDisable()";  # _Z32GetExternalInputInterHccsDisablev
+        "GetExternalInputInterServerRetryEnable()";  # _Z38GetExternalInputInterServerRetryEnablev
+        "GetExternalInputInterSuperPodRetryEnable()";  # _Z40GetExternalInputInterSuperPodRetryEnablev
+        "GetExternalInputIntraRoceSwitch()";  # _Z31GetExternalInputIntraRoceSwitchv
+        "GetExternalInputIntraServerRetryEnable()";  # _Z38GetExternalInputIntraServerRetryEnablev
+        "GetExternalInputLogicSuperPodId[abi:cxx11]()";  # _Z31GetExternalInputLogicSuperPodIdB5cxx11v
+        "GetExternalInputMasterInfo()";  # _Z26GetExternalInputMasterInfov
+        "GetExternalInputMultiQpThreshold()";  # _Z32GetExternalInputMultiQpThresholdv
+        "GetExternalInputProfilingMode()";  # _Z29GetExternalInputProfilingModev
+        "GetExternalInputProtocolType()";  # _Z28GetExternalInputProtocolTypev
+        "GetExternalInputQpSrcPortConfigPath[abi:cxx11]()";  # _Z35GetExternalInputQpSrcPortConfigPathB5cxx11v
+        "GetExternalInputQpsPerConnection()";  # _Z32GetExternalInputQpsPerConnectionv
+        "GetExternalInputRetryHoldTime()";  # _Z29GetExternalInputRetryHoldTimev
+        "GetExternalInputRetryIntervalTime()";  # _Z33GetExternalInputRetryIntervalTimev
+        "GetExternalInputRetryMaxCnt()";  # _Z27GetExternalInputRetryMaxCntv
+        "GetExternalInputTaskExceptionSwitch()";  # _Z35GetExternalInputTaskExceptionSwitchv
+        "GetIfProfile()";  # _Z12GetIfProfilev
+        "GetLocalHostIP(hccl::HcclIpAddress&, unsigned int)";  # _Z14GetLocalHostIPRN4hccl13HcclIpAddressEj
+        "GetNicPort(unsigned int, std::vector<unsigned int, std::allocator<unsigned int> > const&, unsigned int, bool)";  # _Z10GetNicPortjRKSt6vectorIjSaIjEEjb
+        "GetRemoteIsHdc()";  # _Z14GetRemoteIsHdcv
+        "GetRunSideIsDevice(bool&)";  # _Z18GetRunSideIsDeviceRb
+        "GetWorkflowMode()";  # _Z15GetWorkflowModev
+        "H2DTlvDeinit(void*)";  # _Z12H2DTlvDeinitPv
+        "H2DTlvInit(TlvInitInfo*, unsigned int*, void**)";  # _Z10H2DTlvInitP11TlvInitInfoPjPPv
+        "H2DTlvRequest(void*, unsigned int, TlvMsg*, TlvMsg*)";  # _Z13H2DTlvRequestPvjP6TlvMsgS1_
+        "HcclCheckLogLevel(int, int)";  # _Z17HcclCheckLogLevelii
+        "HcclNetCloseDev(void*)";  # _Z15HcclNetCloseDevPv
+        "HcclNetDeInit(NICDeployment, int, int, bool)";  # _Z13HcclNetDeInit13NICDeploymentiib
+        "HcclNetDevGetLocalIp(void*, hccl::HcclIpAddress&)";  # _Z20HcclNetDevGetLocalIpPvRN4hccl13HcclIpAddressE
+        "HcclNetDevGetNicType(void*, NicType*)";  # _Z20HcclNetDevGetNicTypePvP7NicType
+        "HcclNetDevGetPortStatus(void*, bool&)";  # _Z23HcclNetDevGetPortStatusPvRb
+        "HcclNetDevGetTlsStatus(void*, TlsStatus*)";  # _Z22HcclNetDevGetTlsStatusPvP9TlsStatus
+        "HcclNetDevSetProtoType(void*, unsigned int)";  # _Z22HcclNetDevSetProtoTypePvj
+        "HcclNetInit(NICDeployment, int, int, bool, bool)";  # _Z11HcclNetInit13NICDeploymentiibb
+        "HcclNetOpenDev(void**, NicType, int, int, hccl::HcclIpAddress, hccl::HcclIpAddress)";  # _Z14HcclNetOpenDevPPv7NicTypeiiN4hccl13HcclIpAddressES3_
+        "HrtHalDrvQueryProcessHostPid(int, unsigned int*, unsigned int*, unsigned int*, unsigned int*)";  # _Z28HrtHalDrvQueryProcessHostPidiPjS_S_S_
+        "HrtRaGetHccnCfg(int, unsigned int, HccnCfgKeyT, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)";  # _Z15HrtRaGetHccnCfgij11HccnCfgKeyTRNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+        "HrtRaGetNotifyMrInfo(unsigned int, void*, MrInfoT*)";  # _Z20HrtRaGetNotifyMrInfojPvP7MrInfoT
+        "HrtRaMrDereg(void*, MrInfoT*)";  # _Z12HrtRaMrDeregPvP7MrInfoT
+        "HrtRaMrReg(void*, MrInfoT*)";  # _Z10HrtRaMrRegPvP7MrInfoT
+        "HrtRaQpConnectAsync(void*, void*, std::function<bool ()>, unsigned int)";  # _Z19HrtRaQpConnectAsyncPvS_St8functionIFbvEEj
+        "InitExternalInput()";  # _Z17InitExternalInputv
+        "InitExternalInputHeterog()";  # _Z24InitExternalInputHeterogv
+        "InitWorkflowMode(HcclWorkflowMode)";  # _Z16InitWorkflowMode16HcclWorkflowMode
+        "IsAllDigit(char const*)";  # _Z10IsAllDigitPKc
+        "IsErrorToWarn()";  # _Z13IsErrorToWarnv
+        "IsGeneralServer()";  # _Z15IsGeneralServerv
+        "IsHostUseDevNic(bool&)";  # _Z15IsHostUseDevNicRb
+        "IsLaunchKernelMode()";  # _Z18IsLaunchKernelModev
+        "IsSupportStartMC2MaintenanceThread()";  # _Z34IsSupportStartMC2MaintenanceThreadv
+        "IsTaskNumCalMode()";  # _Z16IsTaskNumCalModev
+        "QuerySqBaseAddr(unsigned int, unsigned int, unsigned long long&)";  # _Z15QuerySqBaseAddrjjRy
+        "QuerySqStatus(unsigned int, unsigned int, unsigned int&, unsigned int&)";  # _Z13QuerySqStatusjjRjS_
+        "QuerySqStatusByType(unsigned int, unsigned int, tagDrvSqCqPropType, unsigned int&)";  # _Z19QuerySqStatusByTypejj18tagDrvSqCqPropTypeRj
+        "ResetInitState()";  # _Z14ResetInitStatev
+        "SalGetBareTgid(int*)";  # _Z14SalGetBareTgidPi
+        "SalGetCurrentTimestamp(unsigned long long&)";  # _Z22SalGetCurrentTimestampRy
+        "SalGetDataTypeSize(HcclDataType, unsigned int&)";  # _Z18SalGetDataTypeSize12HcclDataTypeRj
+        "SalGetPid()";  # _Z9SalGetPidv
+        "SalGetSysTime()";  # _Z13SalGetSysTimev
+        "SalGetTid()";  # _Z9SalGetTidv
+        "SalSetBitOne(unsigned long long&, unsigned long long)";  # _Z12SalSetBitOneRyy
+        "SalSleep(unsigned int)";  # _Z8SalSleepj
+        "SalStrToInt(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, int, int&)";  # _Z11SalStrToIntNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEiRi
+        "SalStrToULong(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, int, unsigned int&)";  # _Z13SalStrToULongNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEiRj
+        "SaluSleep(unsigned int)";  # _Z9SaluSleepj
+        "SetDeterministic(unsigned char)";  # _Z16SetDeterministich
+        "SetDumpDebugMode(bool)";  # _Z16SetDumpDebugModeb
+        "SetErrToWarnSwitch(bool)";  # _Z18SetErrToWarnSwitchb
+        "SetExternalInputDebugConfig(unsigned long long)";  # _Z27SetExternalInputDebugConfigy
+        "SetExternalInputProtocolType(ProtocolType)";  # _Z28SetExternalInputProtocolType12ProtocolType
+        "SetFftsSwitch(bool)";  # _Z13SetFftsSwitchb
+        "SetHccLExecTimeOut(char const*, HcclExecTimeoutSet)";  # _Z18SetHccLExecTimeOutPKc18HcclExecTimeoutSet
+        "SetHostUseDevNicFlag(bool)";  # _Z20SetHostUseDevNicFlagb
+        "SetIfProfile(bool)";  # _Z12SetIfProfileb
+        "SetLaunchKernelMode(bool)";  # _Z19SetLaunchKernelModeb
+        "SetProfConfig(unsigned long long)";  # _Z13SetProfConfigy
+        "SetTcpMode(bool)";  # _Z10SetTcpModeb
+        "SetThreadName(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)";  # _Z13SetThreadNameRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+        "SetWorkflowMode(HcclWorkflowMode)";  # _Z15SetWorkflowMode16HcclWorkflowMode
+        "SnapShotRestoreAction(int, unsigned int)";  # _Z21SnapShotRestoreActionij
+        "SnapShotSaveAction(int, unsigned int, HcclSaveSnapShotAction)";  # _Z18SnapShotSaveActionij22HcclSaveSnapShotAction
+        "StreamsKill(unsigned int)";  # _Z11StreamsKillj
+        "TranslateOpcode(unsigned char, unsigned char&)";  # _Z15TranslateOpcodehRh
+        "hccl::AlltoallvMetadata::AlltoallvMetadata()";  # _ZN4hccl17AlltoallvMetadataC1Ev
+        "hccl::AlltoallvMetadata::Clear()";  # _ZN4hccl17AlltoallvMetadata5ClearEv
+        "hccl::AlltoallvSendRecvInfo::AlltoallvSendRecvInfo()";  # _ZN4hccl21AlltoallvSendRecvInfoC1Ev
+        "hccl::CheckDeviceType(DevType)";  # _ZN4hccl15CheckDeviceTypeE7DevType
+        "hccl::DeviceMem::DeviceMem(hccl::DeviceMem const&)";  # _ZN4hccl9DeviceMemC1ERKS0_
+        "hccl::DeviceMem::DeviceMem(hccl::DeviceMem&&)";  # _ZN4hccl9DeviceMemC1EOS0_
+        "hccl::DeviceMem::DeviceMem(void*, unsigned long long, bool)";  # _ZN4hccl9DeviceMemC1EPvyb
+        "hccl::DeviceMem::alloc(hccl::DeviceMem&, unsigned long long, bool)";  # _ZN4hccl9DeviceMem5allocERS0_yb
+        "hccl::DeviceMem::alloc(unsigned long long, bool)";  # _ZN4hccl9DeviceMem5allocEyb
+        "hccl::DeviceMem::create(void*, unsigned long long)";  # _ZN4hccl9DeviceMem6createEPvy
+        "hccl::DeviceMem::free()";  # _ZN4hccl9DeviceMem4freeEv
+        "hccl::DeviceMem::operator=(hccl::DeviceMem const&)";  # _ZN4hccl9DeviceMemaSERKS0_
+        "hccl::DeviceMem::operator=(hccl::DeviceMem&&)";  # _ZN4hccl9DeviceMemaSEOS0_
+        "hccl::DeviceMem::range(unsigned long long, unsigned long long) const";  # _ZNK4hccl9DeviceMem5rangeEyy
+        "hccl::DeviceMem::~DeviceMem()";  # _ZN4hccl9DeviceMemD1Ev
+        "hccl::DispatcherAiCpu::ClearLaunchContext()";  # _ZN4hccl15DispatcherAiCpu18ClearLaunchContextEv
+        "hccl::DispatcherAiCpu::LaunchNewTask(hccl::OpUnfoldCacheEntry*, std::vector<hccl::OpUnfoldMemRange, std::allocator<hccl::OpUnfoldMemRange> > const&, std::vector<hccl::OpUnfoldMemRange, std::allocator<hccl::OpUnfoldMemRange> > const&, hccl::Stream&, std::vector<hccl::Stream, std::allocator<hccl::Stream> >&, bool, bool, hccl::AlltoallvMetadata const&, hccl::AlltoallvSendRecvInfo const&)";  # _ZN4hccl15DispatcherAiCpu13LaunchNewTaskEPNS_18OpUnfoldCacheEntryERKSt6vectorINS_16OpUnfoldMemRangeESaIS4_EES8_RNS_6StreamERS3_IS9_SaIS9_EEbbRKNS_17AlltoallvMetadataERKNS_21AlltoallvSendRecvInfoE
+        "hccl::DispatcherAiCpu::SetLaunchContext(hccl::OpUnfoldKey const&, hccl::OpUnfoldCache*, std::vector<hccl::OpUnfoldMemRange, std::allocator<hccl::OpUnfoldMemRange> > const&, std::vector<hccl::OpUnfoldMemRange, std::allocator<hccl::OpUnfoldMemRange> > const&, bool, hccl::AlltoallvMetadata const*)";  # _ZN4hccl15DispatcherAiCpu16SetLaunchContextERKNS_11OpUnfoldKeyEPNS_13OpUnfoldCacheERKSt6vectorINS_16OpUnfoldMemRangeESaIS7_EESB_bPKNS_17AlltoallvMetadataE
+        "hccl::DispatcherCtx::GetDispatcher() const";  # _ZNK4hccl13DispatcherCtx13GetDispatcherEv
+        "hccl::DispatcherCtx::SetDispatcherHcclQos(unsigned int)";  # _ZN4hccl13DispatcherCtx20SetDispatcherHcclQosEj
+        "hccl::DlHalFunction::DlHalFunctionInit()";  # _ZN4hccl13DlHalFunction17DlHalFunctionInitEv
+        "hccl::DlHalFunction::GetInstance()";  # _ZN4hccl13DlHalFunction11GetInstanceEv
+        "hccl::DlRaFunction::DlRaFunctionInit()";  # _ZN4hccl12DlRaFunction16DlRaFunctionInitEv
+        "hccl::DlRaFunction::GetInstance()";  # _ZN4hccl12DlRaFunction11GetInstanceEv
+        "hccl::DlRaFunction::Init::Init()";  # _ZN4hccl12DlRaFunction4InitC1Ev
+        "hccl::DlRaFunction::Init::~Init()";  # _ZN4hccl12DlRaFunction4InitD1Ev
+        "hccl::GetBandWidthPerNPU(unsigned int, unsigned int, unsigned int, float&)";  # _ZN4hccl18GetBandWidthPerNPUEjjjRf
+        "hccl::GetMaxDevNum(unsigned int&)";  # _ZN4hccl12GetMaxDevNumERj
+        "hccl::GetNotifyMaxWaitTime()";  # _ZN4hccl20GetNotifyMaxWaitTimeEv
+        "hccl::HDCommunicate::Get(unsigned int, unsigned int, unsigned char*)";  # _ZN4hccl13HDCommunicate3GetEjjPh
+        "hccl::HDCommunicate::GetCommunicateParams()";  # _ZN4hccl13HDCommunicate20GetCommunicateParamsEv
+        "hccl::HDCommunicate::HDCommunicate()";  # _ZN4hccl13HDCommunicateC1Ev
+        "hccl::HDCommunicate::HDCommunicate(unsigned int, unsigned int, unsigned int)";  # _ZN4hccl13HDCommunicateC1Ejjj
+        "hccl::HDCommunicate::InitDevice(hccl::HDCommunicateParams const&)";  # _ZN4hccl13HDCommunicate10InitDeviceERKNS_19HDCommunicateParamsE
+        "hccl::HDCommunicate::InitHost()";  # _ZN4hccl13HDCommunicate8InitHostEv
+        "hccl::HDCommunicate::Put(unsigned int, unsigned int, unsigned char*)";  # _ZN4hccl13HDCommunicate3PutEjjPh
+        "hccl::HDCommunicate::~HDCommunicate()";  # _ZN4hccl13HDCommunicateD1Ev
+        "hccl::HcclIpAddress::SetBianryAddress(int, hccl::HcclInAddr const&)";  # _ZN4hccl13HcclIpAddress16SetBianryAddressEiRKNS_10HcclInAddrE
+        "hccl::HcclIpAddress::SetReadableAddress(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)";  # _ZN4hccl13HcclIpAddress18SetReadableAddressERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+        "hccl::HcclSocket::Accept(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::shared_ptr<hccl::HcclSocket>&, unsigned int)";  # _ZN4hccl10HcclSocket6AcceptERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt10shared_ptrIS0_Ej
+        "hccl::HcclSocket::AddWhiteList(std::vector<SocketWlistInfo, std::allocator<SocketWlistInfo> >&)";  # _ZN4hccl10HcclSocket12AddWhiteListERSt6vectorI15SocketWlistInfoSaIS2_EE
+        "hccl::HcclSocket::Close()";  # _ZN4hccl10HcclSocket5CloseEv
+        "hccl::HcclSocket::Connect()";  # _ZN4hccl10HcclSocket7ConnectEv
+        "hccl::HcclSocket::DeInit()";  # _ZN4hccl10HcclSocket6DeInitEv
+        "hccl::HcclSocket::DelWhiteList(std::vector<SocketWlistInfo, std::allocator<SocketWlistInfo> >&)";  # _ZN4hccl10HcclSocket12DelWhiteListERSt6vectorI15SocketWlistInfoSaIS2_EE
+        "hccl::HcclSocket::GetAsyncReqResult(void*, HcclResult&)";  # _ZN4hccl10HcclSocket17GetAsyncReqResultEPvR10HcclResult
+        "hccl::HcclSocket::GetFdHandle() const";  # _ZNK4hccl10HcclSocket11GetFdHandleEv
+        "hccl::HcclSocket::GetLocalIp() const";  # _ZNK4hccl10HcclSocket10GetLocalIpEv
+        "hccl::HcclSocket::GetLocalPort() const";  # _ZNK4hccl10HcclSocket12GetLocalPortEv
+        "hccl::HcclSocket::GetLocalRole() const";  # _ZNK4hccl10HcclSocket12GetLocalRoleEv
+        "hccl::HcclSocket::GetRemoteIp() const";  # _ZNK4hccl10HcclSocket11GetRemoteIpEv
+        "hccl::HcclSocket::GetRemotePort() const";  # _ZNK4hccl10HcclSocket13GetRemotePortEv
+        "hccl::HcclSocket::GetSocketType() const";  # _ZNK4hccl10HcclSocket13GetSocketTypeEv
+        "hccl::HcclSocket::GetStatus()";  # _ZN4hccl10HcclSocket9GetStatusEv
+        "hccl::HcclSocket::HcclSocket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, void*, hccl::HcclIpAddress const&, unsigned int, hccl::HcclSocketRole)";  # _ZN4hccl10HcclSocketC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPvRKNS_13HcclIpAddressEjNS_14HcclSocketRoleE
+        "hccl::HcclSocket::HcclSocket(void*, unsigned int)";  # _ZN4hccl10HcclSocketC1EPvj
+        "hccl::HcclSocket::IRecv(void*, unsigned int, unsigned long long&)";  # _ZN4hccl10HcclSocket5IRecvEPvjRy
+        "hccl::HcclSocket::ISend(void*, unsigned long long, unsigned long long&)";  # _ZN4hccl10HcclSocket5ISendEPvyRy
+        "hccl::HcclSocket::Init()";  # _ZN4hccl10HcclSocket4InitEv
+        "hccl::HcclSocket::IsSupportAsync()";  # _ZN4hccl10HcclSocket14IsSupportAsyncEv
+        "hccl::HcclSocket::Listen()";  # _ZN4hccl10HcclSocket6ListenEv
+        "hccl::HcclSocket::Listen(unsigned int)";  # _ZN4hccl10HcclSocket6ListenEj
+        "hccl::HcclSocket::Recv(void*, unsigned int, unsigned int)";  # _ZN4hccl10HcclSocket4RecvEPvjj
+        "hccl::HcclSocket::RecvAsync(void*, unsigned long long, unsigned long long*, void**)";  # _ZN4hccl10HcclSocket9RecvAsyncEPvyPyPS1_
+        "hccl::HcclSocket::Send(void const*, unsigned long long)";  # _ZN4hccl10HcclSocket4SendEPKvy
+        "hccl::HcclSocket::SendAsync(void const*, unsigned long long, unsigned long long*, void**)";  # _ZN4hccl10HcclSocket9SendAsyncEPKvyPyPPv
+        "hccl::HcclSocket::SetForceClose(bool)";  # _ZN4hccl10HcclSocket13SetForceCloseEb
+        "hccl::HcclSocket::SetStatus(hccl::HcclSocketStatus)";  # _ZN4hccl10HcclSocket9SetStatusENS_16HcclSocketStatusE
+        "hccl::HcclSocket::SetStopFlag(bool)";  # _ZN4hccl10HcclSocket11SetStopFlagEb
+        "hccl::HcclSocket::~HcclSocket()";  # _ZN4hccl10HcclSocketD1Ev
+        "hccl::HcclTraceInfo::DeInit()";  # _ZN4hccl13HcclTraceInfo6DeInitEv
+        "hccl::HcclTraceInfo::Flush()";  # _ZN4hccl13HcclTraceInfo5FlushEv
+        "hccl::HcclTraceInfo::HcclTraceInfo()";  # _ZN4hccl13HcclTraceInfoC1Ev
+        "hccl::HcclTraceInfo::HcclTraceInfo(hccl::HcclTraceInfo::UtraceAttr const&)";  # _ZN4hccl13HcclTraceInfoC1ERKNS0_10UtraceAttrE
+        "hccl::HcclTraceInfo::Init(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)";  # _ZN4hccl13HcclTraceInfo4InitERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+        "hccl::HcclTraceInfo::SaveTraceInfo(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, hccl::AtraceOption)";  # _ZN4hccl13HcclTraceInfo13SaveTraceInfoERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_12AtraceOptionE
+        "hccl::HcclTraceInfo::SavealgtypeTraceInfo(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)";  # _ZN4hccl13HcclTraceInfo20SavealgtypeTraceInfoERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKS6_
+        "hccl::HcclTraceInfo::~HcclTraceInfo()";  # _ZN4hccl13HcclTraceInfoD1Ev
+        "hccl::HostMem::HostMem(hccl::HostMem const&)";  # _ZN4hccl7HostMemC1ERKS0_
+        "hccl::HostMem::HostMem(hccl::HostMem&&)";  # _ZN4hccl7HostMemC1EOS0_
+        "hccl::HostMem::alloc(unsigned long long, bool)";  # _ZN4hccl7HostMem5allocEyb
+        "hccl::HostMem::create(void*, unsigned long long)";  # _ZN4hccl7HostMem6createEPvy
+        "hccl::HostMem::free()";  # _ZN4hccl7HostMem4freeEv
+        "hccl::HostMem::operator=(hccl::HostMem const&)";  # _ZN4hccl7HostMemaSERKS0_
+        "hccl::HostMem::operator=(hccl::HostMem&&)";  # _ZN4hccl7HostMemaSEOS0_
+        "hccl::HostMem::range(unsigned long long, unsigned long long) const";  # _ZNK4hccl7HostMem5rangeEyy
+        "hccl::HostMem::~HostMem()";  # _ZN4hccl7HostMemD1Ev
+        "hccl::Is310PDevice()";  # _ZN4hccl12Is310PDeviceEv
+        "hccl::IsSuperPodMode(bool&)";  # _ZN4hccl14IsSuperPodModeERb
+        "hccl::IsSupportAIVCopy(HcclDataType)";  # _ZN4hccl16IsSupportAIVCopyE12HcclDataType
+        "hccl::IsSupportAIVNormalQP(unsigned int const&, bool&)";  # _ZN4hccl20IsSupportAIVNormalQPERKjRb
+        "hccl::IsSupportAIVReduce(HcclDataType, HcclReduceOp)";  # _ZN4hccl18IsSupportAIVReduceE12HcclDataType12HcclReduceOp
+        "hccl::IsSupportAicpuNormalQP(unsigned int const&, bool&)";  # _ZN4hccl22IsSupportAicpuNormalQPERKjRb
+        "hccl::IsSupportAtomicWrite(DevType, unsigned int, bool&)";  # _ZN4hccl20IsSupportAtomicWriteE7DevTypejRb
+        "hccl::IsSupportHccsAndSio(bool&)";  # _ZN4hccl19IsSupportHccsAndSioERb
+        "hccl::IsSupportRDMALite(int)";  # _ZN4hccl17IsSupportRDMALiteEi
+        "hccl::IsSupportRDMAReduce(HcclDataType, HcclReduceOp)";  # _ZN4hccl19IsSupportRDMAReduceE12HcclDataType12HcclReduceOp
+        "hccl::IsSupportSDMAReduce(void const*, void const*, HcclDataType, HcclReduceOp)";  # _ZN4hccl19IsSupportSDMAReduceEPKvS1_12HcclDataType12HcclReduceOp
+        "hccl::LocalNotify::GetNotifyData(HcclSignalInfo&)";  # _ZN4hccl11LocalNotify13GetNotifyDataER14HcclSignalInfo
+        "hccl::LocalNotify::Init(HcclSignalInfo const&, hccl::NotifyLoadType)";  # _ZN4hccl11LocalNotify4InitERK14HcclSignalInfoNS_14NotifyLoadTypeE
+        "hccl::LocalNotify::Init(hccl::NotifyLoadType)";  # _ZN4hccl11LocalNotify4InitENS_14NotifyLoadTypeE
+        "hccl::LocalNotify::InitNotifyLite(HcclSignalInfo const&)";  # _ZN4hccl11LocalNotify14InitNotifyLiteERK14HcclSignalInfo
+        "hccl::LocalNotify::LocalNotify()";  # _ZN4hccl11LocalNotifyC1Ev
+        "hccl::LocalNotify::Post(hccl::Stream&)";  # _ZN4hccl11LocalNotify4PostERNS_6StreamE
+        "hccl::LocalNotify::Post(hccl::Stream&, void*, std::shared_ptr<hccl::LocalNotify> const&, int)";  # _ZN4hccl11LocalNotify4PostERNS_6StreamEPvRKSt10shared_ptrIS0_Ei
+        "hccl::LocalNotify::Wait(hccl::Stream&, unsigned int)";  # _ZN4hccl11LocalNotify4WaitERNS_6StreamEj
+        "hccl::LocalNotify::Wait(hccl::Stream&, void*, std::shared_ptr<hccl::LocalNotify> const&, int, unsigned int)";  # _ZN4hccl11LocalNotify4WaitERNS_6StreamEPvRKSt10shared_ptrIS0_Eij
+        "hccl::LocalNotify::~LocalNotify()";  # _ZN4hccl11LocalNotifyD1Ev
+        "hccl::NetworkManager::DeInitV2(NICDeployment, bool, bool)";  # _ZN4hccl14NetworkManager8DeInitV2E13NICDeploymentbb
+        "hccl::NetworkManager::GetInstance(int)";  # _ZN4hccl14NetworkManager11GetInstanceEi
+        "hccl::NetworkManager::GetRdmaHandleByIpAddr(hccl::HcclIpAddress const&, void*&)";  # _ZN4hccl14NetworkManager21GetRdmaHandleByIpAddrERKNS_13HcclIpAddressERPv
+        "hccl::NetworkManager::InitTool::InitTool()";  # _ZN4hccl14NetworkManager8InitToolC1Ev
+        "hccl::NetworkManager::InitTool::~InitTool()";  # _ZN4hccl14NetworkManager8InitToolD1Ev
+        "hccl::NetworkManager::InitV2(NICDeployment, bool, unsigned int, bool)";  # _ZN4hccl14NetworkManager6InitV2E13NICDeploymentbjb
+        "hccl::NetworkManager::StopNicSocketHandle(hccl::HcclIpAddress const&)";  # _ZN4hccl14NetworkManager19StopNicSocketHandleERKNS_13HcclIpAddressE
+        "hccl::NotifyPool::Init(int)";  # _ZN4hccl10NotifyPool4InitEi
+        "hccl::NotifyPool::NotifyPool()";  # _ZN4hccl10NotifyPoolC1Ev
+        "hccl::NotifyPool::RegisterOp(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)";  # _ZN4hccl10NotifyPool10RegisterOpERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+        "hccl::NotifyPool::ResetNotify()";  # _ZN4hccl10NotifyPool11ResetNotifyEv
+        "hccl::NotifyPool::ResetNotifyForDestRank(long long)";  # _ZN4hccl10NotifyPool22ResetNotifyForDestRankEx
+        "hccl::NotifyPool::UnregisterOp(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)";  # _ZN4hccl10NotifyPool12UnregisterOpERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+        "hccl::NotifyPool::~NotifyPool()";  # _ZN4hccl10NotifyPoolD1Ev
+        "hccl::OpUnfoldCache::ClearEntry(hccl::OpUnfoldKey const&)";  # _ZN4hccl13OpUnfoldCache10ClearEntryERKNS_11OpUnfoldKeyE
+        "hccl::OpUnfoldCache::ClearEntryForAlltoallv()";  # _ZN4hccl13OpUnfoldCache22ClearEntryForAlltoallvEv
+        "hccl::OpUnfoldCache::FindEntry(hccl::OpUnfoldKey const&, hccl::OpUnfoldCacheEntry**) const";  # _ZNK4hccl13OpUnfoldCache9FindEntryERKNS_11OpUnfoldKeyEPPNS_18OpUnfoldCacheEntryE
+        "hccl::OpUnfoldCache::IsCacheFull() const";  # _ZNK4hccl13OpUnfoldCache11IsCacheFullEv
+        "hccl::OpUnfoldCache::OpUnfoldCache()";  # _ZN4hccl13OpUnfoldCacheC1Ev
+        "hccl::OpUnfoldCache::~OpUnfoldCache()";  # _ZN4hccl13OpUnfoldCacheD1Ev
+        "hccl::OpUnfoldCacheEntry::CalcStreamSeqIdxes(hccl::Stream&, std::vector<hccl::Stream, std::allocator<hccl::Stream> >&)";  # _ZN4hccl18OpUnfoldCacheEntry18CalcStreamSeqIdxesERNS_6StreamERSt6vectorIS1_SaIS1_EE
+        "hccl::OpUnfoldCacheEntry::UpdateRefreshAddrInfoForAlltoallv(unsigned int, hccl::AlltoallvMetadata&)";  # _ZN4hccl18OpUnfoldCacheEntry33UpdateRefreshAddrInfoForAlltoallvEjRNS_17AlltoallvMetadataE
+        "hccl::OpUnfoldKey::GetKeyString[abi:cxx11]() const";  # _ZNK4hccl11OpUnfoldKey12GetKeyStringB5cxx11Ev
+        "hccl::OpUnfoldKey::Init(HcclCMDType, HcclDataType, HcclReduceOp, bool, bool, unsigned long, bool, HcclWorkflowMode, bool, unsigned int)";  # _ZN4hccl11OpUnfoldKey4InitE11HcclCMDType12HcclDataType12HcclReduceOpbbmb16HcclWorkflowModebj
+        "hccl::OpUnfoldKey::OpUnfoldKey()";  # _ZN4hccl11OpUnfoldKeyC1Ev
+        "hccl::OpUnfoldMemRange::OpUnfoldMemRange()";  # _ZN4hccl16OpUnfoldMemRangeC1Ev
+        "hccl::OpUnfoldMemRange::OpUnfoldMemRange(hccl::OpUnfoldMemRange const&)";  # _ZN4hccl16OpUnfoldMemRangeC1ERKS0_
+        "hccl::OpUnfoldMemRange::~OpUnfoldMemRange()";  # _ZN4hccl16OpUnfoldMemRangeD1Ev
+        "hccl::P2PMgmtPub::DisableP2P(std::vector<unsigned int, std::allocator<unsigned int> >)";  # _ZN4hccl10P2PMgmtPub10DisableP2PESt6vectorIjSaIjEE
+        "hccl::P2PMgmtPub::EnableP2P(std::vector<unsigned int, std::allocator<unsigned int> >)";  # _ZN4hccl10P2PMgmtPub9EnableP2PESt6vectorIjSaIjEE
+        "hccl::P2PMgmtPub::WaitP2PEnabled(std::vector<unsigned int, std::allocator<unsigned int> >, std::function<bool ()>)";  # _ZN4hccl10P2PMgmtPub14WaitP2PEnabledESt6vectorIjSaIjEESt8functionIFbvEE
+        "hccl::PetersonLock::GetDevMemAddr() const";  # _ZNK4hccl12PetersonLock13GetDevMemAddrEv
+        "hccl::PetersonLock::Init()";  # _ZN4hccl12PetersonLock4InitEv
+        "hccl::PetersonLock::PetersonLock(unsigned long long)";  # _ZN4hccl12PetersonLockC1Ey
+        "hccl::PetersonLock::PetersonLock(void*, unsigned long long)";  # _ZN4hccl12PetersonLockC1EPvy
+        "hccl::PetersonLock::~PetersonLock()";  # _ZN4hccl12PetersonLockD1Ev
+        "hccl::PetersonLockGuard::PetersonLockGuard(hccl::PetersonLock*)";  # _ZN4hccl17PetersonLockGuardC1EPNS_12PetersonLockE
+        "hccl::PetersonLockGuard::~PetersonLockGuard()";  # _ZN4hccl17PetersonLockGuardD1Ev
+        "hccl::RemoteNotify::GetNotifyData(HcclSignalInfo&)";  # _ZN4hccl12RemoteNotify13GetNotifyDataER14HcclSignalInfo
+        "hccl::RemoteNotify::Init(HcclSignalInfo const&, hccl::NotifyLoadType)";  # _ZN4hccl12RemoteNotify4InitERK14HcclSignalInfoNS_14NotifyLoadTypeE
+        "hccl::RemoteNotify::RemoteNotify()";  # _ZN4hccl12RemoteNotifyC1Ev
+        "hccl::RemoteNotify::~RemoteNotify()";  # _ZN4hccl12RemoteNotifyD1Ev
+        "hccl::Stream::ClearLocalBuff()";  # _ZN4hccl6Stream14ClearLocalBuffEv
+        "hccl::Stream::GetCqeContext(hccl::ErrCqeContext&)";  # _ZN4hccl6Stream13GetCqeContextERNS_13ErrCqeContextE
+        "hccl::Stream::GetMode(unsigned long*)";  # _ZN4hccl6Stream7GetModeEPm
+        "hccl::Stream::GetNextSqeBufferAddr(unsigned char*&, unsigned char*&, unsigned char*&, unsigned short&)";  # _ZN4hccl6Stream20GetNextSqeBufferAddrERPhS2_S2_Rt
+        "hccl::Stream::InitSqAndCqeContext(unsigned int, unsigned int, hccl::SqCqeContext*)";  # _ZN4hccl6Stream19InitSqAndCqeContextEjjPNS_12SqCqeContextE
+        "hccl::Stream::PopTaskLogicInfo(hccl::TaskLogicInfo&)";  # _ZN4hccl6Stream16PopTaskLogicInfoERNS_13TaskLogicInfoE
+        "hccl::Stream::SetCqeContext(hccl::ErrCqeContext const&)";  # _ZN4hccl6Stream13SetCqeContextERKNS_13ErrCqeContextE
+        "hccl::Stream::SetInvalidFlag()";  # _ZN4hccl6Stream14SetInvalidFlagEv
+        "hccl::Stream::SetMode(unsigned long)";  # _ZN4hccl6Stream7SetModeEm
+        "hccl::Stream::Stream()";  # _ZN4hccl6StreamC1Ev
+        "hccl::Stream::Stream(HcclComStreamInfo const&, bool)";  # _ZN4hccl6StreamC1ERK17HcclComStreamInfob
+        "hccl::Stream::Stream(hccl::Stream const&)";  # _ZN4hccl6StreamC1ERKS0_
+        "hccl::Stream::Stream(hccl::Stream&&)";  # _ZN4hccl6StreamC1EOS0_
+        "hccl::Stream::Stream(hccl::StreamType, bool)";  # _ZN4hccl6StreamC1ENS_10StreamTypeEb
+        "hccl::Stream::Stream(void*, bool)";  # _ZN4hccl6StreamC1EPvb
+        "hccl::Stream::operator=(hccl::Stream const&)";  # _ZN4hccl6StreamaSERKS0_
+        "hccl::Stream::operator=(hccl::Stream&&)";  # _ZN4hccl6StreamaSEOS0_
+        "hccl::Stream::~Stream()";  # _ZN4hccl6StreamD1Ev
+        "hccl::Transport::BatchTransferAsync(HcommBatchTransferDesc const*, unsigned int, hccl::Stream&)";  # _ZN4hccl9Transport18BatchTransferAsyncEPK22HcommBatchTransferDescjRNS_6StreamE
+        "hccl::Transport::Break()";  # _ZN4hccl9Transport5BreakEv
+        "hccl::Transport::ConnectAsync(unsigned int&)";  # _ZN4hccl9Transport12ConnectAsyncERj
+        "hccl::Transport::ConnectQuerry(unsigned int&)";  # _ZN4hccl9Transport13ConnectQuerryERj
+        "hccl::Transport::DataReceivedAck(hccl::Stream&)";  # _ZN4hccl9Transport15DataReceivedAckERNS_6StreamE
+        "hccl::Transport::DeInit()";  # _ZN4hccl9Transport6DeInitEv
+        "hccl::Transport::EnableUseOneDoorbell()";  # _ZN4hccl9Transport20EnableUseOneDoorbellEv
+        "hccl::Transport::GetAiQpInfo(std::vector<HcclQpInfoV2, std::allocator<HcclQpInfoV2> >&)";  # _ZN4hccl9Transport11GetAiQpInfoERSt6vectorI12HcclQpInfoV2SaIS2_EE
+        "hccl::Transport::GetAiRMAQueueInfo(std::vector<HcclAiRMAQueueInfo, std::allocator<HcclAiRMAQueueInfo> >&)";  # _ZN4hccl9Transport17GetAiRMAQueueInfoERSt6vectorI18HcclAiRMAQueueInfoSaIS2_EE
+        "hccl::Transport::GetDrainLocalDataNotify(void*&, unsigned int&, HcclSignalInfo&)";  # _ZN4hccl9Transport23GetDrainLocalDataNotifyERPvRjR14HcclSignalInfo
+        "hccl::Transport::GetDrainRemSrcMem(void*&, unsigned int&, unsigned int&)";  # _ZN4hccl9Transport17GetDrainRemSrcMemERPvRjS3_
+        "hccl::Transport::GetExchangeInfo()";  # _ZN4hccl9Transport15GetExchangeInfoEv
+        "hccl::Transport::GetIndOpRemoteMem(HcclMem**, unsigned int*)";  # _ZN4hccl9Transport17GetIndOpRemoteMemEPP7HcclMemPj
+        "hccl::Transport::GetIndOpRemoteMemDetails(MemDetails**, unsigned int*, HcclMemType)";  # _ZN4hccl9Transport24GetIndOpRemoteMemDetailsEPP10MemDetailsPj11HcclMemType
+        "hccl::Transport::GetIsUseAtomicWrite()";  # _ZN4hccl9Transport19GetIsUseAtomicWriteEv
+        "hccl::Transport::GetLinkType() const";  # _ZNK4hccl9Transport11GetLinkTypeEv
+        "hccl::Transport::GetLocalMemDetails(hccl::UserMemType, MemDetails&)";  # _ZN4hccl9Transport18GetLocalMemDetailsENS_11UserMemTypeER10MemDetails
+        "hccl::Transport::GetLocalNotify(std::vector<HcclSignalInfo, std::allocator<HcclSignalInfo> >&)";  # _ZN4hccl9Transport14GetLocalNotifyERSt6vectorI14HcclSignalInfoSaIS2_EE
+        "hccl::Transport::GetLocalNotifyValueAddrKey(std::vector<AddrKey, std::allocator<AddrKey> >&)";  # _ZN4hccl9Transport26GetLocalNotifyValueAddrKeyERSt6vectorI7AddrKeySaIS2_EE
+        "hccl::Transport::GetLocalRdmaNotify(std::vector<HcclSignalInfo, std::allocator<HcclSignalInfo> >&)";  # _ZN4hccl9Transport18GetLocalRdmaNotifyERSt6vectorI14HcclSignalInfoSaIS2_EE
+        "hccl::Transport::GetNotifyNum()";  # _ZN4hccl9Transport12GetNotifyNumEv
+        "hccl::Transport::GetRemoteMem(hccl::UserMemType, void**)";  # _ZN4hccl9Transport12GetRemoteMemENS_11UserMemTypeEPPv
+        "hccl::Transport::GetRemoteMem(std::vector<void*, std::allocator<void*> >*)";  # _ZN4hccl9Transport12GetRemoteMemEPSt6vectorIPvSaIS2_EE
+        "hccl::Transport::GetRemoteMemKey(hccl::UserMemType, unsigned int*)";  # _ZN4hccl9Transport15GetRemoteMemKeyENS_11UserMemTypeEPj
+        "hccl::Transport::GetRemoteNotify(std::vector<HcclSignalInfo, std::allocator<HcclSignalInfo> >&)";  # _ZN4hccl9Transport15GetRemoteNotifyERSt6vectorI14HcclSignalInfoSaIS2_EE
+        "hccl::Transport::GetRemoteRank()";  # _ZN4hccl9Transport13GetRemoteRankEv
+        "hccl::Transport::GetRemoteRdmaNotifyAddrKey(std::vector<AddrKey, std::allocator<AddrKey> >&)";  # _ZN4hccl9Transport26GetRemoteRdmaNotifyAddrKeyERSt6vectorI7AddrKeySaIS2_EE
+        "hccl::Transport::GetRxAckDevNotifyInfo(HcclSignalInfo&)";  # _ZN4hccl9Transport21GetRxAckDevNotifyInfoER14HcclSignalInfo
+        "hccl::Transport::GetRxDataSigleDevNotifyInfo(HcclSignalInfo&)";  # _ZN4hccl9Transport27GetRxDataSigleDevNotifyInfoER14HcclSignalInfo
+        "hccl::Transport::GetSpecificNotify(HcclSignalInfo&, bool&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)";  # _ZN4hccl9Transport17GetSpecificNotifyER14HcclSignalInfoRbRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+        "hccl::Transport::GetSupportDataReceivedAck() const";  # _ZNK4hccl9Transport25GetSupportDataReceivedAckEv
+        "hccl::Transport::GetTransportAttr(hccl::TransportAttrDef&)";  # _ZN4hccl9Transport16GetTransportAttrERNS_16TransportAttrDefE
+        "hccl::Transport::GetTransportErrorCqe(void*, std::vector<std::pair<hccl::Transport*, hccl::tagCqeInfo>, std::allocator<std::pair<hccl::Transport*, hccl::tagCqeInfo> > >&, unsigned int&)";  # _ZN4hccl9Transport20GetTransportErrorCqeEPvRSt6vectorISt4pairIPS0_NS_10tagCqeInfoEESaIS6_EERj
+        "hccl::Transport::GetTransportId(unsigned int&)";  # _ZN4hccl9Transport14GetTransportIdERj
+        "hccl::Transport::GetTxAckDevNotifyInfo(HcclSignalInfo&)";  # _ZN4hccl9Transport21GetTxAckDevNotifyInfoER14HcclSignalInfo
+        "hccl::Transport::GetTxDataSigleDevNotifyInfo(HcclSignalInfo&)";  # _ZN4hccl9Transport27GetTxDataSigleDevNotifyInfoER14HcclSignalInfo
+        "hccl::Transport::HcclBatchRead(hccl::TransportDeviceNormalData const&, MemDetails*, MemDetails*, unsigned int, unsigned long long&)";  # _ZN4hccl9Transport13HcclBatchReadERKNS_25TransportDeviceNormalDataEP10MemDetailsS5_jRy
+        "hccl::Transport::HcclBatchWrite(hccl::TransportDeviceNormalData const&, MemDetails*, MemDetails*, unsigned int, unsigned long long&)";  # _ZN4hccl9Transport14HcclBatchWriteERKNS_25TransportDeviceNormalDataEP10MemDetailsS5_jRy
+        "hccl::Transport::Init()";  # _ZN4hccl9Transport4InitEv
+        "hccl::Transport::InitDrainNotifyInfo()";  # _ZN4hccl9Transport19InitDrainNotifyInfoEv
+        "hccl::Transport::IsSpInlineReduce() const";  # _ZNK4hccl9Transport16IsSpInlineReduceEv
+        "hccl::Transport::IsSupportTransportWithReduce()";  # _ZN4hccl9Transport28IsSupportTransportWithReduceEv
+        "hccl::Transport::IsTransportRoce()";  # _ZN4hccl9Transport15IsTransportRoceEv
+        "hccl::Transport::Post(unsigned int, hccl::Stream&)";  # _ZN4hccl9Transport4PostEjRNS_6StreamE
+        "hccl::Transport::PostFin(hccl::Stream&)";  # _ZN4hccl9Transport7PostFinERNS_6StreamE
+        "hccl::Transport::PostFinAck(hccl::Stream&)";  # _ZN4hccl9Transport10PostFinAckERNS_6StreamE
+        "hccl::Transport::ReadReduceSync(hccl::Transport::Buffer&, hccl::Transport::Buffer&, HcclDataType, HcclReduceOp, hccl::Stream&)";  # _ZN4hccl9Transport14ReadReduceSyncERNS0_6BufferES2_12HcclDataType12HcclReduceOpRNS_6StreamE
+        "hccl::Transport::ReadSync(hccl::Transport::Buffer&, hccl::Transport::Buffer&, hccl::Stream&)";  # _ZN4hccl9Transport8ReadSyncERNS0_6BufferES2_RNS_6StreamE
+        "hccl::Transport::Resume()";  # _ZN4hccl9Transport6ResumeEv
+        "hccl::Transport::RxAck(hccl::Stream&)";  # _ZN4hccl9Transport5RxAckERNS_6StreamE
+        "hccl::Transport::RxAsync(hccl::UserMemType, unsigned long long, void*, unsigned long long, hccl::Stream&)";  # _ZN4hccl9Transport7RxAsyncENS_11UserMemTypeEyPvyRNS_6StreamE
+        "hccl::Transport::RxAsync(std::vector<hccl::RxMemoryInfo, std::allocator<hccl::RxMemoryInfo> >&, hccl::Stream&)";  # _ZN4hccl9Transport7RxAsyncERSt6vectorINS_12RxMemoryInfoESaIS2_EERNS_6StreamE
+        "hccl::Transport::RxData(hccl::UserMemType, unsigned long long, void*, unsigned long long, hccl::Stream&)";  # _ZN4hccl9Transport6RxDataENS_11UserMemTypeEyPvyRNS_6StreamE
+        "hccl::Transport::RxDataSignal(hccl::Stream&)";  # _ZN4hccl9Transport12RxDataSignalERNS_6StreamE
+        "hccl::Transport::RxDone(hccl::Stream&)";  # _ZN4hccl9Transport6RxDoneERNS_6StreamE
+        "hccl::Transport::RxEnv(hccl::Stream&)";  # _ZN4hccl9Transport5RxEnvERNS_6StreamE
+        "hccl::Transport::RxPrepare(hccl::Stream&)";  # _ZN4hccl9Transport9RxPrepareERNS_6StreamE
+        "hccl::Transport::RxWaitDone(hccl::Stream&)";  # _ZN4hccl9Transport10RxWaitDoneERNS_6StreamE
+        "hccl::Transport::RxWithReduce(hccl::UserMemType, unsigned long long, void*, unsigned long long, void*, void*, unsigned long long, HcclDataType, HcclReduceOp, hccl::Stream&, unsigned long long)";  # _ZN4hccl9Transport12RxWithReduceENS_11UserMemTypeEyPvyS2_S2_y12HcclDataType12HcclReduceOpRNS_6StreamEy
+        "hccl::Transport::RxWithReduce(std::vector<hccl::RxWithReduceMemoryInfo, std::allocator<hccl::RxWithReduceMemoryInfo> > const&, HcclDataType, HcclReduceOp, hccl::Stream&, unsigned long long)";  # _ZN4hccl9Transport12RxWithReduceERKSt6vectorINS_22RxWithReduceMemoryInfoESaIS2_EE12HcclDataType12HcclReduceOpRNS_6StreamEy
+        "hccl::Transport::SetDeviceUnavailable(unsigned int)";  # _ZN4hccl9Transport20SetDeviceUnavailableEj
+        "hccl::Transport::SetStopFlag(bool)";  # _ZN4hccl9Transport11SetStopFlagEb
+        "hccl::Transport::SetSupportDataReceivedAck(bool)";  # _ZN4hccl9Transport25SetSupportDataReceivedAckEb
+        "hccl::Transport::Stop()";  # _ZN4hccl9Transport4StopEv
+        "hccl::Transport::Transport(hccl::TransportType, hccl::TransportPara&, void*, std::unique_ptr<hccl::NotifyPool, std::default_delete<hccl::NotifyPool> > const&, hccl::TagMachinePara&, hccl::TransportDeviceP2pData const&, hccl::TransportDeviceIbverbsData const&)";  # _ZN4hccl9TransportC1ENS_13TransportTypeERNS_13TransportParaEPvRKSt10unique_ptrINS_10NotifyPoolESt14default_deleteIS6_EERNS_14TagMachineParaERKNS_22TransportDeviceP2pDataERKNS_26TransportDeviceIbverbsDataE
+        "hccl::Transport::TxAck(hccl::Stream&)";  # _ZN4hccl9Transport5TxAckERNS_6StreamE
+        "hccl::Transport::TxAsync(hccl::UserMemType, unsigned long long, void const*, unsigned long long, hccl::Stream&)";  # _ZN4hccl9Transport7TxAsyncENS_11UserMemTypeEyPKvyRNS_6StreamE
+        "hccl::Transport::TxAsync(std::vector<hccl::TxMemoryInfo, std::allocator<hccl::TxMemoryInfo> >&, hccl::Stream&)";  # _ZN4hccl9Transport7TxAsyncERSt6vectorINS_12TxMemoryInfoESaIS2_EERNS_6StreamE
+        "hccl::Transport::TxData(hccl::UserMemType, unsigned long long, void const*, unsigned long long, hccl::Stream&)";  # _ZN4hccl9Transport6TxDataENS_11UserMemTypeEyPKvyRNS_6StreamE
+        "hccl::Transport::TxDataSignal(hccl::Stream&)";  # _ZN4hccl9Transport12TxDataSignalERNS_6StreamE
+        "hccl::Transport::TxDone(hccl::Stream&)";  # _ZN4hccl9Transport6TxDoneERNS_6StreamE
+        "hccl::Transport::TxEnv(void const*, unsigned long long, hccl::Stream&)";  # _ZN4hccl9Transport5TxEnvEPKvyRNS_6StreamE
+        "hccl::Transport::TxPrepare(hccl::Stream&)";  # _ZN4hccl9Transport9TxPrepareERNS_6StreamE
+        "hccl::Transport::TxWaitDone(hccl::Stream&)";  # _ZN4hccl9Transport10TxWaitDoneERNS_6StreamE
+        "hccl::Transport::TxWithReduce(hccl::UserMemType, unsigned long long, void const*, unsigned long long, HcclDataType, HcclReduceOp, hccl::Stream&)";  # _ZN4hccl9Transport12TxWithReduceENS_11UserMemTypeEyPKvy12HcclDataType12HcclReduceOpRNS_6StreamE
+        "hccl::Transport::TxWithReduce(std::vector<hccl::TxMemoryInfo, std::allocator<hccl::TxMemoryInfo> > const&, HcclDataType, HcclReduceOp, hccl::Stream&)";  # _ZN4hccl9Transport12TxWithReduceERKSt6vectorINS_12TxMemoryInfoESaIS2_EE12HcclDataType12HcclReduceOpRNS_6StreamE
+        "hccl::Transport::UpdateRemoteAddr(void*, void*)";  # _ZN4hccl9Transport16UpdateRemoteAddrEPvS1_
+        "hccl::Transport::Wait(unsigned int, hccl::Stream&, unsigned int)";  # _ZN4hccl9Transport4WaitEjRNS_6StreamEj
+        "hccl::Transport::WaitFin(hccl::Stream&)";  # _ZN4hccl9Transport7WaitFinERNS_6StreamE
+        "hccl::Transport::WaitFinAck(hccl::Stream&)";  # _ZN4hccl9Transport10WaitFinAckERNS_6StreamE
+        "hccl::Transport::~Transport()";  # _ZN4hccl9TransportD1Ev
+        "hccl::TransportMem::Create(hccl::TransportMem::TpType, HcclQpInfoV2 const&, void* const&, hccl::TransportMem::AttrInfo&)";  # _ZN4hccl12TransportMem6CreateENS0_6TpTypeERK12HcclQpInfoV2RKPvRNS0_8AttrInfoE
+        "hccl::TransportMem::Create(hccl::TransportMem::TpType, std::unique_ptr<hccl::NotifyPool, std::default_delete<hccl::NotifyPool> > const&, void* const&, void* const&, hccl::TransportMem::AttrInfo&, bool)";  # _ZN4hccl12TransportMem6CreateENS0_6TpTypeERKSt10unique_ptrINS_10NotifyPoolESt14default_deleteIS3_EERKPvSB_RNS0_8AttrInfoEb
+        "hcclStreamSynchronize(void*, int)";  # _Z21hcclStreamSynchronizePvi
+        "hccl_plf::SendTaskExceptionByMBox(unsigned int, unsigned int, unsigned int, int, unsigned int)";  # _ZN8hccl_plf23SendTaskExceptionByMBoxEjjjij
+        "hrtCacheLastTaskExtendInfo(char const*, unsigned long)";  # _Z26hrtCacheLastTaskExtendInfoPKcm
+        "hrtCtxGetCurrent(void**)";  # _Z16hrtCtxGetCurrentPPv
+        "hrtCtxSetCurrent(void*)";  # _Z16hrtCtxSetCurrentPv
+        "hrtDisableP2P(unsigned int, unsigned int)";  # _Z13hrtDisableP2Pjj
+        "hrtDrvGetLocalDevIDByHostDevID(unsigned int, unsigned int*)";  # _Z30hrtDrvGetLocalDevIDByHostDevIDjPj
+        "hrtDrvMemSmmuQuery(unsigned int, unsigned int*)";  # _Z18hrtDrvMemSmmuQueryjPj
+        "hrtEnableP2P(unsigned int, unsigned int)";  # _Z12hrtEnableP2Pjj
+        "hrtErrMGetErrorContextPub()";  # _Z25hrtErrMGetErrorContextPubv
+        "hrtErrMSetErrorContextPub(Context_Pub)";  # _Z25hrtErrMSetErrorContextPub11Context_Pub
+        "hrtEventCreateWithFlag(void**)";  # _Z22hrtEventCreateWithFlagPPv
+        "hrtGetEventID(void*, unsigned int*)";  # _Z13hrtGetEventIDPvPj
+        "hrtGetHcclV2Support(bool*)";  # _Z19hrtGetHcclV2SupportPb
+        "hrtGetPairDeviceLinkType(unsigned int, unsigned int, LinkTypeInServer&)";  # _Z24hrtGetPairDeviceLinkTypejjR16LinkTypeInServer
+        "hrtGetRaQpStatus(void*, int*)";  # _Z16hrtGetRaQpStatusPvPi
+        "hrtGetStreamId(void*, int&)";  # _Z14hrtGetStreamIdPvRi
+        "hrtHalGetDeviceInfo(unsigned int, int, int, long*)";  # _Z19hrtHalGetDeviceInfojiiPl
+        "hrtHalGetDeviceType(unsigned int, DevType&)";  # _Z19hrtHalGetDeviceTypejR7DevType
+        "hrtHalResourceIdRestore(unsigned int, unsigned int, tagDrvIdType, unsigned int, unsigned int)";  # _Z23hrtHalResourceIdRestorejj12tagDrvIdTypejj
+        "hrtHalSensorNodeRegister(unsigned int, unsigned long*)";  # _Z24hrtHalSensorNodeRegisterjPm
+        "hrtHalSensorNodeUnregister(unsigned int, unsigned long)";  # _Z26hrtHalSensorNodeUnregisterjm
+        "hrtHalSensorNodeUpdateState(unsigned int, unsigned long, int, HcclGeneralEventType)";  # _Z27hrtHalSensorNodeUpdateStatejmi20HcclGeneralEventType
+        "hrtHalStartMC2MaintenanceThread(void (*)(void*), void*, void (*)(void*), void*)";  # _Z31hrtHalStartMC2MaintenanceThreadPFvPvES_S1_S_
+        "hrtMemcpy(void*, unsigned long, void const*, unsigned long, HcclRtMemcpyKind)";  # _Z9hrtMemcpyPvmPKvm16HcclRtMemcpyKind
+        "hrtNotifyReset(void*)";  # _Z14hrtNotifyResetPv
+        "hrtRaCreateEventHandle(int&)";  # _Z22hrtRaCreateEventHandleRi
+        "hrtRaCtlEventHandle(int, void*, int, HcclEpollEvent)";  # _Z19hrtRaCtlEventHandleiPvi14HcclEpollEvent
+        "hrtRaDestroyEventHandle(int&)";  # _Z23hrtRaDestroyEventHandleRi
+        "hrtRaGetDeviceAllNicIP(std::vector<std::vector<hccl::HcclIpAddress, std::allocator<hccl::HcclIpAddress> >, std::allocator<std::vector<hccl::HcclIpAddress, std::allocator<hccl::HcclIpAddress> > > >&)";  # _Z22hrtRaGetDeviceAllNicIPRSt6vectorIS_IN4hccl13HcclIpAddressESaIS1_EESaIS3_EE
+        "hrtRaGetDeviceIP(unsigned int, std::vector<hccl::HcclIpAddress, std::allocator<hccl::HcclIpAddress> >&)";  # _Z16hrtRaGetDeviceIPjRSt6vectorIN4hccl13HcclIpAddressESaIS1_EE
+        "hrtRaGetSingleSocketVnicIpInfo(unsigned int, DeviceIdType, unsigned int, hccl::HcclIpAddress&)";  # _Z30hrtRaGetSingleSocketVnicIpInfoj12DeviceIdTypejRN4hccl13HcclIpAddressE
+        "hrtRaWaitEventHandle(int, std::vector<SocketEventInfo, std::allocator<SocketEventInfo> >&, int, unsigned int, unsigned int&)";  # _Z20hrtRaWaitEventHandleiRSt6vectorI15SocketEventInfoSaIS0_EEijRj
+        "hrtReduceAsync(void*, unsigned long, void const*, unsigned long, aclrtReduceKind, aclDataType, void*)";  # _Z14hrtReduceAsyncPvmPKvm15aclrtReduceKind11aclDataTypeS_
+        "hrtResetDevice(int)";  # _Z14hrtResetDevicei
+        "hrtSetDevice(int)";  # _Z12hrtSetDevicei
+        "hrtStreamActive(void*, void*)";  # _Z15hrtStreamActivePvS_
+        "hrtStreamGetMode(void*, unsigned long*)";  # _Z16hrtStreamGetModePvPm
+        "hrtStreamSetMode(void*, unsigned long)";  # _Z16hrtStreamSetModePvm
+    };
+local:
+    *;
+};

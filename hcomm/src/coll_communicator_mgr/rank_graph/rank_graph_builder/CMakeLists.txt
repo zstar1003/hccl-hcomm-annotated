@@ -1,0 +1,43 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+set(src_list
+    ${CMAKE_CURRENT_SOURCE_DIR}/detour_rules.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/detour_service.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/rank_graph_builder.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/updater_for_64_plus_1.cc
+)
+
+set(rank_graph_builder_include_dirs
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/common
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/phy_topo
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/phy_topo_builder
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/rank_graph
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/rank_table_info
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/topo_info
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/topo/topo_addr_info/include
+)
+
+if(TARGET hcomm)
+    target_sources(hcomm PRIVATE
+        ${src_list}
+        ${CMAKE_CURRENT_SOURCE_DIR}/rank_graph_builder_provider.cc
+    )
+    target_include_directories(hcomm PRIVATE ${rank_graph_builder_include_dirs})
+endif()
+
+if(TARGET hccl_v2)
+    target_sources(hccl_v2 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/rank_graph_builder_bridge.cc
+    )
+    target_include_directories(hccl_v2 BEFORE PRIVATE ${rank_graph_builder_include_dirs})
+endif()

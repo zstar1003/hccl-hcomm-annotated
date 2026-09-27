@@ -1,0 +1,504 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+# hccl_v2 导出符号白名单
+{
+global:
+    CommGetCCLBufSizeCfgV2;
+    HcclAllGatherV2;
+    HcclAllGatherVV2;
+    HcclAllReduceV2;
+    HcclAllocComResourceByTilingV2;
+    HcclAlltoAllV2;
+    HcclAlltoAllVCV2;
+    HcclAlltoAllVV2;
+    HcclBarrierV2;
+    HcclBatchGetV2;
+    HcclBatchPutV2;
+    HcclBatchSendRecvV2;
+    HcclBroadcastV2;
+    HcclCheckTaskServiceExist;
+    HcclCommActivateCommMemoryV2;
+    HcclCommDeactivateCommMemoryV2;
+    HcclCommDestroyV2;
+    HcclCommGraphAllGatherV2;
+    HcclCommGraphGetRankIdV2;
+    HcclCommGraphGetRankSizeV2;
+    HcclCommInitAllV2;
+    HcclCommInitClusterInfoConfigV2;
+    HcclCommInitClusterInfoMemConfigV2;
+    HcclCommInitClusterInfoV2;
+    HcclCommInitRootInfoConfigV2;
+    HcclCommInitRootInfoV2;
+    HcclCommResPrepareV2;
+    HcclCommResumeV2;
+    HcclCommSetMemoryRangeV2;
+    HcclCommSuspendV2;
+    HcclCommUnsetMemoryRangeV2;
+    HcclCommWorkingDevNicSetV2;
+    HcclDpuTaskexpShmemRestore;
+    HcclCreateSubCommConfigV2;
+    HcclDeregisterMemV2;
+    HcclDevMemAcquireV2;
+    HcclDisableMemAccessV2;
+    HcclEnableMemAccessV2;
+    HcclExchangeMemDescV2;
+    HcclFreeOpArgsV2;
+    HcclGetAicpuOpStreamAndNotifyV2;
+    HcclGetAlgExecParamV2;
+    HcclGetCclBuffer;
+    HcclGetCcuTaskInfoLegacy;
+    HcclGetCommAsyncErrorV2;
+    HcclGetCommConfigCapabilityV2;
+    HcclGetCommNameV2;
+    HcclGetConfigV2;
+    HcclGetDpuSteamIdV2;
+    HcclGetHeterogModeV2;
+    HcclGetInstSizeByNetLayerV2;
+    HcclGetInstTopoTypeByNetLayerV2;
+    HcclGetNetLayersV2;
+    HcclGetOpArgsV2;
+    HcclGetRankGraphV2;
+    HcclGetRankSizeV2;
+    HcclGetRootInfoV2;
+    HcclGetTopoDescV2;
+    HcclKernelEntrance;
+    HcclMemClose;
+    HcclMemCloseV2;
+    HcclMemDereg;
+    HcclMemDeregV2;
+    HcclMemExport;
+    HcclMemExportV2;
+    HcclMemImport;
+    HcclMemImportV2;
+    HcclMemReg;
+    HcclMemRegV2;
+    HcclNetDevClose;
+    HcclNetDevCloseV2;
+    HcclNetDevGetAddr; # symbol for business
+    HcclNetDevGetAddrV2;
+    HcclNetDevGetBusAddrV2;
+    HcclNetDevGetNicAddrV2;
+    HcclNetDevOpen;
+    HcclNetDevOpenV2;
+    HcclRecvV2;
+    HcclReduceScatterV2;
+    HcclReduceScatterVV2;
+    HcclReduceV2;
+    HcclRegisterMemV2;
+    HcclScatterV2;
+    HcclSendV2;
+    HcclSetConfigV2;
+    HcclSetOpAlgConfigV2;
+    HcclSetOpCommEngineV2;
+    HcclSetOpCountV2;
+    HcclSetOpDstDataTypeV2;
+    HcclSetOpReduceTypeV2;
+    HcclSetOpSrcDataTypeV2;
+    HcclSnapshotGetBufSize;
+    HcclSnapshotRecoverAllComms;
+    HcclSnapshotSave;
+    HcclTaskRegisterProfV2;
+    HcclTaskRegisterV2;
+    HcclTaskReportRegisterV2;
+    HcclTaskUnRegisterV2;
+    HcclUpdateCommKernelEntrance;
+    HcomAllGatherV2;
+    HcomAllGatherVV2;
+    HcomAllReduceV2;
+    HcomAlltoAllV2;
+    HcomAlltoAllVCV2;
+    HcomAlltoAllVV2;
+    HcomBroadcastV2;
+    HcomCalcNumBlocksV2;
+    HcomCalcTaskNumV2;
+    HcomCheckCommValidityV2;
+    HcomCreateCommCclBufV2;
+    HcomCreateGroupImplV2;
+    HcomDestroyGroupImplV2;
+    HcomDestroyV2;
+    HcomGetAlltoAllStagedWorkSpaceMemSizeV2;
+    HcomGetAlltoAllvcStagedWorkSpaceMemSizeV2;
+    HcomGetCommCCLBufferSizeV2;
+    HcomGetCommV2;
+    HcomGetDevIdV2;
+    HcomGetDevTypeV2;
+    HcomGetGroupParamsV2;
+    HcomGetGroupRankFromWorldRankV2;
+    HcomGetInCclBufV2;
+    HcomGetInitStatusV2;
+    HcomGetL0TopoTypeExV2;
+    HcomGetLocalRankIdV2;
+    HcomGetLocalRankSizeV2;
+    HcomGetOutCclBufV2;
+    HcomGetRankIdV2;
+    HcomGetRankSizeExV2;
+    HcomGetRankSizeV2;
+    HcomGetTopoDescV2;
+    HcomGetWorkspaceMemSizeV2;
+    HcomGetWorkspaceSubStreamNumV2;
+    HcomGetWorldRankFromGroupRankV2;
+    HcomGraphAllReduceV2;
+    HcomGraphBroadcastV2;
+    HcomGraphReceiveV2;
+    HcomGraphReduceScatterV2;
+    HcomGraphReduceV2;
+    HcomGraphSelectAlgV2;
+    HcomGraphSendV2;
+    HcomInitByFileV2;
+    HcomInitByStringV2;
+    HcomMc2AiCpuStreamAllocAndGetV2;
+    HcomReceiveV2;
+    HcomReduceScatterV2;
+    HcomReduceScatterVV2;
+    HcomReduceV2;
+    HcomReleaseSubCommsV2;
+    HcomSelectAlgV2;
+    HcomSendV2;
+    HcomSetAivClearEnableV2;
+    HcomSetAivCoreLimitV2;
+    HcomSetGlobalWorkSpaceV2;
+    HcomSetWorkspaceResourceV2;
+    HcomSupportDeterministicOptimV2;
+    HcomUnloadTaskV2;
+    HcomGetCcuTaskInfo;
+    HcommFlushV2;
+    HrtResetXpuDevice;
+    HrtSetXpuDevice;
+    extern "C++" {
+        "Hccl::AicpuResPackageHelper::GetPackedData(std::vector<Hccl::ModuleData, std::allocator<Hccl::ModuleData> >&) const";  # _ZNK4Hccl21AicpuResPackageHelper13GetPackedDataERSt6vectorINS_10ModuleDataESaIS2_EE
+        "Hccl::Buffer::Buffer(unsigned long, unsigned long)";  # _ZN4Hccl6BufferC1Emm
+        "Hccl::Buffer::Buffer(unsigned long, unsigned long, HcclMemType, char const*)";  # _ZN4Hccl6BufferC1Emm11HcclMemTypePKc
+        "Hccl::Buffer::Contains(unsigned long, unsigned long) const";  # _ZNK4Hccl6Buffer8ContainsEmm
+        "Hccl::Buffer::GetAddr() const";  # _ZNK4Hccl6Buffer7GetAddrEv
+        "Hccl::Buffer::GetMemInfo() const";  # _ZNK4Hccl6Buffer10GetMemInfoEv
+        "Hccl::Buffer::GetMemType() const";  # _ZNK4Hccl6Buffer10GetMemTypeEv
+        "Hccl::Buffer::GetSize() const";  # _ZNK4Hccl6Buffer7GetSizeEv
+        "Hccl::CcuComponent::AllocChannels(unsigned char, Hccl::ChannelPara const&, std::vector<Hccl::CcuChannelInfo, std::allocator<Hccl::CcuChannelInfo> >&)";  # _ZN4Hccl12CcuComponent13AllocChannelsEhRKNS_11ChannelParaERSt6vectorINS_14CcuChannelInfoESaIS5_EE
+        "Hccl::CcuComponent::AllocCke(unsigned char, unsigned int, std::vector<hcomm::ResInfo, std::allocator<hcomm::ResInfo> >&)";  # _ZN4Hccl12CcuComponent8AllocCkeEhjRSt6vectorIN5hcomm7ResInfoESaIS3_EE
+        "Hccl::CcuComponent::AllocIns(unsigned char, unsigned int, hcomm::ResInfo&)";  # _ZN4Hccl12CcuComponent8AllocInsEhjRN5hcomm7ResInfoE
+        "Hccl::CcuComponent::AllocXn(unsigned char, unsigned int, std::vector<hcomm::ResInfo, std::allocator<hcomm::ResInfo> >&)";  # _ZN4Hccl12CcuComponent7AllocXnEhjRSt6vectorIN5hcomm7ResInfoESaIS3_EE
+        "Hccl::CcuComponent::CleanDieCkes(unsigned char) const";  # _ZNK4Hccl12CcuComponent12CleanDieCkesEh
+        "Hccl::CcuComponent::CleanTaskKillState() const";  # _ZNK4Hccl12CcuComponent18CleanTaskKillStateEv
+        "Hccl::CcuComponent::ConfigChannel(unsigned char, Hccl::ChannelCfg const&)";  # _ZN4Hccl12CcuComponent13ConfigChannelEhRKNS_10ChannelCfgE
+        "Hccl::CcuComponent::Deinit()";  # _ZN4Hccl12CcuComponent6DeinitEv
+        "Hccl::CcuComponent::GetCcuResourceSpaceBufInfo(unsigned char, unsigned long&, unsigned long&) const";  # _ZNK4Hccl12CcuComponent26GetCcuResourceSpaceBufInfoEhRmS1_
+        "Hccl::CcuComponent::GetCcuResourceSpaceTokenInfo(unsigned char, unsigned long&, unsigned long&) const";  # _ZNK4Hccl12CcuComponent28GetCcuResourceSpaceTokenInfoEhRmS1_
+        "Hccl::CcuComponent::GetDieEnableFlags() const";  # _ZNK4Hccl12CcuComponent17GetDieEnableFlagsEv
+        "Hccl::CcuComponent::GetInsConsecutiveRemainSize(unsigned char) const";  # _ZNK4Hccl12CcuComponent27GetInsConsecutiveRemainSizeEh
+        "Hccl::CcuComponent::GetInstance(int)";  # _ZN4Hccl12CcuComponent11GetInstanceEi
+        "Hccl::CcuComponent::GetLoopChannelId(unsigned char, unsigned char, unsigned int&) const";  # _ZNK4Hccl12CcuComponent16GetLoopChannelIdEhhRj
+        "Hccl::CcuComponent::Init()";  # _ZN4Hccl12CcuComponent4InitEv
+        "Hccl::CcuComponent::ReleaseChannel(unsigned char, unsigned int)";  # _ZN4Hccl12CcuComponent14ReleaseChannelEhj
+        "Hccl::CcuComponent::ReleaseCke(unsigned char, std::vector<hcomm::ResInfo, std::allocator<hcomm::ResInfo> > const&)";  # _ZN4Hccl12CcuComponent10ReleaseCkeEhRKSt6vectorIN5hcomm7ResInfoESaIS3_EE
+        "Hccl::CcuComponent::ReleaseIns(unsigned char, hcomm::ResInfo const&)";  # _ZN4Hccl12CcuComponent10ReleaseInsEhRKN5hcomm7ResInfoE
+        "Hccl::CcuComponent::ReleaseXn(unsigned char, std::vector<hcomm::ResInfo, std::allocator<hcomm::ResInfo> > const&)";  # _ZN4Hccl12CcuComponent9ReleaseXnEhRKSt6vectorIN5hcomm7ResInfoESaIS3_EE
+        "Hccl::CcuComponent::SetTaskKill()";  # _ZN4Hccl12CcuComponent11SetTaskKillEv
+        "Hccl::CcuComponent::SetTaskKillDone()";  # _ZN4Hccl12CcuComponent15SetTaskKillDoneEv
+        "Hccl::CcuResBatchAllocator::AllocResHandle(hcomm::CcuResReq const&, void*&)";  # _ZN4Hccl20CcuResBatchAllocator14AllocResHandleERKN5hcomm9CcuResReqERPv
+        "Hccl::CcuResBatchAllocator::Deinit()";  # _ZN4Hccl20CcuResBatchAllocator6DeinitEv
+        "Hccl::CcuResBatchAllocator::GetAllocatableMaxBlockResNum(Hccl::ResType, unsigned char, unsigned int&) const";  # _ZNK4Hccl20CcuResBatchAllocator28GetAllocatableMaxBlockResNumENS_7ResTypeEhRj
+        "Hccl::CcuResBatchAllocator::GetInstance(int)";  # _ZN4Hccl20CcuResBatchAllocator11GetInstanceEi
+        "Hccl::CcuResBatchAllocator::GetResource(void* const&, hcomm::CcuResRepository&)";  # _ZN4Hccl20CcuResBatchAllocator11GetResourceERKPvRN5hcomm16CcuResRepositoryE
+        "Hccl::CcuResBatchAllocator::Init()";  # _ZN4Hccl20CcuResBatchAllocator4InitEv
+        "Hccl::CcuResBatchAllocator::QueryRemainRes(unsigned char, Hccl::ResType, unsigned int&) const";  # _ZNK4Hccl20CcuResBatchAllocator14QueryRemainResEhNS_7ResTypeERj
+        "Hccl::CcuResBatchAllocator::ReleaseResHandle(void* const&)";  # _ZN4Hccl20CcuResBatchAllocator16ReleaseResHandleERKPv
+        "Hccl::CcuResSpecifications::Deinit()";  # _ZN4Hccl20CcuResSpecifications6DeinitEv
+        "Hccl::CcuResSpecifications::GetCcuVersion() const";  # _ZNK4Hccl20CcuResSpecifications13GetCcuVersionEv
+        "Hccl::CcuResSpecifications::GetInstance(int)";  # _ZN4Hccl20CcuResSpecifications11GetInstanceEi
+        "Hccl::CcuResSpecifications::GetInstructionNum(unsigned char, unsigned int&) const";  # _ZNK4Hccl20CcuResSpecifications17GetInstructionNumEhRj
+        "Hccl::CcuResSpecifications::GetMissionKey(unsigned char, unsigned int&) const";  # _ZNK4Hccl20CcuResSpecifications13GetMissionKeyEhRj
+        "Hccl::CcuResSpecifications::GetMissionNum(unsigned char, unsigned int&) const";  # _ZNK4Hccl20CcuResSpecifications13GetMissionNumEhRj
+        "Hccl::CcuResSpecifications::GetXnBaseAddr(unsigned char, unsigned long&) const";  # _ZNK4Hccl20CcuResSpecifications13GetXnBaseAddrEhRm
+        "Hccl::CcuResSpecifications::Init()";  # _ZN4Hccl20CcuResSpecifications4InitEv
+        "Hccl::CheckCollOperator(Hccl::CollOperatorDef const&, Hccl::CollOperatorDef const&)";  # _ZN4Hccl17CheckCollOperatorERKNS_15CollOperatorDefES2_
+        "Hccl::CollOpToString(Hccl::BaseCollOperatorDef const&)";  # _ZN4Hccl14CollOpToStringERKNS_19BaseCollOperatorDefE
+        "Hccl::CollOperatorDef::GetPackedData(std::vector<char, std::allocator<char> >&)";  # _ZN4Hccl15CollOperatorDef13GetPackedDataERSt6vectorIcSaIcEE
+        "Hccl::CommunicatorImplLiteMgr::GetInstance()";  # _ZN4Hccl23CommunicatorImplLiteMgr11GetInstanceEv
+        "Hccl::CtxMgrImp::Deinit()";  # _ZN4Hccl9CtxMgrImp6DeinitEv
+        "Hccl::CtxMgrImp::GetInstance(int)";  # _ZN4Hccl9CtxMgrImp11GetInstanceEi
+        "Hccl::CtxMgrImp::Init()";  # _ZN4Hccl9CtxMgrImp4InitEv
+        "Hccl::DevBuffer::Create(unsigned long, unsigned long)";  # _ZN4Hccl9DevBuffer6CreateEmm
+        "Hccl::DevBuffer::DevBuffer(unsigned long)";  # _ZN4Hccl9DevBufferC1Em
+        "Hccl::DevBuffer::~DevBuffer()";  # _ZN4Hccl9DevBufferD1Ev
+        "Hccl::DevCapability::GetInstance()";  # _ZN4Hccl13DevCapability11GetInstanceEv
+        "Hccl::DevCapability::Init(Hccl::DevType)";  # _ZN4Hccl13DevCapability4InitENS_7DevTypeE
+        "Hccl::DevUbConnection::DetachJetty()";  # _ZN4Hccl15DevUbConnection11DetachJettyEv
+        "Hccl::DevUbConnection::GetJettyInfo(Hccl::DevUbConnection::JettyInfo&) const";  # _ZNK4Hccl15DevUbConnection12GetJettyInfoERNS0_9JettyInfoE
+        "Hccl::DevUbConnection::SetCqContextInfo(CqContext&) const";  # _ZNK4Hccl15DevUbConnection16SetCqContextInfoER9CqContext
+        "Hccl::DevUbConnection::SetMaxReadSize(unsigned int)";  # _ZN4Hccl15DevUbConnection14SetMaxReadSizeEj
+        "Hccl::DevUbConnection::SetMaxWriteSize(unsigned int)";  # _ZN4Hccl15DevUbConnection15SetMaxWriteSizeEj
+        "Hccl::DevUbConnection::SetSharedJettyFields(unsigned long long, void*, unsigned int, unsigned long, unsigned long, unsigned char const*, unsigned int, unsigned int, unsigned long long, Hccl::CqCreateInfo, unsigned int, void*, std::function<void (void*)>, std::function<HcclResult (unsigned char const*, unsigned int, bool&, unsigned long long&, void*&, unsigned int&)>, std::function<HcclResult (unsigned char const*, unsigned int, unsigned long long, void*, unsigned int)>)";  # _ZN4Hccl15DevUbConnection20SetSharedJettyFieldsEyPvjmmPKhjjyNS_12CqCreateInfoEjS1_St8functionIFvS1_EES5_IF10HcclResultS3_jRbRyRS1_RjEES5_IFS8_S3_jyS1_jEE
+        "Hccl::DevUbConnection::SetSqContextInfo(SqContext&)";  # _ZN4Hccl15DevUbConnection16SetSqContextInfoER9SqContext
+        "Hccl::DevUbCtpConnection::DevUbCtpConnection(void*, Hccl::IpAddress const&, Hccl::IpAddress const&, Hccl::OpMode, bool, Hccl::HrtUbJfcMode, Hccl::IpAddress const&, Hccl::IpAddress const&, unsigned char, unsigned char, CommEngine, unsigned int, Hccl::DevUbConnection::JettyMode)";  # _ZN4Hccl18DevUbCtpConnectionC1EPvRKNS_9IpAddressES4_NS_6OpModeEbNS_12HrtUbJfcModeES4_S4_hh10CommEnginejNS_15DevUbConnection9JettyModeE
+        "Hccl::DevUbRtpConnection::DevUbRtpConnection(void*, Hccl::IpAddress const&, Hccl::IpAddress const&, Hccl::OpMode, bool, Hccl::HrtUbJfcMode, Hccl::IpAddress const&, Hccl::IpAddress const&, unsigned char, unsigned char, CommEngine, unsigned int, Hccl::DevUbConnection::JettyMode)";  # _ZN4Hccl18DevUbRtpConnectionC1EPvRKNS_9IpAddressES4_NS_6OpModeEbNS_12HrtUbJfcModeES4_S4_hh10CommEnginejNS_15DevUbConnection9JettyModeE
+        "Hccl::DevUbTpConnection::DevUbTpConnection(void*, Hccl::IpAddress const&, Hccl::IpAddress const&, Hccl::OpMode, bool, Hccl::HrtUbJfcMode, Hccl::IpAddress const&, Hccl::IpAddress const&, unsigned char, unsigned char, CommEngine, unsigned int, Hccl::DevUbConnection::JettyMode)";  # _ZN4Hccl17DevUbTpConnectionC1EPvRKNS_9IpAddressES4_NS_6OpModeEbNS_12HrtUbJfcModeES4_S4_hh10CommEnginejNS_15DevUbConnection9JettyModeE
+        "Hccl::DevUbUboeConnection::DevUbUboeConnection(void*, Hccl::IpAddress const&, Hccl::IpAddress const&, Hccl::OpMode, bool, Hccl::HrtUbJfcMode, Hccl::IpAddress const&, Hccl::IpAddress const&, unsigned char, unsigned char, CommEngine, unsigned int, Hccl::DevUbConnection::JettyMode)";  # _ZN4Hccl19DevUbUboeConnectionC1EPvRKNS_9IpAddressES4_NS_6OpModeEbNS_12HrtUbJfcModeES4_S4_hh10CommEnginejNS_15DevUbConnection9JettyModeE
+        "Hccl::DfxProfilingHandlerLite::GetInstance()";  # _ZN4Hccl23DfxProfilingHandlerLite11GetInstanceEv
+        "Hccl::DlProfFunction::GetInstance()";  # _ZN4Hccl14DlProfFunction11GetInstanceEv
+        "Hccl::EnvAlgoConfig::GetHcclAccelerator() const";  # _ZNK4Hccl13EnvAlgoConfig18GetHcclAcceleratorEv
+        "Hccl::EnvConfig::GetAlgoConfig()";  # _ZN4Hccl9EnvConfig13GetAlgoConfigEv
+        "Hccl::EnvConfig::GetDetourConfig()";  # _ZN4Hccl9EnvConfig15GetDetourConfigEv
+        "Hccl::EnvConfig::GetHostNicConfig()";  # _ZN4Hccl9EnvConfig16GetHostNicConfigEv
+        "Hccl::EnvConfig::GetInstance()";  # _ZN4Hccl9EnvConfig11GetInstanceEv
+        "Hccl::EnvConfig::GetLogConfig()";  # _ZN4Hccl9EnvConfig12GetLogConfigEv
+        "Hccl::EnvConfig::GetRdmaConfig()";  # _ZN4Hccl9EnvConfig13GetRdmaConfigEv
+        "Hccl::EnvConfig::GetRtsConfig()";  # _ZN4Hccl9EnvConfig12GetRtsConfigEv
+        "Hccl::EnvConfig::GetSocketConfig()";  # _ZN4Hccl9EnvConfig15GetSocketConfigEv
+        "Hccl::EnvHostNicConfig::GetControlIfIp() const";  # _ZNK4Hccl16EnvHostNicConfig14GetControlIfIpEv
+        "Hccl::EnvHostNicConfig::GetDeviceSocketPortRange() const";  # _ZNK4Hccl16EnvHostNicConfig24GetDeviceSocketPortRangeEv
+        "Hccl::EnvHostNicConfig::GetHostSocketPortRange() const";  # _ZNK4Hccl16EnvHostNicConfig22GetHostSocketPortRangeEv
+        "Hccl::EnvHostNicConfig::GetIfBasePort() const";  # _ZNK4Hccl16EnvHostNicConfig13GetIfBasePortEv
+        "Hccl::EnvHostNicConfig::GetSocketIfName() const";  # _ZNK4Hccl16EnvHostNicConfig15GetSocketIfNameEv
+        "Hccl::EnvHostNicConfig::GetWhiteListFile() const";  # _ZNK4Hccl16EnvHostNicConfig16GetWhiteListFileEv
+        "Hccl::EnvHostNicConfig::GetWhitelistDisable() const";  # _ZNK4Hccl16EnvHostNicConfig19GetWhitelistDisableEv
+        "Hccl::EnvLogConfig::GetDfsConfig() const";  # _ZNK4Hccl12EnvLogConfig12GetDfsConfigEv
+        "Hccl::EnvRdmaConfig::GetMultiQpSrcPortConfig() const";  # _ZNK4Hccl13EnvRdmaConfig23GetMultiQpSrcPortConfigEv
+        "Hccl::EnvRdmaConfig::GetHostRdmaUdpPortsList() const";  # _ZNK4Hccl13EnvRdmaConfig23GetHostRdmaUdpPortsListEv
+        "Hccl::EnvRdmaConfig::GetRdmaMultiQpThreshold() const";  # _ZNK4Hccl13EnvRdmaConfig23GetRdmaMultiQpThresholdEv
+        "Hccl::EnvRdmaConfig::GetRdmaQueueNum() const";  # _ZNK4Hccl13EnvRdmaConfig15GetRdmaQueueNumEv
+        "Hccl::EnvRdmaConfig::GetRdmaRetryCnt() const";  # _ZNK4Hccl13EnvRdmaConfig15GetRdmaRetryCntEv
+        "Hccl::EnvRdmaConfig::GetRdmaServerLevel() const";  # _ZNK4Hccl13EnvRdmaConfig18GetRdmaServerLevelEv
+        "Hccl::EnvRdmaConfig::GetRdmaTimeOut() const";  # _ZNK4Hccl13EnvRdmaConfig14GetRdmaTimeOutEv
+        "Hccl::EnvRdmaConfig::GetRdmaTrafficClass() const";  # _ZNK4Hccl13EnvRdmaConfig19GetRdmaTrafficClassEv
+        "Hccl::EnvRtsConfig::GetExecTimeOut() const";  # _ZNK4Hccl12EnvRtsConfig14GetExecTimeOutEv
+        "Hccl::EnvSocketConfig::GetLinkTimeOut() const";  # _ZNK4Hccl15EnvSocketConfig14GetLinkTimeOutEv
+        "Hccl::EnvSocketConfig::GetSocketFamily() const";  # _ZNK4Hccl15EnvSocketConfig15GetSocketFamilyEv
+        "Hccl::ExceptionInfo::GetErrorCode(Hccl::ExceptionType const&)";  # _ZN4Hccl13ExceptionInfo12GetErrorCodeERKNS_13ExceptionTypeE
+        "Hccl::ExceptionInfo::GetErrorMsg(Hccl::ExceptionType const&)";  # _ZN4Hccl13ExceptionInfo11GetErrorMsgERKNS_13ExceptionTypeE
+        "Hccl::GetMultiQpPortsNumByIpPair(Hccl::MultiQpSrcPortConfig const&, Hccl::IpAddress const&, Hccl::IpAddress const&)";  # _ZN4Hccl26GetMultiQpPortsNumByIpPairERKNS_20MultiQpSrcPortConfigERKNS_9IpAddressES5_
+        "Hccl::GetMultiQpSrcPortsByIpPair(Hccl::MultiQpSrcPortConfig const&, Hccl::IpAddress const&, Hccl::IpAddress const&)";  # _ZN4Hccl26GetMultiQpSrcPortsByIpPairERKNS_20MultiQpSrcPortConfigERKNS_9IpAddressES5_
+        "Hccl::ParseHostRdmaUdpPorts(std::string const&, std::vector<unsigned short, std::allocator<unsigned short> >&)";  # _ZN4Hccl21ParseHostRdmaUdpPortsERKSsRSt6vectorItSaItEE
+        "Hccl::GetUbToken()";  # _ZN4Hccl10GetUbTokenEv
+        "Hccl::GlobalMirrorTasks::FindTaskInfo(unsigned int, unsigned int, unsigned int, Hccl::TaskInfo*&) const";  # _ZNK4Hccl17GlobalMirrorTasks12FindTaskInfoEjjjRPNS_8TaskInfoE
+        "Hccl::GlobalMirrorTasks::GetQueue(unsigned int, unsigned int) const";  # _ZNK4Hccl17GlobalMirrorTasks8GetQueueEjj
+        "Hccl::GlobalMirrorTasks::Instance()";  # _ZN4Hccl17GlobalMirrorTasks8InstanceEv
+        "Hccl::HashCombine(std::initializer_list<unsigned long>)";  # _ZN4Hccl11HashCombineESt16initializer_listImE
+        "Hccl::HcclCommunicator::GetCclBufferSharedPtr(std::shared_ptr<Hccl::DevBuffer>&)";  # _ZN4Hccl16HcclCommunicator21GetCclBufferSharedPtrERSt10shared_ptrINS_9DevBufferEE
+        "Hccl::HcclCommunicator::GetRankGraphV2(void*&)";  # _ZN4Hccl16HcclCommunicator14GetRankGraphV2ERPv
+        "Hccl::HcclCommunicator::GetRankInParentComm()";  # _ZN4Hccl16HcclCommunicator19GetRankInParentCommEv
+        "Hccl::HcclCommunicator::GetRankIpPortMap(std::shared_ptr<std::unordered_map<unsigned int, std::unordered_map<Hccl::IpAddress, unsigned int, std::hash<Hccl::IpAddress>, std::equal_to<Hccl::IpAddress>, std::allocator<std::pair<Hccl::IpAddress const, unsigned int> > >, std::hash<unsigned int>, std::equal_to<unsigned int>, std::allocator<std::pair<unsigned int const, std::unordered_map<Hccl::IpAddress, unsigned int, std::hash<Hccl::IpAddress>, std::equal_to<Hccl::IpAddress>, std::allocator<std::pair<Hccl::IpAddress const, unsigned int> > > > > > >&)";  # _ZN4Hccl16HcclCommunicator16GetRankIpPortMapERSt10shared_ptrISt13unordered_mapIjS2_INS_9IpAddressEjSt4hashIS3_ESt8equal_toIS3_ESaISt4pairIKS3_jEEES4_IjES6_IjESaIS8_IKjSC_EEEE
+        "Hccl::HcclCommunicator::SetAccelerator(int, bool)";  # _ZN4Hccl16HcclCommunicator14SetAcceleratorEib
+        "Hccl::HccpHdcManager::DeInit(unsigned int)";  # _ZN4Hccl14HccpHdcManager6DeInitEj
+        "Hccl::HccpHdcManager::GetInstance()";  # _ZN4Hccl14HccpHdcManager11GetInstanceEv
+        "Hccl::HccpHdcManager::Init(unsigned int)";  # _ZN4Hccl14HccpHdcManager4InitEj
+        "Hccl::HccpPeerManager::DeInit(int)";  # _ZN4Hccl15HccpPeerManager6DeInitEi
+        "Hccl::HccpPeerManager::GetInstance()";  # _ZN4Hccl15HccpPeerManager11GetInstanceEv
+        "Hccl::HccpPeerManager::Init(int)";  # _ZN4Hccl15HccpPeerManager4InitEi
+        "Hccl::HccpTlvHdcManager::GetInstance()";  # _ZN4Hccl17HccpTlvHdcManager11GetInstanceEv
+        "Hccl::HccpTlvHdcManager::GetTlvHandle(int)";  # _ZN4Hccl17HccpTlvHdcManager12GetTlvHandleEi
+        "Hccl::HostBuffer::HostBuffer(unsigned long)";  # _ZN4Hccl10HostBufferC1Em
+        "Hccl::HostSocketHandleManager::Create(unsigned int, Hccl::IpAddress const&)";  # _ZN4Hccl23HostSocketHandleManager6CreateEjRKNS_9IpAddressE
+        "Hccl::HostSocketHandleManager::Destroy(unsigned int, Hccl::IpAddress const&)";  # _ZN4Hccl23HostSocketHandleManager7DestroyEjRKNS_9IpAddressE
+        "Hccl::HostSocketHandleManager::Get(unsigned int, Hccl::IpAddress const&)";  # _ZN4Hccl23HostSocketHandleManager3GetEjRKNS_9IpAddressE
+        "Hccl::HostSocketHandleManager::GetInstance()";  # _ZN4Hccl23HostSocketHandleManager11GetInstanceEv
+        "Hccl::HostUbConnection::GetCqVa() const";  # _ZNK4Hccl16HostUbConnection7GetCqVaEv
+        "Hccl::HostUbConnection::GetJettyVa() const";  # _ZNK4Hccl16HostUbConnection10GetJettyVaEv
+        "Hccl::HostUbConnection::GetTJettyVa() const";  # _ZNK4Hccl16HostUbConnection11GetTJettyVaEv
+        "Hccl::HostUbCtpConnection::HostUbCtpConnection(void*, Hccl::IpAddress const&, Hccl::IpAddress const&, Hccl::OpMode, Hccl::HrtUbJfcMode, unsigned char)";  # _ZN4Hccl19HostUbCtpConnectionC1EPvRKNS_9IpAddressES4_NS_6OpModeENS_12HrtUbJfcModeEh
+        "Hccl::HostUbTpConnection::HostUbTpConnection(void*, Hccl::IpAddress const&, Hccl::IpAddress const&, Hccl::OpMode, Hccl::HrtUbJfcMode, unsigned char)";  # _ZN4Hccl18HostUbTpConnectionC1EPvRKNS_9IpAddressES4_NS_6OpModeENS_12HrtUbJfcModeEh
+        "Hccl::HrtDeviceAbortRegCallBack(int (*)(int, aclrtDeviceTaskAbortStage, unsigned int, void*), void*, std::string const&)";  # _ZN4Hccl25HrtDeviceAbortRegCallBackEPFii25aclrtDeviceTaskAbortStagejPvES1_RKSs
+        "Hccl::HrtFree(void*)";  # _ZN4Hccl7HrtFreeEPv
+        "Hccl::HrtGetDevice()";  # _ZN4Hccl12HrtGetDeviceEv
+        "Hccl::HrtGetDeviceCount()";  # _ZN4Hccl17HrtGetDeviceCountEv
+        "Hccl::HrtGetDevicePhyIdByIndex(int)";  # _ZN4Hccl24HrtGetDevicePhyIdByIndexEi
+        "Hccl::HrtGetDevicePhyIdByUserDevId(int)";  # _ZN4Hccl28HrtGetDevicePhyIdByUserDevIdEi
+        "Hccl::HrtGetDeviceType()";  # _ZN4Hccl16HrtGetDeviceTypeEv
+        "Hccl::HrtGetHostIf(unsigned int)";  # _ZN4Hccl12HrtGetHostIfEj
+        "Hccl::HrtGetMainboardId(unsigned int, Hccl::HcclMainboardId&)";  # _ZN4Hccl17HrtGetMainboardIdEjRNS_15HcclMainboardIdE
+        "Hccl::HrtMalloc(unsigned long long, int)";  # _ZN4Hccl9HrtMallocEyi
+        "Hccl::HrtMemcpy(void*, unsigned long, void const*, unsigned long, Hccl::tagRtMemcpyKind)";  # _ZN4Hccl9HrtMemcpyEPvmPKvmNS_15tagRtMemcpyKindE
+        "Hccl::HrtMemset(void*, unsigned long, unsigned long)";  # _ZN4Hccl9HrtMemsetEPvmm
+        "Hccl::HrtRaCreateQpWithCq(void*, int, int, void*, void*, Hccl::QpInfoDef&, bool)";  # _ZN4Hccl19HrtRaCreateQpWithCqEPviiS0_S0_RNS_9QpInfoDefEb
+        "Hccl::HrtRaDestroyQpWithCq(Hccl::QpInfoDef const&, bool)";  # _ZN4Hccl20HrtRaDestroyQpWithCqERKNS_9QpInfoDefEb
+        "Hccl::HrtRaGetTlsStatus(RaInfo*, Hccl::TlsStatus&)";  # _ZN4Hccl17HrtRaGetTlsStatusEP6RaInfoRNS_9TlsStatusE
+        "Hccl::HrtRaGetTpAttrAsync(unsigned int, void*, unsigned long, unsigned int&, TpAttr&, unsigned long long&)";  # _ZN4Hccl19HrtRaGetTpAttrAsyncEjPvmRjR6TpAttrRy
+        "Hccl::HrtRaNdaCqCreate(void*, NdaOps*, unsigned int, unsigned int, NdaCqInfo*, void**)";  # _ZN4Hccl16HrtRaNdaCqCreateEPvP6NdaOpsjjP9NdaCqInfoPS0_
+        "Hccl::HrtRaNdaCqDestroy(void*, void*)";  # _ZN4Hccl17HrtRaNdaCqDestroyEPvS0_
+        "Hccl::HrtRaNdaQpCreate(void*, NdaOps*, unsigned int, NdaCqInfo*, NdaQpInfo*, void**)";  # _ZN4Hccl16HrtRaNdaQpCreateEPvP6NdaOpsjP9NdaCqInfoP9NdaQpInfoPS0_
+        "Hccl::HrtRaQpDestroy(void*)";  # _ZN4Hccl14HrtRaQpDestroyEPv
+        "Hccl::HrtRaRdmaDeInit(void*, Hccl::HrtNetworkMode)";  # _ZN4Hccl15HrtRaRdmaDeInitEPvNS_14HrtNetworkModeE
+        "Hccl::HrtRaRdmaInit(Hccl::HrtNetworkMode, Hccl::RaInterface&, void*&)";  # _ZN4Hccl13HrtRaRdmaInitENS_14HrtNetworkModeERNS_11RaInterfaceERPv
+        "Hccl::HrtRaSetTpAttrAsync(void*, unsigned long, unsigned int, TpAttr&, unsigned long long&)";  # _ZN4Hccl19HrtRaSetTpAttrAsyncEPvmjR6TpAttrRy
+        "Hccl::HrtRaSocketGetVnicIpInfos(unsigned int, Hccl::DeviceIdType, unsigned int, Hccl::IpAddress&)";  # _ZN4Hccl25HrtRaSocketGetVnicIpInfosEjNS_12DeviceIdTypeEjRNS_9IpAddressE
+        "Hccl::HrtRaSocketSetWhiteListStatus(unsigned int)";  # _ZN4Hccl29HrtRaSocketSetWhiteListStatusEj
+        "Hccl::HrtRaSocketWhiteListAdd(void*, std::vector<Hccl::RaSocketWhitelist, std::allocator<Hccl::RaSocketWhitelist> >&)";  # _ZN4Hccl23HrtRaSocketWhiteListAddEPvRSt6vectorINS_17RaSocketWhitelistESaIS2_EE
+        "Hccl::HrtRaSocketWhiteListDel(void*, std::vector<Hccl::RaSocketWhitelist, std::allocator<Hccl::RaSocketWhitelist> >&)";  # _ZN4Hccl23HrtRaSocketWhiteListDelEPvRSt6vectorINS_17RaSocketWhitelistESaIS2_EE
+        "Hccl::HrtRaUbDestroyJetty(unsigned long long)";  # _ZN4Hccl19HrtRaUbDestroyJettyEy
+        "Hccl::HrtRaUbDestroyJfc(void*, unsigned long long)";  # _ZN4Hccl17HrtRaUbDestroyJfcEPvy
+        "Hccl::HrtRaUbUnimportJetty(void*, unsigned long long)";  # _ZN4Hccl20HrtRaUbUnimportJettyEPvy
+        "Hccl::HrtRaWaitEventHandle(int, std::vector<Hccl::SocketEventInfo, std::allocator<Hccl::SocketEventInfo> >&, int, unsigned int, unsigned int&)";  # _ZN4Hccl20HrtRaWaitEventHandleEiRSt6vectorINS_15SocketEventInfoESaIS1_EEijRj
+        "Hccl::HrtResetDevice(int)";  # _ZN4Hccl14HrtResetDeviceEi
+        "Hccl::HrtSetDevice(int)";  # _ZN4Hccl12HrtSetDeviceEi
+        "Hccl::HrtUnregTaskExceptionCallbackByModule(void (*)(rtExceptionInfo*))";  # _ZN4Hccl37HrtUnregTaskExceptionCallbackByModuleEPFvP15rtExceptionInfoE
+        "Hccl::IAicpuTsThread::IAicpuTsThread(unsigned int, unsigned int, unsigned int, unsigned int)";  # _ZN4Hccl14IAicpuTsThreadC1Ejjjj
+        "Hccl::IAicpuTsThread::LaunchTask() const";  # _ZNK4Hccl14IAicpuTsThread10LaunchTaskEv
+        "Hccl::IAicpuTsThread::NotifyRecordLoc(unsigned int) const";  # _ZNK4Hccl14IAicpuTsThread15NotifyRecordLocEj
+        "Hccl::IAicpuTsThread::NotifyWait(unsigned int, unsigned int) const";  # _ZNK4Hccl14IAicpuTsThread10NotifyWaitEjj
+        "Hccl::IAicpuTsThread::SdmaCopy(unsigned long, unsigned long, unsigned long) const";  # _ZNK4Hccl14IAicpuTsThread8SdmaCopyEmmm
+        "Hccl::IAicpuTsThread::SdmaReduce(unsigned long, unsigned long, unsigned long, unsigned int, unsigned int) const";  # _ZNK4Hccl14IAicpuTsThread10SdmaReduceEmmmjj
+        "Hccl::IAicpuTsThread::TryLaunchTask() const";  # _ZNK4Hccl14IAicpuTsThread13TryLaunchTaskEv
+        "Hccl::IAicpuTsThread::~IAicpuTsThread()";  # _ZN4Hccl14IAicpuTsThreadD1Ev
+        "Hccl::IRankGraph::GetDeviceId(unsigned int, unsigned int*)";  # _ZN4Hccl10IRankGraph11GetDeviceIdEjPj
+        "Hccl::IRankGraph::GetDevicePort(unsigned int, unsigned int*)";  # _ZN4Hccl10IRankGraph13GetDevicePortEjPj
+        "Hccl::IRankGraph::GetEndpointDesc(unsigned int, unsigned int, unsigned int*, EndpointDesc*)";  # _ZN4Hccl10IRankGraph15GetEndpointDescEjjPjP12EndpointDesc
+        "Hccl::IRankGraph::GetEndpointInfo(unsigned int, EndpointDesc const*, EndpointAttr, unsigned int, void*)";  # _ZN4Hccl10IRankGraph15GetEndpointInfoEjPK12EndpointDesc12EndpointAttrjPv
+        "Hccl::IRankGraph::GetEndpointNum(unsigned int, unsigned int, unsigned int*)";  # _ZN4Hccl10IRankGraph14GetEndpointNumEjjPj
+        "Hccl::IRankGraph::GetHostPort(unsigned int, unsigned int*)";  # _ZN4Hccl10IRankGraph11GetHostPortEjPj
+        "Hccl::IRankGraph::GetInstRanksByNetLayer(unsigned int, unsigned int**, unsigned int*)";  # _ZN4Hccl10IRankGraph22GetInstRanksByNetLayerEjPPjS1_
+        "Hccl::IRankGraph::GetInstSizeByNetLayer(unsigned int, unsigned int*)";  # _ZN4Hccl10IRankGraph21GetInstSizeByNetLayerEjPj
+        "Hccl::IRankGraph::GetInstSizeListByNetLayer(unsigned int, unsigned int**, unsigned int*)";  # _ZN4Hccl10IRankGraph25GetInstSizeListByNetLayerEjPPjS1_
+        "Hccl::IRankGraph::GetInstTopoTypeByNetLayer(unsigned int, CommTopo*)";  # _ZN4Hccl10IRankGraph25GetInstTopoTypeByNetLayerEjP8CommTopo
+        "Hccl::IRankGraph::GetLinks(unsigned int, unsigned int, unsigned int, CommLink**, unsigned int*)";  # _ZN4Hccl10IRankGraph8GetLinksEjjjPP8CommLinkPj
+        "Hccl::IRankGraph::GetNetLayers(unsigned int**, unsigned int*)";  # _ZN4Hccl10IRankGraph12GetNetLayersEPPjS1_
+        "Hccl::IRankGraph::GetRankGraphInfo(void**, unsigned int*)";  # _ZN4Hccl10IRankGraph16GetRankGraphInfoEPPvPj
+        "Hccl::IRankGraph::GetRankId(unsigned int*)";  # _ZN4Hccl10IRankGraph9GetRankIdEPj
+        "Hccl::IRankGraph::GetRankSize(unsigned int*)";  # _ZN4Hccl10IRankGraph11GetRankSizeEPj
+        "Hccl::IRankGraph::GetRanksByTopoInst(unsigned int, unsigned int, unsigned int**, unsigned int*)";  # _ZN4Hccl10IRankGraph18GetRanksByTopoInstEjjPPjS1_
+        "Hccl::IRankGraph::GetTopoInstsByLayer(unsigned int, unsigned int**, unsigned int*)";  # _ZN4Hccl10IRankGraph19GetTopoInstsByLayerEjPPjS1_
+        "Hccl::IRankGraph::GetTopoType(unsigned int, unsigned int, CommTopo*)";  # _ZN4Hccl10IRankGraph11GetTopoTypeEjjP8CommTopo
+        "Hccl::InnerNetDevManager::GetInstance()";  # _ZN4Hccl18InnerNetDevManager11GetInstanceEv
+        "Hccl::IpcLocalNotify::IpcLocalNotify(bool)";  # _ZN4Hccl14IpcLocalNotifyC1Eb
+        "Hccl::LinkData::GetUniqueId() const";  # _ZNK4Hccl8LinkData11GetUniqueIdEv
+        "Hccl::LinkData::UpdateIpAddrWithPCIE()";  # _ZN4Hccl8LinkData20UpdateIpAddrWithPCIEEv
+        "Hccl::LocalIpcRmaBuffer::LocalIpcRmaBuffer(std::shared_ptr<Hccl::Buffer>)";  # _ZN4Hccl17LocalIpcRmaBufferC1ESt10shared_ptrINS_6BufferEE
+        "Hccl::LocalIpcRmaBuffer::LocalIpcRmaBuffer(std::shared_ptr<Hccl::Buffer>, Hccl::LocalIpcRmaBuffer const&)";  # _ZN4Hccl17LocalIpcRmaBufferC1ESt10shared_ptrINS_6BufferEERKS0_
+        "Hccl::LocalRdmaRmaBuffer::LocalRdmaRmaBuffer(std::shared_ptr<Hccl::Buffer>, void*)";  # _ZN4Hccl18LocalRdmaRmaBufferC1ESt10shared_ptrINS_6BufferEEPv
+        "Hccl::LocalRdmaRmaBuffer::LocalRdmaRmaBuffer(std::shared_ptr<Hccl::Buffer>, void*, unsigned int, unsigned int, void*)";  # _ZN4Hccl18LocalRdmaRmaBufferC1ESt10shared_ptrINS_6BufferEEPvjjS4_
+        "Hccl::LocalUbRmaBuffer::GetTokenId() const";  # _ZNK4Hccl16LocalUbRmaBuffer10GetTokenIdEv
+        "Hccl::LocalUbRmaBuffer::GetTokenValue() const";  # _ZNK4Hccl16LocalUbRmaBuffer13GetTokenValueEv
+        "Hccl::LocalUbRmaBuffer::LocalUbRmaBuffer(std::shared_ptr<Hccl::Buffer>, void*)";  # _ZN4Hccl16LocalUbRmaBufferC1ESt10shared_ptrINS_6BufferEEPv
+        "Hccl::LocalUbRmaBuffer::LocalUbRmaBuffer(std::shared_ptr<Hccl::Buffer>, void*, Hccl::LocalUbRmaBuffer const&)";  # _ZN4Hccl16LocalUbRmaBufferC1ESt10shared_ptrINS_6BufferEEPvRKS0_
+        "Hccl::MirrorTaskManager::AddTaskInfo(unsigned int, unsigned int, unsigned int, Hccl::TaskParam const&, std::shared_ptr<Hccl::DfxOpInfo>, bool)";  # _ZN4Hccl17MirrorTaskManager11AddTaskInfoEjjjRKNS_9TaskParamESt10shared_ptrINS_9DfxOpInfoEEb
+        "Hccl::MirrorTaskManager::AddTaskInfo(unsigned int, unsigned int, unsigned int, Hccl::TaskParam const&, std::shared_ptr<Hccl::DfxOpInfo>, bool, unsigned int)";  # _ZN4Hccl17MirrorTaskManager11AddTaskInfoEjjjRKNS_9TaskParamESt10shared_ptrINS_9DfxOpInfoEEbj
+        "Hccl::MirrorTaskManager::Begin()";  # _ZN4Hccl17MirrorTaskManager5BeginEv
+        "Hccl::MirrorTaskManager::End()";  # _ZN4Hccl17MirrorTaskManager3EndEv
+        "Hccl::MirrorTaskManager::GetCurrDfxOpInfo() const";  # _ZNK4Hccl17MirrorTaskManager16GetCurrDfxOpInfoEv
+        "Hccl::MirrorTaskManager::MirrorTaskManager(unsigned int, Hccl::GlobalMirrorTasks*, bool)";  # _ZN4Hccl17MirrorTaskManagerC1EjPNS_17GlobalMirrorTasksEb
+        "Hccl::MirrorTaskManager::RegFullyCallBack(std::function<void ()>)";  # _ZN4Hccl17MirrorTaskManager16RegFullyCallBackESt8functionIFvvEE
+        "Hccl::MirrorTaskManager::SetCurrDfxOpInfo(std::shared_ptr<Hccl::DfxOpInfo>)";  # _ZN4Hccl17MirrorTaskManager16SetCurrDfxOpInfoESt10shared_ptrINS_9DfxOpInfoEE
+        "Hccl::MirrorTaskManager::~MirrorTaskManager()";  # _ZN4Hccl17MirrorTaskManagerD1Ev
+        "Hccl::P2PConnection::P2PConnection(Hccl::Socket*, std::string const&)";  # _ZN4Hccl13P2PConnectionC1EPNS_6SocketERKSs
+        "Hccl::P2PTransport::GetRemoteMems(unsigned int*, CommMem**, char***)";  # _ZN4Hccl12P2PTransport13GetRemoteMemsEPjPP7CommMemPPPc
+        "Hccl::P2PTransport::GetUniqueIdV2()";  # _ZN4Hccl12P2PTransport13GetUniqueIdV2Ev
+        "Hccl::P2PTransport::P2PTransport(Hccl::BaseMemTransport::CommonLocRes&, Hccl::BaseMemTransport::Attribution&, Hccl::LinkData const&, Hccl::Socket const&)";  # _ZN4Hccl12P2PTransportC1ERNS_16BaseMemTransport12CommonLocResERNS1_11AttributionERKNS_8LinkDataERKNS_6SocketE
+        "Hccl::PreemptPortManager::GetInstance(int)";  # _ZN4Hccl18PreemptPortManager11GetInstanceEi
+        "Hccl::PreemptPortManager::ListenPreempt(std::shared_ptr<Hccl::Socket> const&, std::vector<Hccl::SocketPortRangeDef, std::allocator<Hccl::SocketPortRangeDef> > const&, unsigned int&)";  # _ZN4Hccl18PreemptPortManager13ListenPreemptERKSt10shared_ptrINS_6SocketEERKSt6vectorINS_18SocketPortRangeDefESaIS7_EERj
+        "Hccl::PreemptPortManager::Release(std::shared_ptr<Hccl::Socket> const&)";  # _ZN4Hccl18PreemptPortManager7ReleaseERKSt10shared_ptrINS_6SocketEE
+        "Hccl::PrintTaskLog(unsigned int, unsigned int, Hccl::TaskParam const&, unsigned int)";  # _ZN4Hccl12PrintTaskLogEjjRKNS_9TaskParamEj
+        "Hccl::ProfilingHandler::GetHcclL0State() const";  # _ZNK4Hccl16ProfilingHandler14GetHcclL0StateEv
+        "Hccl::ProfilingHandler::GetHcclL1State() const";  # _ZNK4Hccl16ProfilingHandler14GetHcclL1StateEv
+        "Hccl::ProfilingHandler::GetInstance()";  # _ZN4Hccl16ProfilingHandler11GetInstanceEv
+        "Hccl::ProfilingHandler::Init()";  # _ZN4Hccl16ProfilingHandler4InitEv
+        "Hccl::ProfilingHandler::ReportNodeApi(unsigned long, unsigned long, unsigned long, unsigned int, bool)";  # _ZN4Hccl16ProfilingHandler13ReportNodeApiEmmmjb
+        "Hccl::ProfilingHandler::ReportNodeBasicInfo(unsigned long, unsigned long, unsigned int, bool)";  # _ZN4Hccl16ProfilingHandler19ReportNodeBasicInfoEmmjb
+        "Hccl::ProfilingReporter::CallReportMc2CommInfo(unsigned int, std::vector<unsigned int, std::allocator<unsigned int> > const&, std::string const&, int, unsigned int, int) const";  # _ZNK4Hccl17ProfilingReporter21CallReportMc2CommInfoEjRKSt6vectorIjSaIjEERKSsiji
+        "Hccl::ProfilingReporter::Init()";  # _ZN4Hccl17ProfilingReporter4InitEv
+        "Hccl::ProfilingReporter::ProfilingReporter(Hccl::MirrorTaskManager*, Hccl::ProfilingHandler*)";  # _ZN4Hccl17ProfilingReporterC1EPNS_17MirrorTaskManagerEPNS_16ProfilingHandlerE
+        "Hccl::ProfilingReporter::ReportAllTasks(bool)";  # _ZN4Hccl17ProfilingReporter14ReportAllTasksEb
+        "Hccl::ProfilingReporter::ReportOp(unsigned long, bool, bool) const";  # _ZNK4Hccl17ProfilingReporter8ReportOpEmbb
+        "Hccl::ProfilingReporter::SetCurrDfxOpInfo(std::shared_ptr<Hccl::DfxOpInfo>) const";  # _ZNK4Hccl17ProfilingReporter16SetCurrDfxOpInfoESt10shared_ptrINS_9DfxOpInfoEE
+        "Hccl::ProfilingReporter::UpdateProfStat()";  # _ZN4Hccl17ProfilingReporter14UpdateProfStatEv
+        "Hccl::RaGetAuxInfo(void*, Hccl::AuxInfoIn, Hccl::AuxInfoOut&)";  # _ZN4Hccl12RaGetAuxInfoEPvNS_9AuxInfoInERNS_10AuxInfoOutE
+        "Hccl::RdmaHandleManager::DeInit(unsigned int)";  # _ZN4Hccl17RdmaHandleManager6DeInitEj
+        "Hccl::RdmaHandleManager::GetByAddr(unsigned int, Hccl::LinkProtoType const&, Hccl::IpAddress&, Hccl::PortDeploymentType)";  # _ZN4Hccl17RdmaHandleManager9GetByAddrEjRKNS_13LinkProtoTypeERNS_9IpAddressENS_18PortDeploymentTypeE
+        "Hccl::RdmaHandleManager::GetByIp(unsigned int, Hccl::IpAddress const&)";  # _ZN4Hccl17RdmaHandleManager7GetByIpEjRKNS_9IpAddressE
+        "Hccl::RdmaHandleManager::GetEidByIpv4Addr(Hccl::IpAddress const&, Hccl::IpAddress&)";  # _ZN4Hccl17RdmaHandleManager16GetEidByIpv4AddrERKNS_9IpAddressERS1_
+        "Hccl::RdmaHandleManager::GetInstance()";  # _ZN4Hccl17RdmaHandleManager11GetInstanceEv
+        "Hccl::RdmaHandleManager::GetJfcHandle(void*, Hccl::CqCreateInfo&, Hccl::HrtUbJfcMode)";  # _ZN4Hccl17RdmaHandleManager12GetJfcHandleEPvRNS_12CqCreateInfoENS_12HrtUbJfcModeE
+        "Hccl::RdmaHandleManager::GetRtpEnable(void*)";  # _ZN4Hccl17RdmaHandleManager12GetRtpEnableEPv
+        "Hccl::RdmaHandleManager::IsHandleValid(void*)";  # _ZN4Hccl17RdmaHandleManager13IsHandleValidEPv
+        "Hccl::RdmaHandleManager::UboeIpv4ToEid(Hccl::IpAddress const&, Hccl::IpAddress&, unsigned int)";  # _ZN4Hccl17RdmaHandleManager13UboeIpv4ToEidERKNS_9IpAddressERS1_j
+        "Hccl::RdmaLocalNotify::RdmaLocalNotify(void*, bool)";  # _ZN4Hccl15RdmaLocalNotifyC1EPvb
+        "Hccl::RegisterRankGraphBuilderBridge(Hccl::RankGraphBuilderBridge const&)";  # _ZN4Hccl30RegisterRankGraphBuilderBridgeERKNS_22RankGraphBuilderBridgeE
+        "Hccl::RegisterRootInfoDetectBridge(Hccl::RootInfoDetectBridge const&)";  # _ZN4Hccl28RegisterRootInfoDetectBridgeERKNS_20RootInfoDetectBridgeE
+        "Hccl::RemoteIpcRmaBuffer::RemoteIpcRmaBuffer(Hccl::Serializable const&)";  # _ZN4Hccl18RemoteIpcRmaBufferC1ERKNS_12SerializableE
+        "Hccl::RemoteRdmaRmaBuffer::RemoteRdmaRmaBuffer(void*, Hccl::Serializable const&)";  # _ZN4Hccl19RemoteRdmaRmaBufferC1EPvRKNS_12SerializableE
+        "Hccl::RemoteUbRmaBuffer::Describe() const";  # _ZNK4Hccl17RemoteUbRmaBuffer8DescribeEv
+        "Hccl::RemoteUbRmaBuffer::RemoteUbRmaBuffer(unsigned long, unsigned long long, unsigned int, unsigned int, HcclMemType, std::string const&)";  # _ZN4Hccl17RemoteUbRmaBufferC1Emyjj11HcclMemTypeRKSs
+        "Hccl::RemoteUbRmaBuffer::RemoteUbRmaBuffer(void*, Hccl::Serializable const&)";  # _ZN4Hccl17RemoteUbRmaBufferC1EPvRKNS_12SerializableE
+        "Hccl::RmaBufSliceLite::Describe() const";  # _ZNK4Hccl15RmaBufSliceLite8DescribeEv
+        "Hccl::RmaBufSliceLite::RmaBufSliceLite(unsigned long long, unsigned long long, unsigned int, unsigned int)";  # _ZN4Hccl15RmaBufSliceLiteC1Eyyjj
+        "Hccl::RmaConnection::~RmaConnection()";  # _ZN4Hccl13RmaConnectionD2Ev
+        "Hccl::RmtRmaBufSliceLite::Describe() const";  # _ZNK4Hccl18RmtRmaBufSliceLite8DescribeEv
+        "Hccl::RmtRmaBufSliceLite::RmtRmaBufSliceLite(unsigned long long, unsigned long long, unsigned int, unsigned int, unsigned int, unsigned int)";  # _ZN4Hccl18RmtRmaBufSliceLiteC1Eyyjjjj
+        "Hccl::RtsNotify::GetHandleAddr() const";  # _ZNK4Hccl9RtsNotify13GetHandleAddrEv
+        "Hccl::RtsNotify::GetId() const";  # _ZNK4Hccl9RtsNotify5GetIdEv
+        "Hccl::RtsNotify::GetUniqueId() const";  # _ZNK4Hccl9RtsNotify11GetUniqueIdEv
+        "Hccl::Socket::Close()";  # _ZN4Hccl6Socket5CloseEv
+        "Hccl::Socket::ConnectAsync()";  # _ZN4Hccl6Socket12ConnectAsyncEv
+        "Hccl::Socket::Destroy()";  # _ZN4Hccl6Socket7DestroyEv
+        "Hccl::Socket::GetAsyncStatus()";  # _ZN4Hccl6Socket14GetAsyncStatusEv
+        "Hccl::Socket::GetStatus(unsigned int)";  # _ZN4Hccl6Socket9GetStatusEj
+        "Hccl::Socket::IRecvWithHeart(void*, unsigned long long, unsigned long long&) const";  # _ZNK4Hccl6Socket14IRecvWithHeartEPvyRy
+        "Hccl::Socket::ISend(void*, unsigned long long, unsigned long long&) const";  # _ZNK4Hccl6Socket5ISendEPvyRy
+        "Hccl::Socket::ISendWithHeart(void*, unsigned long long, unsigned long long&) const";  # _ZNK4Hccl6Socket14ISendWithHeartEPvyRy
+        "Hccl::Socket::Listen(unsigned int&)";  # _ZN4Hccl6Socket6ListenERj
+        "Hccl::Socket::Recv(void*, unsigned int) const";  # _ZNK4Hccl6Socket4RecvEPvj
+        "Hccl::Socket::RecvAsync(unsigned char*, unsigned int)";  # _ZN4Hccl6Socket9RecvAsyncEPhj
+        "Hccl::Socket::Send(void const*, unsigned int) const";  # _ZNK4Hccl6Socket4SendEPKvj
+        "Hccl::Socket::SendAsync(void const*, unsigned int)";  # _ZN4Hccl6Socket9SendAsyncEPKvj
+        "Hccl::Socket::StopListen()";  # _ZN4Hccl6Socket10StopListenEv
+        "Hccl::SocketHandleManager::Create(unsigned int, Hccl::PortData const&)";  # _ZN4Hccl19SocketHandleManager6CreateEjRKNS_8PortDataE
+        "Hccl::SocketHandleManager::DeInit(unsigned int)";  # _ZN4Hccl19SocketHandleManager6DeInitEj
+        "Hccl::SocketHandleManager::Get(unsigned int, Hccl::PortData const&)";  # _ZN4Hccl19SocketHandleManager3GetEjRKNS_8PortDataE
+        "Hccl::SocketHandleManager::GetInstance()";  # _ZN4Hccl19SocketHandleManager11GetInstanceEv
+        "Hccl::SocketManager::BatchCreateSockets(Hccl::SocketConfig const&)";  # _ZN4Hccl13SocketManager18BatchCreateSocketsERKNS_12SocketConfigE
+        "Hccl::SocketManager::CheckServerPortListening(Hccl::PortData const&, unsigned int) const";  # _ZNK4Hccl13SocketManager24CheckServerPortListeningERKNS_8PortDataEj
+        "Hccl::SocketManager::ConnectSockets(Hccl::SocketConfig const&)";  # _ZN4Hccl13SocketManager14ConnectSocketsERKNS_12SocketConfigE
+        "Hccl::SocketManager::GetConnectedSocket(Hccl::SocketConfig const&) const";  # _ZNK4Hccl13SocketManager18GetConnectedSocketERKNS_12SocketConfigE
+        "Hccl::SocketManager::RegisterHostListenSocket(Hccl::PortData const&, std::shared_ptr<Hccl::Socket>)";  # _ZN4Hccl13SocketManager24RegisterHostListenSocketERKNS_8PortDataESt10shared_ptrINS_6SocketEE
+        "Hccl::SocketManager::RegisterHostListenSocket(Hccl::PortData const&, std::shared_ptr<Hccl::Socket>) const";  # _ZNK4Hccl13SocketManager24RegisterHostListenSocketERKNS_8PortDataESt10shared_ptrINS_6SocketEE
+        "Hccl::SocketManager::ServerDeInit(Hccl::PortData&) const";  # _ZNK4Hccl13SocketManager12ServerDeInitERNS_8PortDataE
+        "Hccl::SocketManager::ServerInitAll(Hccl::NewRankInfo&)";  # _ZN4Hccl13SocketManager13ServerInitAllERNS_11NewRankInfoE
+        "Hccl::SocketManager::ServerListen(Hccl::SocketConfig const&)";  # _ZN4Hccl13SocketManager12ServerListenERKNS_12SocketConfigE
+        "Hccl::SocketManager::SetDeviceServerListenPortMap(std::shared_ptr<std::unordered_map<unsigned int, std::unordered_map<Hccl::IpAddress, unsigned int, std::hash<Hccl::IpAddress>, std::equal_to<Hccl::IpAddress>, std::allocator<std::pair<Hccl::IpAddress const, unsigned int> > >, std::hash<unsigned int>, std::equal_to<unsigned int>, std::allocator<std::pair<unsigned int const, std::unordered_map<Hccl::IpAddress, unsigned int, std::hash<Hccl::IpAddress>, std::equal_to<Hccl::IpAddress>, std::allocator<std::pair<Hccl::IpAddress const, unsigned int> > > > > > > const&)";  # _ZN4Hccl13SocketManager28SetDeviceServerListenPortMapERKSt10shared_ptrISt13unordered_mapIjS2_INS_9IpAddressEjSt4hashIS3_ESt8equal_toIS3_ESaISt4pairIKS3_jEEES4_IjES6_IjESaIS8_IKjSC_EEEE
+        "Hccl::SocketManager::SocketManager(unsigned int, unsigned int, unsigned int, std::string const&)";  # _ZN4Hccl13SocketManagerC1EjjjRKSs
+        "Hccl::SocketManager::~SocketManager()";  # _ZN4Hccl13SocketManagerD1Ev
+        "Hccl::Stream::GetSqId() const";  # _ZNK4Hccl6Stream7GetSqIdEv
+        "Hccl::TaskExceptionHandler::Process(rtExceptionInfo*)";  # _ZN4Hccl20TaskExceptionHandler7ProcessEP15rtExceptionInfo
+        "Hccl::TaskInfo::Describe() const";  # _ZNK4Hccl8TaskInfo8DescribeEv
+        "Hccl::TaskInfo::GetBaseInfo() const";  # _ZNK4Hccl8TaskInfo11GetBaseInfoEv
+        "Hccl::TaskInfo::GetConciseBaseInfo() const";  # _ZNK4Hccl8TaskInfo18GetConciseBaseInfoEv
+        "Hccl::TaskInfo::GetIndopBaseInfo() const";  # _ZNK4Hccl8TaskInfo16GetIndopBaseInfoEv
+        "Hccl::TaskInfo::GetIndopDataInfo() const";  # _ZNK4Hccl8TaskInfo16GetIndopDataInfoEv
+        "Hccl::TaskInfo::GetParaInfo() const";  # _ZNK4Hccl8TaskInfo11GetParaInfoEv
+        "Hccl::TaskInfo::TaskInfo(unsigned int, unsigned int, unsigned int, Hccl::TaskParam const&, std::shared_ptr<Hccl::DfxOpInfo> const&, bool)";  # _ZN4Hccl8TaskInfoC1EjjjRKNS_9TaskParamERKSt10shared_ptrINS_9DfxOpInfoEEb
+        "Hccl::TpManager::GetInstance(int)";  # _ZN4Hccl9TpManager11GetInstanceEi
+        "Hccl::TpManager::Init()";  # _ZN4Hccl9TpManager4InitEv
+        "Hccl::UbLocalNotify::UbLocalNotify(void*, bool)";  # _ZN4Hccl13UbLocalNotifyC1EPvb
+        "Hccl::UbMemTransport::Describe(std::string&)";  # _ZN4Hccl14UbMemTransport8DescribeERSs
+        "Hccl::UbMemTransport::GetRemoteMems(unsigned int*, CommMem**, char***)";  # _ZN4Hccl14UbMemTransport13GetRemoteMemsEPjPP7CommMemPPPc
+        "Hccl::UbMemTransport::GetRemoteSeg(void const*, unsigned long long, unsigned long long*)";  # _ZN4Hccl14UbMemTransport12GetRemoteSegEPKvyPy
+        "Hccl::UbMemTransport::GetUniqueIdV2()";  # _ZN4Hccl14UbMemTransport13GetUniqueIdV2Ev
+        "Hccl::UbMemTransport::UbMemTransport(Hccl::BaseMemTransport::CommonLocRes&, Hccl::BaseMemTransport::Attribution&, Hccl::LinkData const&, Hccl::Socket const&, void*, Hccl::BaseMemTransport::LocCntNotifyRes&, bool)";  # _ZN4Hccl14UbMemTransportC1ERNS_16BaseMemTransport12CommonLocResERNS1_11AttributionERKNS_8LinkDataERKNS_6SocketEPvRNS1_15LocCntNotifyResEb
+        "Hccl::UbMemTransport::UpdateMemInfo(std::vector<Hccl::LocalRmaBuffer*, std::allocator<Hccl::LocalRmaBuffer*> >&)";  # _ZN4Hccl14UbMemTransport13UpdateMemInfoERSt6vectorIPNS_14LocalRmaBufferESaIS3_EE
+        "Hccl::UbTransportLiteImpl::GetRmtRmaBufSliceLite(Hccl::Buffer const&)";  # _ZN4Hccl19UbTransportLiteImpl21GetRmtRmaBufSliceLiteERKNS_6BufferE
+        "RankTableCrcBridge::ConsumeRankTableJsonCrc(int)";  # _ZN18RankTableCrcBridge23ConsumeRankTableJsonCrcEi
+        "RankTableCrcBridge::GetInstance()";  # _ZN18RankTableCrcBridge11GetInstanceEv
+        "hccl::RankConsistencyCheckerV2::CompareCheckFrameV2(hccl::CheckFrameV2 const&, hccl::CheckFrameV2 const&)";  # _ZN4hccl24RankConsistencyCheckerV219CompareCheckFrameV2ERKNS_12CheckFrameV2ES3_
+        "hccl::RankConsistencyCheckerV2::GenerateCheckFrameV2(hccl::CheckFrameV2&)";  # _ZN4hccl24RankConsistencyCheckerV220GenerateCheckFrameV2ERNS_12CheckFrameV2E
+        "hccl::RankConsistencyCheckerV2::GetCheckFrameLengthV2() const";  # _ZNK4hccl24RankConsistencyCheckerV221GetCheckFrameLengthV2Ev
+        "hccl::RankConsistencyCheckerV2::GetInconsistentCheckFirstDone() const";  # _ZNK4hccl24RankConsistencyCheckerV229GetInconsistentCheckFirstDoneEv
+        "hccl::RankConsistencyCheckerV2::GetInstance(int const&)";  # _ZN4hccl24RankConsistencyCheckerV211GetInstanceERKi
+        "hccl::RankConsistencyCheckerV2::RecordCannVersionV2(std::string const&)";  # _ZN4hccl24RankConsistencyCheckerV219RecordCannVersionV2ERKSs
+        "hccl::RankConsistencyCheckerV2::RecordRankTableCrcV2(unsigned int)";  # _ZN4hccl24RankConsistencyCheckerV220RecordRankTableCrcV2Ej
+        "hccl::RankConsistencyCheckerV2::SetInconsistentCheckFirstDone(bool)";  # _ZN4hccl24RankConsistencyCheckerV229SetInconsistentCheckFirstDoneEb
+        "typeinfo for Hccl::DevUbConnection";  # _ZTIN4Hccl15DevUbConnectionE
+        "typeinfo for Hccl::LocalUbRmaBuffer";  # _ZTIN4Hccl16LocalUbRmaBufferE
+        "typeinfo for Hccl::RmaConnection";  # _ZTIN4Hccl13RmaConnectionE
+        "vtable for Hccl::BaseMemTransport";  # _ZTVN4Hccl16BaseMemTransportE
+        "vtable for Hccl::P2PConnection";  # _ZTVN4Hccl13P2PConnectionE
+        "vtable for Hccl::P2PTransport";  # _ZTVN4Hccl12P2PTransportE
+        "vtable for Hccl::Socket";  # _ZTVN4Hccl6SocketE
+    };
+local:
+    *;
+};

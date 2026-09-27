@@ -1,0 +1,39 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+type: "server_intra_links"
+name: "ascend950_links_topo_normal"
+description: "ascend950芯片NORMAL类型拓扑连接关系描述文件"
+
+soc_version: "Ascend950"
+device_num: 8
+hardware_type: "910D-2D-Fullmsh_64_plus_1"
+
+device_ports_allocate_map:
+ # port分配表: 0: 不使用, 1: device直连, 2: device连交换机, 3: d2h端口
+ #                 portId:  0  1  2  3  4  5  6  7  8
+    - {die_id: 0, pin_map: [2, 2, 2, 2, 2, 2, 2, 2, 3]} # die0
+    - {die_id: 1, pin_map: [1, 1, 1, 1, 1, 1, 1, 0, 0]} # die1
+
+# port_group: 描述哪些port合并为一个portGroup，相同portGroup的port对于IP地址相同
+port_group:
+    - {layer: 1, ports: ["0/0", "0/1", "0/2", "0/3", "0/4", "0/5", "0/6", "0/7"]}
+    - {layer: 2, ports: ["0/7"]}
+    - {layer: 3, ports: ["d2h"]}
+
+links:
+  # ── 描述法：每行8个device组成全互联 ──
+  - link_mode: "fullmesh"
+    connections:
+      - {die_id: 1, devices_range: [0, 7]}
+
+  - link_mode: "enum"
+    device_to_switch_links:
+      - {die_id: 0, devices_range: [0, 7]}

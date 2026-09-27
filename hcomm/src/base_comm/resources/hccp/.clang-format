@@ -1,0 +1,90 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+BasedOnStyle: None  #禁用默认风格
+DisableFormat: false #启用格式化
+Language: Cpp
+# 缩进相关配置
+IndentWidth: 4           # 基本缩进宽度（空格数）
+AlignAfterOpenBracket: DontAlign #不在左括号垂直对齐缩进
+ContinuationIndentWidth: 4  # 续行缩进宽度
+TabWidth: 4             # Tab字符代表的空格数
+UseTab: Never           # 禁止使用Tab键，始终用空格
+
+# 换行与断行规则
+ColumnLimit: 120         # 行宽限制
+PenaltyBreakString: 1000  #字符串字面量换行惩罚
+PenaltyBreakAssignment: 500 #赋值符换行惩罚
+PenaltyBreakOpenParenthesis: 100 #(后换行的惩罚值
+PenaltyBreakBeforeFirstCallParameter: 100 #函数调用的左括号后换行的惩罚值
+DeriveLineEnding: false
+UseCRLF: false
+
+# 大括号换行风格
+BreakBeforeBraces: Custom #启用自定义风格
+BraceWrapping:     #风格定义
+  AfterFunction: true     # 函数定义后换行
+  AfterCaseLabel: false   # case标签后不换行
+  AfterControlStatement: Never  # 控制语句后不换行
+  AfterEnum: false        # enum定义后不换行
+  AfterStruct: false      # struct后不换行
+  AfterUnion: false       # union后不换行
+  AfterExternBlock: false # extern块后不换行
+  BeforeElse: false       # else前不换行
+  IndentBraces: false     # 不缩进大括号本身
+
+BreakArrays: false      #列表初始化可以在一行
+
+# 空格相关配置
+SpaceBeforeParens: ControlStatements  # 只在控制语句的括号前加空格，函数调用不加
+SpaceBeforeAssignmentOperators: true  # 赋值操作符前后加空格，该选项在前加，在后加是默认行为
+SpaceInEmptyParentheses: false        # 空括号内不加空格
+SpaceAfterCStyleCast: false           # C风格强制转换后不加空格
+SpacesInSquareBrackets: false         # 数组索引不加空格: arr[0] 而不是 arr[ 0 ]
+SpacesInParentheses: false            # 禁止括号内多余空格（如 (int *x) 而非 (int * x)）
+
+#注释符前后空格
+SpacesInLineCommentPrefix:
+  Minimum: 1  # 注释符 "//" 后至少 1 个空格
+SpacesBeforeTrailingComments: 1  # 行尾注释符前加1个空格
+
+
+# 指针定义*靠近标识符
+DerivePointerAlignment: false  # 不自动推断指针对齐方式
+PointerAlignment: Right    # *靠近标识符 (int *ptr)
+SpaceAroundPointerQualifiers: Before
+# 代码紧凑性配置
+BinPackArguments: true    # 函数调用参数尽量放在一行
+BinPackParameters: true   # 函数声明参数尽量放在一行
+
+# 空白行控制
+MaxEmptyLinesToKeep: 1    # 最大连续空行数
+KeepEmptyLinesAtTheStartOfBlocks: false  # 不保留块开始处的空行
+
+# 特殊格式规则
+AllowShortBlocksOnASingleLine: false #禁止单行语句块
+AllowShortFunctionsOnASingleLine: false  # 禁止短函数放在一行 void f() { foo(); }
+AllowShortIfStatementsOnASingleLine: false  # 禁止短if语句放在一行  f(con) {foo();};
+AllowShortLoopsOnASingleLine: false      # 禁止短循环放在一行  while(c) {foo();};
+AllowShortCaseLabelsOnASingleLine: false # 禁止短case标签放在一行
+IndentCaseLabels: true     # case标签缩进
+
+SortIncludes: false #禁用排序
+IncludeCategories:
+  - Regex:           '^<.*.h>' #系统头文件
+    Priority:        1      #分组间排序
+    SortPriority:    0      #组间优先级相同时的优先级
+    CaseSensitive:   true   #区分大小写
+  - Regex:           '^"ra_.*' #ra起头的头文件
+    Priority:        2
+  - Regex:           '^"rs_.*'   #rs开头的头文件
+    Priority:        3
+  - Regex:           '.*'     #其他
+    Priority:        4

@@ -1,0 +1,65 @@
+{
+    "version": "2.0",
+	"rank_count" : 1,
+	"rank_list": [
+		{
+			"rank_id": 1,
+			"device_id": 64,
+			"local_id": 64,
+            "replaced_local_id": 1,
+			"level_list":  [
+				{
+					"net_layer": 0,
+					"net_instance_id" : "az0-rack0",
+					"net_type": "TOPO_FILE_DESC",
+					"net_attr": "",
+					"rank_addr_list": [
+					{
+					"addr_type": "IPV4",
+                    "addr": "192.168.164.100",
+                    "ports": [ "0/0" ]
+					},
+					{
+					"addr_type": "IPV4",
+                    "addr": "192.168.164.101",
+                    "ports": [ "0/1" ]
+					},
+					{
+					"addr_type": "IPV4",
+                    "addr": "192.168.164.102",
+                    "ports": [ "0/2" ]
+					},
+					{
+					"addr_type": "IPV4",
+                    "addr": "192.168.164.110",
+                    "ports": [ "1/0" ]
+					},
+					{
+					"addr_type": "IPV4",
+                    "addr": "192.168.164.111",
+                    "ports": [ "1/1" ]
+					},
+					{
+					"addr_type": "IPV4",
+                    "addr": "192.168.164.112",
+                    "ports": [ "1/2" ]
+					}
+					]
+				},
+                {   
+                    "net_layer": 1,
+                    "net_instance_id" : "az0-layer1",
+					"net_type":"CLOS",
+					"net_attr": "",
+					"rank_addr_list": [
+					{
+					"addr_type": "IPV4",
+                    "addr": "192.168.164.108",
+                    "ports": [ "0/8" ]
+					}
+					]
+                }
+			]
+		}
+	]
+}

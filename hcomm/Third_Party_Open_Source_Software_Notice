@@ -1,0 +1,807 @@
+OPEN SOURCE SOFTWARE NOTICE
+
+Please note we provide an open source software notice along with this product and/or this product firmware (in the following just “this product”). The open source software licenses are granted by the respective right holders. And the open source licenses prevail all other license information with regard to the respective open source software contained in the product, including but not limited to End User Software Licensing Agreement. This notice is provided on behalf of Huawei Technologies Co. Ltd. and any of its local subsidiaries which may have provided this product to you in your local country.
+
+Warranty Disclaimer
+THE OPEN SOURCE SOFTWARE IN THIS PRODUCT IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL, BUT WITHOUT ANY WARRANTY, WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. SEE THE APPLICABLE LICENSES FOR MORE DETAILS.
+
+Copyright Notice and License Texts
+Software: pytorch v2.3.1
+Copyright notice:
+Copyright (c) 2011-2013 NYU
+Copyright (c) Microsoft Corporation
+Copyright (c) 2014- Facebook, Inc
+Copyright (c) 2017 The Android Open Source Project
+Copyright Python Software Foundation
+Copyright (c) 2018 Alex Rogozhnikov
+Copyright (c) 2007-2009 Scientific Computing and Imaging Institute, University of Utah
+Copyright (c) 2016, NVIDIA CORPORATION, All rights reserved
+Copyright (c) 2017 Microsoft
+Copyright (c) Meta Platforms, Inc.
+Copyright (c) 2022 Apple Inc.
+Copyright (c) 2018-present, Facebook, Inc.
+Copyright (c) Facebook Inc. and Microsoft Corporation
+Copyright (c) 2005-2017, NumPy Developers. All rights reserved
+Copyright (c) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura, All rights reserved
+Copyright (c) 2014, The Regents
+Copyright (c) 2005-2010 ActiveState Software Inc.
+Copyright 2005, Google Inc. All rights reserved
+Copyright (c) 2022, Tri Dao
+Copyright (c) 2001-2002 Enthought, Inc. 2003-2019, SciPy Developers. All rights reserved
+Copyright 2008 Google Inc. All rights reserved
+Copyright (c) 2003-2017 Josef Weidendorfer. All rights reserved
+Copyright (c) 2014 Matthew Rocklin
+Copyright (c) 2016 Microsoft
+Copyright (c) 2008 - 2009 NVIDIA Corporation. All rights reserved
+Copyright 2010-2014 Rich Geldreich and Tenacious Software LLC
+Copyright (c) 2008-2012 The Khronos Group Inc.
+Copyright (c) 2016 Facebook Inc.
+Copyright 2010-2014 Rich Geldreich and Tenacious Software LLC All Rights Reserved
+Copyright (c) 2006, Laurent Montel, <montel@kde.org>
+Copyright (c) 2015 Google Inc. All rights reserved
+Copyright (c) 2010-2022 by Alex Clark and contributors
+Copyright 2015 Google Inc. All Rights Reserved
+Copyright (c) 2017 - 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved
+Copyright (c) 2011-2012 NEC Laboratories America (Koray Kavukcuoglu)
+(c) BNParamType
+Copyright 2013-2014 RAD Game
+Copyright (c) 2011-2019 Stephan Brumme. All rights reserved
+Copyright (c) 2018 MathInf GmbH, Thomas Viehmann
+Copyright 2019 Kakao Brain
+Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 Python Software Foundation All Rights Reserved
+Copyright 2004-present Facebook. All Rights Reserved
+Copyright (c) 2008-2013 The Khronos Group Inc.
+Copyright (c) Microsoft Corporation. All rights reserved
+Copyright 2006, Google Inc. All rights reserved
+Copyright (c) 2014-2015 The Khronos Group Inc.
+Copyright 2015 The TensorFlow Authors. All Rights Reserved
+Copyright (c) 2023, Tri Dao
+Copyright (c) 2011-2014 Idiap Research Institute
+Copyright (c) 2016-present, Facebook Inc. All rights reserved
+Copyright (c) Advanced Micro Devices, Inc.
+Copyright (c) 2001-2014 Python Software Foundation All Rights Reserved
+Copyright (c) Bjorn Fahller
+Copyright (c) 1995-2011 by Fredrik Lundh
+Copyright (c) Edward Z. Yang <ezyang@mit.edu>
+Copyright (c) 2012 Massachusetts Institute of Technology
+Copyright (c) 2006 Idiap Research Institute
+Copyright (c) 2011-2021, NVIDIA CORPORATION. All rights reserved
+Copyright (c) 2008 - 2012 The Khronos Group Inc.
+Copyright (c) 2015 Yangqing Jia All rights reserved
+Copyright 2023-present Facebook. All Rights Reserved
+Copyright 2013 Conrad Steenberg <conrad.steenberg@gmail.com>
+Copyright (c) 2008-2015 The Khronos Group Inc.
+Copyright (c) 2014-2017 The Regents
+Copyright (c) 2006-2010 NEC Laboratories America (Ronan Collobert, Leon Bottou, Iain Melvin, Jason Weston)
+Copyright Malte Skarupke 2017
+Copyright (c) Meta Platforms, Inc. and affiliates
+Copyright (c) 2023, Advanced Micro Devices, Inc.
+Copyright (c) 2016- Facebook, Inc
+Copyright (c) 1997-2011 by Secret Labs AB
+Copyright (c) 2005-2022 NVIDIA Corporation Built
+Copyright (c) Facebook, Inc.
+Copyright 2019-2020 Kakao Brain
+Copyright (c) 2000-2017 Julian Seward. All rights reserved
+Copyright (c) 2016-2017, ARM Limited and Contributors
+Copyright (c) 2005-2020 Rich Felker
+Copyright (c) 2001-2004 Idiap Research Institute (Ronan Collobert, Samy Bengio, Johnny Mariethoz)
+Copyright 2016 Facebook
+Copyright (c) 2012-2014 Deepmind Technologies
+Copyright (c) 2012 Giovanni Garberoglio Interdisciplinary Laboratory
+Copyright (c) 2024, Tri Dao
+Copyright (c) Donald Stufft and individual contributors. All rights reserved
+Copyright (c) 2018, Steven Moshier All rights reserved
+Copyright (c) 2015-2016 Advanced Micro Devices, Inc. All rights reserved
+Copyright (c) 2017-present, Facebook, Inc.
+Copyright (c) 2020-2023, NVIDIA CORPORATION. All rights reserved
+Copyright (c) 2017 - 2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved
+Copyright (c) 2014, 2015, The Regents
+Copyright (c) 2013 Eddy Petrisor
+Copyright (c) 2010 ActiveState Software Inc.
+Copyright (c) 2006 The Android Open Source Project
+Copyright (c) 2023 Apple Inc.
+Copyright 2015 The Gemmlowp Authors. All Rights Reserved
+Copyright (c) 2015-2017 The Khronos Group Inc.
+Copyright 2022 Cruise LLC
+Copyright (c) Meta Platforms, Inc. and affiliates. All rights reserved
+Copyright (c) 2022 Cruise LLC. All rights reserved
+Copyright (c) 2016-present, Facebook, Inc.
+(c) Copyright John Maddock 2006
+Copyright (c) 2014 Indiana University All rights reserved
+copyright 2019 The TensorFlow Authors
+
+License: BSD 3-Clause License
+Copyright (c) , <YEAR>,<OWNER>
+All rights reserved. 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. 
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Software: acl e145c53
+Official Repository: https://gitee.com/cann/acl
+Usage:
+test/ut/depends/pkg_inc/aicpu/tsd/tsd.h
+test/ut/depends/pkg_inc/runtime/rt_error_codes.h
+test/ut/depends/pkg_inc/runtime/runtime/dev.h
+test/ut/depends/include/mmpa/mmpa_api.h
+test/ut/depends/include/driver/hwts_task_info.h
+test/ut/depends/include/acl/acl_base_rt.h
+test/ut/depends/include/acl/acl_rt.h
+test/ut/depends/include/mmpa/sub_inc/mmpa_linux.h
+test/ut/depends/pkg_inc/profiling/prof_common.h
+test/ut/depends/include/acl/error_codes/rt_error_codes.h
+test/ut/depends/pkg_inc/dump/adump_device_pub.h
+test/ut/depends/include/driver/ascend_inpackage_hal.h
+test/ut/depends/include/acl/error_codes/ge_error_codes.h
+test/ut/depends/pkg_inc/profiling/aprof_pub.h
+test/ut/depends/include/driver/ascend_hal_error.h
+test/ut/depends/include/driver/ascend_hal.h
+test/ut/depends/include/driver/ascend_hal_base.h
+test/ut/depends/pkg_inc/runtime/rt_external_base.h
+test/ut/depends/include/acl/acl_tdt_queue.h
+test/ut/depends/include/acl/acl_prof.h
+test/ut/depends/pkg_inc/runtime/runtime/mem.h
+test/ut/depends/include/acl/acl_tdt.h
+test/ut/depends/include/driver/ascend_hal_external.h
+
+Copyright notice(s):
+Copyright 2019-2020 Huawei Technologies Co., Ltd
+Copyright 2020 Huawei Technologies Co., Ltd
+Copyright 2012-2019 Huawei Technologies Co., Ltd
+Copyright 2021-2021 Huawei Technologies Co., Ltd
+Copyright 2018-2020 Huawei Technologies Co., Ltd
+Copyright 2020-2021 Huawei Technologies Co., Ltd
+Copyright 2019-2021 Huawei Technologies Co., Ltd
+Copyright (c) 2025 Huawei Technologies Co., Ltd.
+Copyright (c) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
+Copyright (c) Huawei Technologies Co., Ltd. 2012-2020. All rights reserved.
+License: Apache License V2.0
+Full Licence Text:
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Do not include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+Software: akg v1.6.0
+Official Repository: https://gitee.com/mindspore/akg
+Usage:
+test/ut/depends/pkg_inc/runtime/runtime/mem_base.h
+test/ut/depends/pkg_inc/runtime/runtime/base.h
+test/ut/depends/pkg_inc/runtime/runtime/context.h
+
+Copyright notice(s):
+Copyright 2019-2020 Huawei Technologies Co., Ltd
+License: Apache License V2.0
+Please see above:
+
+
+Software: FP16 ba1d31f
+Official Repository: https://github.com/Maratyszcza/FP16
+Usage:
+test/ut/stub/llt_hccl_stub_fp16.h
+
+Copyright notice(s):
+Copyright (c) 2017 Facebook Inc.
+Copyright (c) 2017 Georgia Institute of Technology
+Copyright 2019 Google LLC
+License: The MIT License (MIT)
+Full Licence Text:
+    Permission is hereby granted, free of charge, 
+    to any person obtaining a copy of this software and associated documentation files (the "Software"), 
+    to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, 
+    publish, distribute, sublicense, and/or sell copies of the Software, 
+    and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Software: graphengine v1.5.1
+Official Repository: https://gitee.com/mindspore/graphengine
+Usage:
+test/ut/depends/pkg_inc/aicpu/fwk_adpt_struct.h
+test/ut/depends/include/external/ge_common/ge_error_codes.h
+test/ut/depends/pkg_inc/runtime/runtime/rt_dfx.h
+test/ut/depends/pkg_inc/runtime/runtime/rt_ffts_plus_define.h
+test/ut/depends/pkg_inc/aicpu/aicpu_engine_struct.h
+test/ut/depends/pkg_inc/runtime/runtime/rt_ffts_plus.h
+
+Copyright notice(s):
+Copyright 2019-2020 Huawei Technologies Co., Ltd
+Copyright 2021 Huawei Technologies Co., Ltd
+License: Apache License V2.0
+Please see above:
+
+
+Software: libboundscheck v1.1.11
+Official Repository: https://gitee.com/openeuler/libboundscheck
+Usage:
+test/ut/depends/include/securectype.h
+test/ut/platform/hccp/rdma_agent/stub/sec.c
+test/ut/platform/hccp/hccp_service/stub/mm.c
+test/ut/platform/hccp/rdma_service_normal/stub/mm.c
+test/ut/platform/hccp/rdma_service_abnormal/stub/mm.c
+
+Copyright notice(s):
+Copyright (c) Huawei Technologies Co., Ltd. 2014-2021. All rights reserved.
+License: Mulan PSL v2
+Full Licence Text:
+    http://license.coscl.org.cn/MulanPSL2
+    THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+    EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+    MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+    See the Mulan PSL v2 for more details.
+    Mulan Permissive Software License,Version 2
+    Mulan Permissive Software License,Version 2 (Mulan PSL v2)
+
+    January 2020 http://license.coscl.org.cn/MulanPSL2
+
+    Your reproduction, use, modification and distribution of the Software shall be subject 
+    to Mulan PSL v2 (this License) with the following terms and conditions:
+
+    0. Definition
+
+        Software means the program and related documents which are licensed under this License and comprise all Contribution(s).
+        Contribution means the copyrightable work licensed by a particular Contributor under this License.
+        Contributor means the Individual or Legal Entity who licenses its copyrightable work under this License.
+        Legal Entity means the entity making a Contribution and all its Affiliates.
+        Affiliates means entities that control, are controlled by, or are under common control with the 
+        acting entity under this License, 'control' means direct or indirect ownership of at least fifty 
+        percent (50%) of the voting power, capital or other securities of controlled or commonly controlled entity.
+
+    1. Grant of Copyright License
+
+        Subject to the terms and conditions of this License, each Contributor hereby grants 
+        to you a perpetual, worldwide, royalty-free, non-exclusive, irrevocable copyright license to reproduce, 
+        use, modify, or distribute its Contribution, with modification or not.
+
+    2. Grant of Patent License
+
+        Subject to the terms and conditions of this License, each Contributor hereby grants to you a perpetual, 
+        worldwide, royalty-free, non-exclusive, irrevocable (except for revocation under this Section) 
+        patent license to make, have made, use, offer for sale, sell, import or otherwise transfer its Contribution, 
+        where such patent license is only limited to the patent claims owned or controlled by such Contributor now or 
+        in future which will be necessarily infringed by its Contribution alone, or by combination of the Contribution 
+        with the Software to which the Contribution was contributed. The patent license shall not apply to any modification 
+        of the Contribution, and any other combination which includes the Contribution. If you or your Affiliates directly 
+        or indirectly institute patent litigation (including a cross claim or counterclaim in a litigation) 
+        or other patent enforcement activities against any individual or entity by alleging that the Software 
+        or any Contribution in it infringes patents, then any patent license granted to you under this License 
+        for the Software shall terminate as of the date such litigation or activity is filed or taken.
+
+    3. No Trademark License
+
+        No trademark license is granted to use the trade names, trademarks, service marks, 
+        or product names of Contributor, except as required to fulfill notice requirements in section 4.
+
+    4. Distribution Restriction
+
+        You may distribute the Software in any medium with or without modification, whether in source 
+        or executable forms, provided that you provide recipients with a copy of this License 
+        and retain copyright, patent, trademark and disclaimer statements in the Software.
+
+    5. Disclaimer of Warranty and Limitation of Liability
+
+        THE SOFTWARE AND CONTRIBUTION IN IT ARE PROVIDED WITHOUT WARRANTIES OF ANY KIND, 
+        EITHER EXPRESS OR IMPLIED. IN NO EVENT SHALL ANY CONTRIBUTOR OR COPYRIGHT HOLDER BE LIABLE 
+        TO YOU FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO ANY DIRECT, OR INDIRECT, SPECIAL OR CONSEQUENTIAL 
+        DAMAGES ARISING FROM YOUR USE OR INABILITY TO USE THE SOFTWARE OR THE CONTRIBUTION IN IT, 
+        NO MATTER HOW IT IS CAUSED OR BASED ON WHICH LEGAL THEORY, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+    6. Language
+
+        THIS LICENSE IS WRITTEN IN BOTH CHINESE AND ENGLISH, AND THE CHINESE VERSION AND ENGLISH VERSION 
+        SHALL HAVE THE SAME LEGAL EFFECT. IN THE CASE OF DIVERGENCE BETWEEN THE CHINESE AND ENGLISH VERSIONS, 
+        THE CHINESE VERSION SHALL PREVAIL.
+
+    END OF THE TERMS AND CONDITIONS
+
+    How to Apply the Mulan Permissive Software License,Version 2 (Mulan PSL v2) to Your Software
+
+    To apply the Mulan PSL v2 to your work, for easy identification by recipients, you are suggested to complete following three steps:
+
+    Fill in the blanks in following statement, including insert your software name, the year of the first publication of your software, and your name identified as the copyright owner;
+    Create a file named "LICENSE" which contains the whole context of this License in the first directory of your software package;
+    Attach the statement to the appropriate annotated syntax at the beginning of each source file.
+    Copyright (c) [Year] [name of copyright holder]
+    [Software Name] is licensed under Mulan PSL v2.
+    You can use this software according to the terms and conditions of the Mulan PSL v2.
+    You may obtain a copy of Mulan PSL v2 at:
+            http://license.coscl.org.cn/MulanPSL2
+    THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+    EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+    MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+    See the Mulan PSL v2 for more details.
+
+
+Software: metadef d604066
+Official Repository: https://gitee.com/ascend/metadef
+Usage:
+test/ut/depends/pkg_inc/runtime/runtime/rt_stars_define.h
+test/ut/depends/include/register/register_error_codes.h
+test/ut/depends/pkg_inc/runtime/rt_external_ffts_define.h
+test/ut/depends/include/exe_graph/runtime/tensor.h
+test/ut/depends/include/graph/attr_value.h
+test/ut/depends/include/utils/extern_math_util.h
+test/ut/depends/include/graph/ascend_string.h
+test/ut/depends/pkg_inc/runtime/rt_external_kernel.h
+test/ut/depends/include/graph/inference_context.h
+test/ut/depends/include/mmpa/sub_inc/mmpa_typedef_linux.h
+test/ut/depends/pkg_inc/runtime/runtime/rt_ffts.h
+test/ut/depends/include/platform/platform_info.h
+test/ut/depends/include/graph/tensor.h
+test/ut/depends/include/register/register_types.h
+test/ut/depends/pkg_inc/runtime/rt_external_stars_define.h
+test/ut/depends/include/register/register_fmk_types.h
+test/ut/depends/include/platform/platform_infos_def.h
+test/ut/depends/include/exe_graph/runtime/tiling_context.h
+test/ut/depends/include/graph/types.h
+test/ut/depends/include/exe_graph/runtime/context_extend.h
+test/ut/depends/include/exe_graph/runtime/kernel_context.h
+test/ut/depends/include/exe_graph/runtime/tiling_data.h
+test/ut/depends/include/exe_graph/runtime/shape.h
+test/ut/depends/include/platform/platform_info_def.h
+test/ut/depends/include/exe_graph/runtime/expand_dims_type.h
+test/ut/depends/include/exe_graph/runtime/compute_node_info.h
+test/ut/depends/include/graph/ge_error_codes.h
+test/ut/depends/include/exe_graph/runtime/storage_format.h
+
+Copyright notice(s):
+Copyright 2019-2020 Huawei Technologies Co., Ltd
+Copyright 2021 Huawei Technologies Co., Ltd
+Copyright 2022 Huawei Technologies Co., Ltd
+Copyright 2020 Huawei Technologies Co., Ltd
+License: Apache License V2.0
+Please see above:
+
+
+Software: mindspore v6173dc2
+Official Repository: https://gitee.com/mindspore/mindspore
+Usage:
+test/ut/depends/pkg_inc/aicpu/aicpu_schedule/aicpu_context.h
+test/ut/depends/pkg_inc/aicpu/aicpu_schedule/aicpu_async_event.h
+
+Copyright notice(s):
+Copyright 2021 Huawei Technologies Co., Ltd
+License: Apache License V2.0
+Please see above:
+
+
+Software: tensorflow v30f1035
+Official Repository: https://gitee.com/ascend/tensorflow
+Usage:
+test/ut/depends/pkg_inc/runtime/runtime/rt_model.h
+scripts/package/hcomm/scripts/run_hcomm_install.sh
+scripts/package/hcomm/scripts/run_hcomm_upgrade.sh
+test/ut/depends/pkg_inc/runtime/runtime/kernel.h
+test/ut/depends/pkg_inc/aicpu/tsd/tsd_client.h
+test/ut/depends/pkg_inc/runtime/runtime/config.h
+
+Copyright notice(s):
+Copyright 2019-2020 Huawei Technologies Co., Ltd
+Copyright 2019 Huawei Technologies Co., Ltd
+License: Apache License V2.0
+Please see above:
+
+
+Software: third_party_bounds_checking_function OpenHarmony-v1.1.4-LTS
+Official Repository: https://gitee.com/openharmony/third_party_bounds_checking_function
+Usage:
+test/ut/depends/include/securec.h
+
+Copyright notice(s):
+Copyright (c) Huawei Technologies Co., Ltd. 2014-2020. All rights reserved.
+License: Mulan PSL v2
+Please see above:
+
+
+Software: rdma-roce v42.7
+Official Repository: https://github.com/linux-rdma/rdma-core
+Usage:
+src/base_comm/resources/hccp/external_depends/rdma-core/providers/hns/hns_roce_u.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/infiniband/kern-abi.h
+src/base_comm/resources/hccp/external_depends/rdma-core/libverbs/driver.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/infiniband/cmd_ioctl.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/infiniband/verbs.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/infiniband/driver.h
+src/base_comm/resources/hccp/external_depends/rdma-core/libverbs/cmd_ioctl.h
+src/base_comm/resources/hccp/external_depends/rdma-core/providers/hns/hns_roce_u_hw_v2.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/ibdiag_common.h
+src/base_comm/resources/hccp/external_depends/rdma-core/libverbs/kern-abi.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/util/udma_barrier.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/rdma/ib_user_verbs.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/infiniband/ib_user_ioctl_verbs.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/infiniband/verbs_api.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/util/compiler.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/ccan/list.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/ccan/str.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/ccan/check_type.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/ccan/container_of.h
+src/base_comm/resources/hccp/external_depends/rdma-core/include/rdma/rdma_user_ioctl_cmds.h
+test/ut/platform/hccp/rdma_service_abnormal/stub/cmd.c
+test/ut/platform/hccp/rdma_service_abnormal/stub/device.c
+test/ut/platform/hccp/rdma_service_abnormal/stub/init.c
+test/ut/platform/hccp/rdma_service_normal/stub/cmd.c
+test/ut/platform/hccp/rdma_service_normal/stub/device.c
+test/ut/platform/hccp/rdma_service_normal/stub/init.c
+
+Copyright notice(s):
+Copyright (c) 2016-2017 Hisilicon Limited.
+Copyright (c) 2005 Topspin Communications.  All rights reserved.
+Copyright (c) 2005, 2006 Cisco Systems.  All rights reserved.
+Copyright (c) 2005 PathScale, Inc.  All rights reserved.
+Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
+Copyright (c) 2005, 2006 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2018 Mellanox Technologies, Ltd.  All rights reserved.
+Copyright (c) 2004, 2011-2012 Intel Corporation.  All rights reserved.
+Copyright (c) 2005, 2006, 2007 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2007 The Regents of the University of Califotnia.
+Copyright (c) 2006 Mellanox Technologies.  All rights reserved.
+Copyright (c) 2017-2018, Mellanox Technologies inc.  All rights reserved.
+Copyright (c) 2017, Mellanox Technologies inc.  All rights reserved.
+Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
+Copyright (c) 2006-2007 The Regents of the University of California.
+Copyright (c) 2004-2009 Voltaire Inc. All rights reserved.
+Copyright (c) 2002-2010 Mellanox Technologies LTD. All rights reserved.
+Copyright (c) 1996-2003 Intel Corporation. All rights reserved.
+Copyright (c) 2009 HNR Consulting. All rights reserved.
+Copyright (c) 2011 Lawrence Livermore National Security. All rights reserved.
+License: CC0 (Public domain)
+Full Licence Text:
+
+    Statement of Purpose
+
+    The laws of most jurisdictions throughout the world automatically confer
+    exclusive Copyright and Related Rights (defined below) upon the creator and
+    subsequent owner(s) (each and all, an "owner") of an original work of
+    authorship and/or a database (each, a "Work").
+
+    Certain owners wish to permanently relinquish those rights to a Work for the
+    purpose of contributing to a commons of creative, cultural and scientific works
+    ("Commons") that the public can reliably and without fear of later claims of
+    infringement build upon, modify, incorporate in other works, reuse and
+    redistribute as freely as possible in any form whatsoever and for any purposes,
+    including without limitation commercial purposes. These owners may contribute
+    to the Commons to promote the ideal of a free culture and the further
+    production of creative, cultural and scientific works, or to gain reputation or
+    greater distribution for their Work in part through the use and efforts of
+    others.
+
+    For these and/or other purposes and motivations, and without any expectation of
+    additional consideration or compensation, the person associating CC0 with a
+    Work (the "Affirmer"), to the extent that he or she is an owner of Copyright
+    and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
+    publicly distribute the Work under its terms, with knowledge of his or her
+    Copyright and Related Rights in the Work and the meaning and intended legal
+    effect of CC0 on those rights.
+
+    1. Copyright and Related Rights. A Work made available under CC0 may be
+    protected by copyright and related or neighboring rights ("Copyright and
+    Related Rights"). Copyright and Related Rights include, but are not limited to,
+    the following:
+
+        the right to reproduce, adapt, distribute, perform, display, communicate,
+    and translate a Work; moral rights retained by the original author(s) and/or
+    performer(s); publicity and privacy rights pertaining to a person's image or
+    likeness depicted in a Work; rights protecting against unfair competition in
+    regards to a Work, subject to the limitations in paragraph 4(a), below; rights
+    protecting the extraction, dissemination, use and reuse of data in a Work;
+    database rights (such as those arising under Directive 96/9/EC of the European
+    Parliament and of the Council of 11 March 1996 on the legal protection of
+    databases, and under any national implementation thereof, including any amended
+    or successor version of such directive); and other similar, equivalent or
+    corresponding rights throughout the world based on applicable law or treaty,
+    and any national implementations thereof.
+
+    2. Waiver. To the greatest extent permitted by, but not in contravention of,
+    applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
+    unconditionally waives, abandons, and surrenders all of Affirmer's Copyright
+    and Related Rights and associated claims and causes of action, whether now
+    known or unknown (including existing as well as future claims and causes of
+    action), in the Work (i) in all territories worldwide, (ii) for the maximum
+    duration provided by applicable law or treaty (including future time
+    extensions), (iii) in any current or future medium and for any number of
+    copies, and (iv) for any purpose whatsoever, including without limitation
+    commercial, advertising or promotional purposes (the "Waiver"). Affirmer makes
+    the Waiver for the benefit of each member of the public at large and to the
+    detriment of Affirmer's heirs and successors, fully intending that such Waiver
+    shall not be subject to revocation, rescission, cancellation, termination, or
+    any other legal or equitable action to disrupt the quiet enjoyment of the Work
+    by the public as contemplated by Affirmer's express Statement of Purpose.
+
+    3. Public License Fallback. Should any part of the Waiver for any reason be
+    judged legally invalid or ineffective under applicable law, then the Waiver
+    shall be preserved to the maximum extent permitted taking into account
+    Affirmer's express Statement of Purpose. In addition, to the extent the Waiver
+    is so judged Affirmer hereby grants to each affected person a royalty-free, non
+    transferable, non sublicensable, non exclusive, irrevocable and unconditional
+    license to exercise Affirmer's Copyright and Related Rights in the Work (i) in
+    all territories worldwide, (ii) for the maximum duration provided by applicable
+    law or treaty (including future time extensions), (iii) in any current or
+    future medium and for any number of copies, and (iv) for any purpose
+    whatsoever, including without limitation commercial, advertising or promotional
+    purposes (the "License"). The License shall be deemed effective as of the date
+    CC0 was applied by Affirmer to the Work. Should any part of the License for any
+    reason be judged legally invalid or ineffective under applicable law, such
+    partial invalidity or ineffectiveness shall not invalidate the remainder of the
+    License, and in such case Affirmer hereby affirms that he or she will not (i)
+    exercise any of his or her remaining Copyright and Related Rights in the Work
+    or (ii) assert any associated claims and causes of action with respect to the
+    Work, in either case contrary to Affirmer's express Statement of Purpose.
+
+    4. Limitations and Disclaimers.
+
+        No trademark or patent rights held by Affirmer are waived, abandoned,
+    surrendered, licensed or otherwise affected by this document.  Affirmer offers
+    the Work as-is and makes no representations or warranties of any kind
+    concerning the Work, express, implied, statutory or otherwise, including
+    without limitation warranties of title, merchantability, fitness for a
+    particular purpose, non infringement, or the absence of latent or other
+    defects, accuracy, or the present or absence of errors, whether or not
+    discoverable, all to the greatest extent permissible under applicable law.
+    Affirmer disclaims responsibility for clearing rights of other persons that may
+    apply to the Work or any use thereof, including without limitation any person's
+    Copyright and Related Rights in the Work. Further, Affirmer disclaims
+    responsibility for obtaining any necessary consents, permissions or other
+    rights required for any use of the Work.  Affirmer understands and acknowledges
+    that Creative Commons is not a party to this document and has no duty or
+    obligation with respect to this CC0 or use of the Work.
+
+License: OpenIB.org BSD License (MIT variant)
+Full Licence Text:
+
+           OpenIB.org BSD license (MIT variant)
+ 
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+    
+    - Redistributions of source code must retain the above copyright notice,
+        this list of conditions and the following disclaimer.
+    
+    - Redistributions in binary form must reproduce the above copyright notice,
+        this list of conditions and the following disclaimer in the documentation
+        and/or other materials provided with the distribution.
+    
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+Software: umdk
+Official Repository: https://gitcode.com/openeuler/umdk
+Usage:
+test/ut/platform/hccp/rdma_service_abnormal/stub/ub_api.c
+test/ut/platform/hccp/rdma_service_normal/stub/ub_api.c
+
+Copyright notice(s):
+Copyright (c) Huawei Technologies Co., Ltd. 2021-2025. All rights reserved.
+License: The MIT License (MIT)
+Full Licence Text:
+The MIT License
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.

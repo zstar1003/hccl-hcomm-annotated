@@ -1,0 +1,8 @@
+{
+global:
+    HcommNicPluginGetInfo;
+    HcommNicPluginCreateEndpoint;
+    HcommNicPluginCreateChannel;
+local:
+    *;
+};

@@ -1,0 +1,2840 @@
+<!--
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+-->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCCL-VM FAQ 文档站</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #f7f7f8;
+            --surface: #ffffff;
+            --surface-subtle: #fbfbfc;
+            --surface-muted: #f3f4f6;
+            --border: #e5e7eb;
+            --border-strong: #d1d5db;
+            --text: #1f2937;
+            --text-soft: #4b5563;
+            --text-muted: #6b7280;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+            --accent-green: #059669;
+            --accent-green-soft: #ecfdf5;
+            --code-bg: #111827;
+            --code-border: #1f2937;
+            --code-text: #e5e7eb;
+            --sidebar-width: 320px;
+            --radius-lg: 6px;
+            --radius-md: 4px;
+            --radius-sm: 3px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        button, input, select { font: inherit; }
+        .app-shell {
+            min-height: 100vh;
+        }
+        .frame {
+            max-width: 1440px;
+            margin: 0 auto;
+            background: var(--surface);
+            min-height: 100vh;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            padding: 16px 24px 12px;
+            background: rgba(255, 255, 255, 0.94);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        .topbar-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .brand h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .breadcrumb {
+            margin-top: 10px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            min-height: 24px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .crumb {
+            color: var(--text-soft);
+        }
+        .crumb.current {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .crumb-sep {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(280px, var(--sidebar-width)) minmax(0, 1fr);
+            min-height: calc(100vh - 96px);
+        }
+        .sidebar {
+            background: #fafafa;
+            border-right: 1px solid var(--border);
+        }
+        .sidebar-inner {
+            position: sticky;
+            top: 96px;
+            max-height: calc(100vh - 96px);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+        }
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0;
+        }
+        .filter-panel {
+            padding: 7px 10px;
+            display: grid;
+            gap: 8px;
+            flex: none;
+        }
+        .filter-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .search-note {
+            display: none;
+        }
+        .filter-body {
+            display: grid;
+            gap: 8px;
+        }
+        .control-group {
+            min-width: 0;
+        }
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .filter-grid .control-group:last-child {
+            grid-column: 1 / -1;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-soft);
+        }
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 0;
+            padding: 7px 9px;
+            min-height: 34px;
+            font-size: 12px;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+        }
+        .btn {
+            border: 1px solid var(--border);
+            border-radius: 0;
+            padding: 7px 10px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--surface);
+            color: var(--text-soft);
+            font-size: 12px;
+            transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+        }
+        .btn:hover {
+            border-color: var(--border-strong);
+            background: var(--surface-subtle);
+            color: var(--text);
+        }
+        .filter-clear-btn {
+            width: auto;
+            flex: none;
+            padding: 4px 8px;
+        }
+        .directory-panel {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .directory-head {
+            padding: 9px 12px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .directory-head h2 {
+            font-size: 13px;
+            color: var(--text);
+            font-weight: 600;
+        }
+        .match-pill {
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            color: var(--text-soft);
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .directory-tree {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 6px;
+        }
+        .directory-empty {
+            padding: 20px 14px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.7;
+            font-size: 13px;
+        }
+        .nav-module + .nav-module {
+            margin-top: 4px;
+        }
+        .module-toggle,
+        .submodule-toggle,
+        .nav-faq {
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            background: none;
+        }
+        .module-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 6px;
+            border-radius: 0;
+            color: var(--text);
+        }
+        .module-toggle:hover {
+            background: var(--surface-muted);
+        }
+        .nav-chevron {
+            width: 14px;
+            flex: none;
+            color: #9ca3af;
+            font-size: 11px;
+        }
+        .toggle-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .toggle-title {
+            display: block;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .toggle-subtitle {
+            display: none;
+        }
+        .count-badge {
+            flex: none;
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .module-content {
+            padding: 1px 0 0 9px;
+        }
+        .submodule-block + .submodule-block {
+            margin-top: 1px;
+        }
+        .submodule-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 6px;
+            border-radius: 0;
+            color: var(--text-soft);
+        }
+        .submodule-toggle:hover {
+            background: var(--surface-muted);
+        }
+        .submodule-content {
+            padding: 1px 0 1px 10px;
+            display: grid;
+            gap: 0;
+        }
+        .nav-faq {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 19px;
+            padding: 1px 4px;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 12px;
+            line-height: 1.35;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .nav-faq:hover {
+            background: var(--surface-muted);
+            color: var(--accent);
+        }
+        .nav-faq.active {
+            background: rgba(37, 99, 235, 0.06);
+            color: var(--accent);
+        }
+        .nav-faq-id {
+            display: inline;
+            flex: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.01em;
+        }
+        .nav-faq-title {
+            display: block;
+            min-width: 0;
+            margin-top: 0;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-faq-code {
+            display: none;
+            margin-top: 0;
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            color: var(--text-soft);
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .content {
+            min-width: 0;
+            background: var(--surface-subtle);
+        }
+        .content-inner {
+            padding: 20px;
+        }
+        .detail-card {
+            min-height: calc(100vh - 144px);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0;
+            overflow: hidden;
+        }
+        .detail-empty {
+            padding: 56px 40px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        .detail-empty h2 {
+            color: var(--text);
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .detail-empty p {
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .detail-header {
+            padding: 24px 28px 18px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .detail-eyebrow {
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+        .detail-title {
+            margin-top: 10px;
+            font-size: 28px;
+            line-height: 1.2;
+            color: var(--text);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .detail-summary {
+            margin-top: 12px;
+            color: var(--text-soft);
+            font-size: 15px;
+            max-width: 920px;
+        }
+        .detail-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            border-radius: 0;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-soft);
+        }
+        .tag-path {
+            background: var(--accent-soft);
+            border-color: #dbeafe;
+            color: var(--accent);
+        }
+        .detail-body {
+            padding: 20px 28px 28px;
+        }
+        .section-grid {
+            display: grid;
+            gap: 14px;
+        }
+        .detail-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0;
+            padding: 18px 20px;
+        }
+        .detail-section h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        .detail-section p,
+        .detail-section ul {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-soft);
+        }
+        .detail-section ul {
+            padding-left: 18px;
+        }
+        .detail-section li + li {
+            margin-top: 6px;
+        }
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            border: 1px solid var(--code-border);
+            padding: 14px 16px;
+            border-radius: 0;
+            font-family: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .diagram-container {
+            background: var(--surface);
+            padding: 16px;
+            border-radius: 0;
+            border: 1px solid var(--border);
+            overflow: auto;
+        }
+        .diagram-container img {
+            max-width: 100%;
+            border-radius: 0;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        @media (max-width: 1100px) {
+            .workspace {
+                grid-template-columns: 280px minmax(0, 1fr);
+            }
+            .detail-title {
+                font-size: 26px;
+            }
+        }
+        @media (max-width: 960px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            .sidebar-inner {
+                position: static;
+                top: auto;
+                max-height: none;
+            }
+            .detail-card {
+                min-height: auto;
+            }
+        }
+        @media (max-width: 720px) {
+            .topbar {
+                padding: 14px 16px 12px;
+            }
+            .brand h1 {
+                font-size: 20px;
+            }
+            .sidebar-inner,
+            .content-inner {
+                padding: 16px;
+            }
+            .detail-header,
+            .detail-body,
+            .detail-empty {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+            .detail-title {
+                font-size: 21px;
+            }
+        }
+        @media (max-width: 480px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <div class="frame">
+            <header class="topbar">
+                <div class="topbar-main">
+                    <div class="brand">
+                        <h1>HCCL-VM FAQ 文档站</h1>
+                    </div>
+                </div>
+                <nav class="breadcrumb" id="breadcrumbNav"></nav>
+            </header>
+            <div class="workspace">
+                <aside class="sidebar">
+                    <div class="sidebar-inner">
+                        <section class="panel filter-panel">
+                            <div class="filter-head">
+                                <h2 class="panel-title">搜索与筛选</h2>
+                                <button class="btn filter-clear-btn" id="clearBtn">清空</button>
+                            </div>
+                            <div class="filter-body" id="filterBody">
+                                <p class="search-note">输入即过滤目录，无需额外点击搜索。筛选后会自动定位到第一条可见 FAQ。</p>
+                                <div class="control-group">
+                                    <label for="keywordInput">关键词</label>
+                                    <input type="text" id="keywordInput" placeholder="函数名、日志片段、错误码、问题描述">
+                                </div>
+                                <div class="filter-grid">
+                                    <div class="control-group">
+                                        <label for="moduleFilter">模块</label>
+                                        <select id="moduleFilter">
+                                            <option value="">全部模块</option>
+                                        </select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="submoduleFilter">子模块</label>
+                                        <select id="submoduleFilter">
+                                            <option value="">全部子模块</option>
+                                        </select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="errorCodeFilter">错误码</label>
+                                        <select id="errorCodeFilter">
+                                            <option value="">全部错误码</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="panel directory-panel">
+                            <div class="directory-head">
+                                <div>
+                                    <h2>目录</h2>
+                                </div>
+                                <span class="match-pill" id="matchInfo">0 条</span>
+                            </div>
+                            <div class="directory-tree" id="directoryTree">
+                                <div class="directory-empty">目录准备中...</div>
+                            </div>
+                        </section>
+                    </div>
+                </aside>
+                <main class="content">
+                    <div class="content-inner">
+                        <article class="detail-card" id="detailContainer">
+                            <div class="detail-empty">
+                                <h2>准备加载 FAQ 内容</h2>
+                                <p>左侧目录会自动按模块和子模块展开，选择任意条目后，中间区域会展示完整详情、关键日志和 Mermaid 图示。</p>
+                            </div>
+                        </article>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const faqData = [
+  {
+    "id": "FAQ-CHK101",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "成图翻译失败",
+    "errorCode": "GRAPH_TRANSLATE_FAILED (101)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_TRANSLATE_FAILED",
+      "GenGraph",
+      "ErrorCode: 101"
+    ],
+    "logPatterns": [
+      "[GenGraph] [ErrorCode: 101] Failed to convert one task into a graph node, taskIndex=128, ret=1, taskMeta=taskType=0, rankId=3, streamId=7, srcRankId=3, dstRankId=4, src=[0x0,0x400), dst=[0x1000,0x1400), protocol=1"
+    ],
+    "symptom": "成图阶段无法将输入 task meta 翻译为内部图节点，常见于任务类型不支持或字段组合不满足翻译条件。",
+    "guidance": "【可能原因】\n1. 该 `taskType` 当前没有对应的翻译实现。\n2. `rankId`、`streamId`、偏移、长度等字段异常。\n3. 上游生成的 task meta 自身有问题。\n\n【排查步骤】\n典型报错点:\n1. 普通 task meta 无法翻译成图节点: 先按 `taskIndex` 在原始 task 列表里定位是哪一条任务；再根据具体任务信息，确认问题根因。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK102",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "成图阶段死锁",
+    "errorCode": "GRAPH_DEADLOCK (102)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_DEADLOCK",
+      "GenGraph",
+      "ErrorCode: 102",
+      "TaskWaitAICPU"
+    ],
+    "logPatterns": [
+      "[GenGraph] [ErrorCode: 102] Local Record/Wait matching is stuck on this rank. Some Wait tasks are still blocked, but no new local Record task can unblock them, rankId=0, firstBlockedWaitNode=[TaskWaitAICPU] node=143, rank=0, stream=3, protocol=SDMA, notify={recordRank=0, waitRank=0, notifyId=17}, blockedWaitNodeCount=5"
+    ],
+    "symptom": "成图阶段的同步配对推进卡住，仍有 Wait 节点等待，但没有新的 Record 节点能够与 Wait 节点配对。",
+    "guidance": "【可能原因】\n1. Wait 数量多于 Record，或 Record 因其他依赖未执行到而无法参与配对。\n2. `notifyId` 错误，Wait 和 Record 的 `notifyId` 不一致，导致无法完成配对。\n3. Record 本身已执行，但其后继 Wait 的前驱依赖尚未满足，Wait 无法进入可配对队列。\n\n【排查步骤】\n1. 阅读日志中 `firstBlockedWaitNode` 的 `notifyId`、`recordRank` 和 `waitRank`，确认这条 Wait 理论上应该由谁解锁。\n2. 查询同 rank 或对应的对端 rank 上是否存在匹配的 Record；如果存在，再继续看两者能否正确配对。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK103",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "同步配对残留未消费",
+    "errorCode": "GRAPH_UNMATCHED (103)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_UNMATCHED",
+      "GenGraph",
+      "ErrorCode: 103",
+      "TaskRecordAICPU"
+    ],
+    "logPatterns": [
+      "[GenGraph] [ErrorCode: 103] Found cross-rank Record tasks that were never consumed by any matching Wait task, recordRankId=0, waitRankId=3, notifyId=21, firstUnconsumedRecordNode=[TaskRecordAICPU] node=77, rank=0, stream=1, protocol=RDMA, notify={recordRank=0, waitRank=3, notifyId=21}, unconsumedRecordCount=2"
+    ],
+    "symptom": "同步配对结束后仍残留未被消费的同步节点，通常表现为 Record 没有对应的 Wait。",
+    "guidance": "【可能原因】\n1. Record 与 Wait 数量不匹配。\n2. 使用的 `notifyId` 不正确。\n\n【排查步骤】\n1. 查看 `recordRankId`、`waitRankId`、`notifyId` 是否符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK104",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "AIV 分组成员缺失",
+    "errorCode": "GRAPH_MEMBER_MISSING (104)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_MEMBER_MISSING"
+    ],
+    "logPatterns": [],
+    "symptom": "该错误码主要表示 AIV 模式下成图阶段发现分组成员不完整。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK105",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "图结构非法",
+    "errorCode": "GRAPH_STRUCTURE_INVALID (105)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_STRUCTURE_INVALID",
+      "GenGraph",
+      "ErrorCode: 105",
+      "TaskTransMem"
+    ],
+    "logPatterns": [
+      "[GenGraph] [ErrorCode: 105] Failed to remove one graph edge because the parent or child node does not exist, parentNodeId=91, childNodeId=123, parentNode=[TaskTransMem] node=91, rank=2, stream=0, protocol=SDMA, src=rank 2 INPUT [0x0,0x400), dst=rank 2 CCL [0x1000,0x1400), childNode=null"
+    ],
+    "symptom": "图边关系不满足建图前提，例如删边或重连时父节点、子节点不存在。",
+    "guidance": "【可能原因】\n1. 该问题通常不是算法编排问题。\n\n【排查步骤】\n1. 先确认 `Checker` 中是否已经生成了任务节点。\n2. 可联系工具支撑人员协助定位。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK106",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "AIV 快照不一致",
+    "errorCode": "GRAPH_SNAPSHOT_MISMATCH (106)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_SNAPSHOT_MISMATCH"
+    ],
+    "logPatterns": [],
+    "symptom": "该错误码主要表示 AIV 模式下成图阶段加载的快照或环境信息不一致。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK107",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "成图资源缺失",
+    "errorCode": "GRAPH_RESOURCE_NOT_FOUND (107)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_RESOURCE_NOT_FOUND"
+    ],
+    "logPatterns": [],
+    "symptom": "该错误码主要表示 AIV 模式下成图阶段依赖的资源、映射或数据文件缺失。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK108",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "寄存器或 HBM 未初始化",
+    "errorCode": "GRAPH_REGISTER_UNINITIALIZED (108)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_REGISTER_UNINITIALIZED",
+      "GenGraphCCU",
+      "ErrorCode: 108",
+      "GenGraphCCU"
+    ],
+    "logPatterns": [
+      "[GenGraphCCU] [ErrorCode: 108] Failed to read XN register before it was initialized, rankId=2, dieId=0, instrId=73, xnId=11\n\n[GenGraphCCU] [ErrorCode: 108] Failed to read HBM content before it was initialized, rankId=2, dieId=0, instrId=73, hbmAddr=0x1000"
+    ],
+    "symptom": "当前指令在读取寄存器或 HBM 内容时，没有找到对应的已初始化数据，通常说明前序写入链路没有正确建立。",
+    "guidance": "【可能原因】\n1. 前置 Load / Set / Store 指令未执行到。\n2. 负责初始化的 queue 被 Wait 等依赖阻塞，未能推进。\n3. 地址或寄存器解析错位，读到了不该访问的位置。\n\n【排查步骤】\n1. 如果日志里给出了 `xnId`，向前回看该 queue 中最近一次对该寄存器的合法写入。\n2. 如果日志里给出了 `hbmAddr`，检查对应地址区间在更早任务中是否存在合法写入。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK109",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "编号或索引越界",
+    "errorCode": "GRAPH_OUT_OF_RANGE (109)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_OUT_OF_RANGE",
+      "GenGraphCCU",
+      "ErrorCode: 109",
+      "GenGraphCCU"
+    ],
+    "logPatterns": [
+      "[GenGraphCCU] [ErrorCode: 109] dieId is out of range when converting address to MS id, dieId=4, maxDieId=1\n\n[GenGraphCCU] [ErrorCode: 109] Xn register id is out of the valid range, xnId=37, validMin=0, validMax=31"
+    ],
+    "symptom": "编号、索引或地址归属字段超出当前资源或指令约束范围，常见于 `dieId`、寄存器编号或地址解析中间结果越界。",
+    "guidance": "【可能原因】\n1. 资源库规模与任务数据不匹配，例如只加载了部分 die。\n2. 地址归属解析错误，把本地地址映射到了不存在的资源编号。\n3. 指令字段解析错位，导致寄存器编号或索引值异常。\n4. 当前数据来自不同版本或不同分支的指令集。\n\n【排查步骤】\n1. 如果日志里给出了 `dieId/maxDieId`，先核对当前资源文件中的 die 数量是否和任务数据一致。\n2. 如果日志里给出了 `xnId/validMin/validMax`，再回看原始指令字段，确认寄存器编号是否被错误解析或计算。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK110",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "地址非法或未满足对齐约束",
+    "errorCode": "GRAPH_ADDRESS_INVALID (110)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_ADDRESS_INVALID",
+      "GenGraphCCU",
+      "ErrorCode: 110",
+      "GenGraphCCU"
+    ],
+    "logPatterns": [
+      "[GenGraphCCU] [ErrorCode: 110] Address does not fall into any known MS address range, localMsAddr=0x27f0000, rawAddr=0x82ff000\n\n[GenGraphCCU] [ErrorCode: 110] Load source address must be 8-byte aligned, sourceAddress=0x1003"
+    ],
+    "symptom": "地址无法映射到 Checker 已知的资源区间，或 Load/Store 相关地址、长度不满足当前指令的对齐约束。",
+    "guidance": "【可能原因】\n1. 基础地址表不匹配。\n2. 原始地址被上游错误写入，导致值异常。\n3. 上游地址计算偏了。\n4. 某条指令的地址或长度没有按要求对齐。\n\n【排查步骤】\n1. 如果日志给出了 `rawAddr/localMsAddr` 或 `addr/dieBaseAddr`，先判断该地址理论上应落在哪类资源区间。\n2. 如果日志给出了 `sourceAddress`、`hbmAddr` 或 `dataLengthBytes`，再核对是否满足 8 字节或 64 字节粒度约束。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK111",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "当前任务或指令暂不支持",
+    "errorCode": "GRAPH_UNSUPPORTED (111)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_UNSUPPORTED",
+      "GenGraph",
+      "ErrorCode: 111",
+      "GenGraphCCU"
+    ],
+    "logPatterns": [
+      "[GenGraph] [ErrorCode: 111] This task type is not supported for CheckerV3 graph generation, taskIndex=128, taskMeta=taskType=9, rankId=3, streamId=7\n\n[GenGraphCCU] [ErrorCode: 111] This CCU instruction type is not supported by CheckerV3 graph expansion, rankId=2, queueId=1, instructionHeader=0xf431"
+    ],
+    "symptom": "使用了尚未被 Checker 支持的特性。",
+    "guidance": "【可能原因】\n1. Checker 尚未支持该特性。\n\n【排查步骤】\n1. 查看日志中的对应字段，确认是否符合预期。\n2. 可联系工具支撑人员协助定位。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK112",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "远端 Rank 推导不一致",
+    "errorCode": "GRAPH_REMOTE_RANK_MISMATCH (112)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_REMOTE_RANK_MISMATCH",
+      "GenGraphCCU",
+      "ErrorCode: 112"
+    ],
+    "logPatterns": [
+      "[GenGraphCCU] [ErrorCode: 112] Remote address resolves to a different rank than the selected channel, instruction=TransLocMemToRmtMem, rankId=2, dieId=0, queueId=1, instrId=73, channelId=7, expectedRemoteRankId=5, actualRemoteRankId=6, remoteAddr=140737488363520"
+    ],
+    "symptom": "按 channel 或 remote address 推导出来的远端 rank 不一致。",
+    "guidance": "【可能原因】\n1. channel 表错误。\n2. 远端地址被错误编码。\n\n【排查步骤】\n1. 核对 `channelId` 和 `remoteAddr` 所属 rank，确认是否符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK113",
+    "module": "Checker",
+    "submodule": "成图阶段",
+    "errorCodeGroup": "",
+    "title": "Merged Loop 发射失败",
+    "errorCode": "GRAPH_LOOP_MERGE_ERROR (113)",
+    "errorFunctions": [],
+    "keywords": [
+      "GRAPH_LOOP_MERGE_ERROR",
+      "GenGraphCCU",
+      "ErrorCode: 113",
+      "GenGraphCCU"
+    ],
+    "logPatterns": [
+      "[GenGraphCCU] [ErrorCode: 113] Failed to emit one merged loop instruction because the merged instruction entry is null, rankId=2, queueId=1\n\n[GenGraphCCU] [ErrorCode: 113] Failed to emit one merged loop transfer task, rankId=2, queueId=1, mergedLoopInstr={rankId=2, dieId=0, instrId=73, srcs=4, dsts=4, waitOps=1, setOps=1}"
+    ],
+    "symptom": "CCU 模式下 Loop 合并失败。",
+    "guidance": "【可能原因】\n1. Loop 串行、并行展开时出现资源冲突（内存地址、CKE 等）。\n注: Loop 合并失败后会尝试正常展开，可能会影响性能。\n\n【排查步骤】\n1. 确认 Loop 体指令模板设计符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK201",
+    "module": "Checker",
+    "submodule": "单任务与从流校验",
+    "errorCodeGroup": "",
+    "title": "Memory Slice 非法",
+    "errorCode": "SINGLETASK_SLICE_INVALID (201)",
+    "errorFunctions": [
+      "task_graph_single_task_check_v3.cc::CheckMemorySlice()",
+      "task_graph_single_task_check_v3.cc::CheckBatchTrans()",
+      "task_graph_mem_conflict_v3.cc",
+      "task_graph_semantic_check_v3.cc"
+    ],
+    "keywords": [
+      "SINGLETASK_SLICE_INVALID",
+      "MemConflict",
+      "ErrorCode: 201",
+      "TaskTransMem"
+    ],
+    "logPatterns": [
+      "[MemConflict] [ErrorCode: 201] One memory slice is missing a valid rank or memory type, task=[TaskTransMem] node=42, rank=0, stream=2, protocol=SDMA, src=rank 0 INPUT [0x0,0x400), dst=rank 0 CCL [0x1000,0x1400), rankId=invalid, memType=invalid, offset=0x0, length=0x400\n    \n\n[SingleTaskCheck] [ErrorCode: 201] One memory slice is invalid because its end address overflows while total coverage is being calculated, task=[TaskBatchTransMem] node=108, rank=1, stream=5, protocol=CCU, pairCount=2, mergedPairCount=2, src0=rank 1 CCL [0xfffffffffffffff0,0xffffffffffffff30), dst0=rank 1 OUTPUT [0x0,0x40), memorySlice={rankId=1, memType=CCL, offset=0xfffffffffffffff0, length=0x40}\n    \n\n[SingleTaskCheck] [ErrorCode: 201] Batch trans slice length mismatch, node=[TaskBatchTransMem] node=108, rank=1, stream=5, protocol=CCU, label=src, index=2, expectedLen=0x400, actualLen=0x200\n\n[SingleTaskCheck] [ErrorCode: 201] Batch trans pair size mismatch, node=[TaskBatchTransMem] node=108, rank=1, stream=5, protocol=CCU, label=src, srcCount=4, dstCount=3\n\n[SingleTaskCheck] [ErrorCode: 201] Batch reduce has different counts of source groups and target memory slices, task=[TaskBatchReduce] node=176, rank=2, stream=4, protocol=CCU, group=src, sourceGroupCount=3, targetMemorySliceCount=2\n\n[SingleTaskCheck] [ErrorCode: 201] Source data size is not an integer multiple of target data size, task=[TaskBatchReduce] node=176, rank=2, stream=4, protocol=CCU, srcDataSize=0xc00, dstDataSize=0x800, group=src"
+    ],
+    "symptom": "memory slice 本体不合法，或同组 slice 出现重叠；问题可能出现在单任务校验、内存冲突检查或语义模拟阶段。",
+    "guidance": "【可能原因】\n1. slice 字段不完整。\n2. 内存类型转换失败。\n3. 长度或偏移不符合预期。\n4. CCU Loop 合并时发现 loop 间有 slice 重叠。\n\n【排查步骤】\n1. 观察日志中输出的 slice 字段的 `rankId/memType/offset/length` 是否符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK202",
+    "module": "Checker",
+    "submodule": "单任务与从流校验",
+    "errorCodeGroup": "",
+    "title": "单任务内 Slice 冲突",
+    "errorCode": "SINGLETASK_SLICE_CONFLICT (202)",
+    "errorFunctions": [],
+    "keywords": [
+      "SINGLETASK_SLICE_CONFLICT",
+      "SingleTaskCheck",
+      "ErrorCode: 202",
+      "TaskReduce"
+    ],
+    "logPatterns": [
+      "[SingleTaskCheck] [ErrorCode: 202] Two memory slices overlap inside the same task, task=[TaskReduce] node=57, rank=0, stream=4, protocol=CCU, dataType=0, reduceOp=0, srcs=[rank 0 CCL [0x1000,0x1400), rank 0 CCL [0x1200,0x1600)], dst=rank 0 OUTPUT [0x0,0x400), memorySlice1={rankId=0, memType=CCL, offset=0x1000, length=0x400}, memorySlice2={rankId=0, memType=CCL, offset=0x1200, length=0x400}, position=rankId=0, streamId=4"
+    ],
+    "symptom": "同一条任务内部存在重叠的 memory slice，导致同一 buffer 的地址区间发生交叉。",
+    "guidance": "【可能原因】\n1. Transmem 源和目的地址有重叠。\n2. Reduce 源片段划分错了。\n3. Batch 合并后仍有重叠残留。\n注: CCU 模式下允许源和目的地址完全一致的情况。\n\n【排查步骤】\n1. 观察日志中输出的 slice 字段的 `rankId/memType/offset/length` 是否符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK203",
+    "module": "Checker",
+    "submodule": "单任务与从流校验",
+    "errorCodeGroup": "",
+    "title": "从流结构非法",
+    "errorCode": "SINGLETASK_SLAVE_STREAM_INVALID (203)",
+    "errorFunctions": [],
+    "keywords": [
+      "SINGLETASK_SLAVE_STREAM_INVALID",
+      "StreamCheck",
+      "ErrorCode: 203",
+      "TaskRecordAICPU"
+    ],
+    "logPatterns": [
+      "[StreamCheck] [ErrorCode: 203] This slave stream is missing its start node or end node, rankId=0, streamId=6, taskCount=4, startNode=null, endNode=[TaskRecordAICPU] node=241, rank=0, stream=6, protocol=SDMA, notify={recordRank=0, waitRank=0, notifyId=32}\n    \n\n[StreamCheck] [ErrorCode: 203] The first task in this slave stream is not a local WAIT task, rankId=0, streamId=6, actualFirstTaskType=TRANS_MEM, firstTask=[TaskTransMem] node=214, rank=0, stream=6, protocol=SDMA, src=rank 0 INPUT [0x0,0x400), dst=rank 0 CCL [0x4000,0x4400)\n    \n\n[StreamCheck] [ErrorCode: 203] The last task in this slave stream is not a local RECORD task, rankId=0, streamId=6, actualLastTaskType=WAIT, lastTask=[TaskWaitAICPU] node=245, rank=0, stream=6, protocol=SDMA, notify={recordRank=0, waitRank=0, notifyId=32}\n    \n\n[StreamCheck] [ErrorCode: 203] This slave stream still has no valid end node after empty local-copy tasks are skipped, rankId=0, streamId=6, skippedEmptyLocalCopyCount=3, currentTailNode=null"
+    ],
+    "symptom": "从流结构不满足 Checker 的约束，常见表现为缺少有效头尾节点、首任务不是本地 `WAIT`，或尾任务不是本地 `RECORD`。",
+    "guidance": "【可能原因】\n1. 从流缺少头尾同步节点。\n\n【排查步骤】\n1. 从流缺开始或结束节点: 确认 stream 节点列表本身是否完整，再确认当前的首尾节点是否符合预期",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK301",
+    "module": "Checker",
+    "submodule": "内存冲突校验",
+    "errorCodeGroup": "",
+    "title": "内存冲突 DAG 非法",
+    "errorCode": "MEMCONFLICT_DAG_INVALID (301)",
+    "errorFunctions": [],
+    "keywords": [
+      "MEMCONFLICT_DAG_INVALID",
+      "MemConflict",
+      "ErrorCode: 301",
+      "TaskTransMem"
+    ],
+    "logPatterns": [
+      "[MemConflict] [ErrorCode: 301] Reachability analysis cannot start because the main start node is invalid, mainStartNode=[TaskTransMem] node=42, rank=0, stream=2, protocol=SDMA, src=rank 0 INPUT [0x0,0x400), dst=rank 0 CCL [0x1000,0x1400)\n    \n\n[MemConflict] [ErrorCode: 301] This data-move node is missing its reachability index, node=[TaskBatchTransMem] node=318, rank=3, stream=2, protocol=CCU, pairCount=4, mergedPairCount=2, src0=rank 3 CCL [0x8000,0x8400), dst0=rank 3 OUTPUT [0x0,0x400)\n    \n\n[MemConflict] [ErrorCode: 301] This V3 graph is not a complete DAG from the main start node, topoSize=412, expectedTopoSize=415, reachableTaskCount=411, taskNodeCount=414, mainStartNodeId=-1"
+    ],
+    "symptom": "内存冲突检查依赖的主图结构异常，常见于主图起点非法、可达性索引缺节点，或任务图并非完整 DAG。",
+    "guidance": "【可能原因】\n1. 成图阶段生成的主图不完整。\n2. 部分任务节点不在 `main_start` 头节点的可达路径上。\n\n【排查步骤】\n1. 先确认任务图生成是否正确执行。\n2. 可联系工具支撑人员协助定位。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK302",
+    "module": "Checker",
+    "submodule": "内存冲突校验",
+    "errorCodeGroup": "",
+    "title": "检测到真实内存冲突",
+    "errorCode": "MEMCONFLICT_DETECTED (302)",
+    "errorFunctions": [],
+    "keywords": [
+      "MEMCONFLICT_DETECTED",
+      "MemConflict",
+      "ErrorCode: 302",
+      "0x1000,0x1400)\n  Conflict task 1:\n    node 214, action=write\n    access range : [0x1000,0x1800)\n    task         : [TaskTransMem"
+    ],
+    "logPatterns": [
+      "[MemConflict] [ErrorCode: 302] Two tasks may access the same memory range in parallel, and at least one access is a write.\n  Conflict memory : rank 0 OUTPUT\n  Overlap range    : [0x1000,0x1400)\n  Conflict task 1:\n    node 214, action=write\n    access range : [0x1000,0x1800)\n    task         : [TaskTransMem] node=214, rank=0, stream=6, protocol=SDMA, src=rank 0 CCL [0x4000,0x4800), dst=rank 0 OUTPUT [0x1000,0x1800)\n  Conflict task 2:\n    node 233, action=write\n    access range : [0x1000,0x1400)\n    task         : [TaskReduce] node=233, rank=0, stream=8, protocol=CCU, dataType=0, reduceOp=0, srcs=[rank 0 CCL [0x5000,0x5400), rank 3 CCL [0x5000,0x5400)], dst=rank 0 OUTPUT [0x1000,0x1400)"
+    ],
+    "symptom": "检测到了真实的内存并发冲突，两条任务访问同一内存区间，且至少一方是写。",
+    "guidance": "【可能原因】\n1. 两条 stream 间缺少同步约束。\n2. 原本应串行的任务被错误建成可并发。\n3. 读写区间切分或地址计算不正确。\n注: 仅校验 `读-写` / `写-写` 冲突，`读-读` 不认为冲突。\n\n【排查步骤】\n1. 查看日志，确认是哪两条任务在什么地址区间发生冲突，检查任务排布和同步信号设计是否符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK401",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "目标区间没有语义来源",
+    "errorCode": "SEMANTIC_BUFFER_EMPTY (401)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_BUFFER_EMPTY",
+      "SemanticCheck",
+      "ErrorCode: 401"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 401] No source/output information was found for the target memory range, startAddr=0x0, size=0x1000"
+    ],
+    "symptom": "语义检查在目标区间上找不到任何可用的源数据或输出语义。",
+    "guidance": "【可能原因】\n1. 相关写入任务还没被执行到。\n2. 更早的语义构造已因其他错误提前失败。\n注: Checker 只会默认初始化 INPUT 内存语义，后续将根据内存操作任务进行语义传播。\n\n【排查步骤】\n1. 先确认这段结果理论上应由哪条任务写入，确认其使用的 src 源地址语义是否被正确设置。",
+    "diagram": "flowchart TB\n    subgraph NORMAL[\"正常语义传播\"]\n        N1[\"Task1\\nINPUT -> CCL1\"] --> N2[\"Task2\\nCCL1 -> CCL2\"]\n        N2 --> N3[\"Task3\\nCCL2 -> OUTPUT\"]\n        N3 --> N4[\"OUTPUT 语义完整\"]\n    end\n\n    subgraph ABNORMAL[\"缺少中间任务\"]\n        A1[\"Task1\\nINPUT -> CCL1\"] -.->|\"缺少 Task2\\nCCL1 -> CCL2\"| A2[\"CCL2 没有语义\"]\n        A2 --> A3[\"Task3\\nCCL2 -> OUTPUT\"]\n        A3 --> A4[\"报错: Task3 CCL2来源语义缺失\"]\n    end\n\n    style A2 fill:#fdd,stroke:#c33\n    style A4 fill:#fdd,stroke:#c33",
+    "diagramType": "mermaid",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK402",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "语义结果区间断裂",
+    "errorCode": "SEMANTIC_GAP (402)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_GAP",
+      "SemanticCheck",
+      "ErrorCode: 402",
+      "SemanticCheck"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 402] Output data does not start from the expected address; the beginning is missing, expectedStart=0x0, actualStart=0x400\n    \n\n[SemanticCheck] [ErrorCode: 402] Output data is broken in the middle; one piece ends at 0x800 but the next starts at 0xc00\n    \n\n[SemanticCheck] [ErrorCode: 402] Output data ends too early; the tail is missing, expectedEnd=0x2000, actualEnd=0x1c00"
+    ],
+    "symptom": "语义结果区间不连续，常见表现为开头缺失、中间断裂或尾部未覆盖完整。",
+    "guidance": "【可能原因】\n1. 相关写入任务没有完整执行。\n2. 偏移量或长度计算不符合预期。\n\n【排查步骤】\n1. 先根据 `expectedStart/actualStart`、断点地址或 `expectedEnd/actualEnd` 判断是头部缺失、中间断裂还是尾部缺失。\n2. 再查看对应的写任务，确认是哪一段数据没有写入或写入长度不正确。",
+    "diagram": "---\nconfig:\n  gantt:\n    displayMode: compact\n---\ngantt\n    title 目标Buffer\n    dateFormat x\n    axisFormat 0x%L\n    tickInterval 100millisecond\n    todayMarker off\n\n    section 地址布局\n    0x000-0x100 已有数据 :done, blk0, 0, 100ms\n    0x100-0x200 空洞   :crit, hole, 100, 100ms\n    0x200-0x300 已有数据 :done, blk1, 200, 100ms",
+    "diagramType": "mermaid",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK403",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "Reduce 语义不正确",
+    "errorCode": "SEMANTIC_REDUCE_ERROR (403)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_REDUCE_ERROR",
+      "SemanticCheck",
+      "ErrorCode: 403",
+      "0x0,0x400), pieceCount=1\n    \n\n[SemanticCheck",
+      "HCCL_REDUCE_SUM",
+      "HCCL_REDUCE_MAX"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 403] Target output range is only partially filled before reduce continues, dataMapping={operation=reduce, sourceMemorySlice={rankId=3, memoryType=CCL, offset=0x800, length=0x400}, targetMemorySlice={rankId=1, memoryType=OUTPUT, offset=0x0, length=0x400}, launchIdx=18446744073709551615, blockId=4294967295, pipeId=4294967295, taskId=4294967295, reduceType=HCCL_REDUCE_SUM}, outputRange=[0x0,0x400), pieceCount=1\n    \n\n[SemanticCheck] [ErrorCode: 403] Reduce result type is inconsistent while merging one source data range, dataMapping={operation=reduce, sourceMemorySlice={rankId=2, memoryType=CCL, offset=0x0, length=0x400}, targetMemorySlice={rankId=0, memoryType=OUTPUT, offset=0x0, length=0x400}, launchIdx=18446744073709551615, blockId=4294967295, pipeId=4294967295, taskId=4294967295, reduceType=HCCL_REDUCE_MAX}\n    \n\n[SemanticCheck] [ErrorCode: 403] Source data needed by this reduce is missing, dataMapping={operation=reduce, sourceMemorySlice={rankId=5, memoryType=INPUT, offset=0x400, length=0x400}, targetMemorySlice={rankId=0, memoryType=OUTPUT, offset=0x400, length=0x400}, launchIdx=18446744073709551615, blockId=4294967295, pipeId=4294967295, taskId=4294967295, reduceType=HCCL_REDUCE_SUM}"
+    ],
+    "symptom": "reduce 语义链路不完整或不一致，常见表现为目标区间覆盖不完全就继续 reduce、reduce 类型不一致，或 reduce 源数据缺失。",
+    "guidance": "【可能原因】\n1. 前序 overwrite 或搬运没有把目标区间、源区间覆盖完整。\n2. reduce 执行顺序异常，或不同 `reduceOp` 被写到同一目标区间。\n3. 某些 rank 未正确参与 reduce。\n\n【排查步骤】\n1. 观察日志信息，先判断是区间不完整、类型不一致还是源数据缺失。\n2. 再查看对应前序内存操作任务，确认是哪一段语义链路缺失。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK404",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "overwrite 源语义缺失",
+    "errorCode": "SEMANTIC_SIMULATE_FAILED (404)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_SIMULATE_FAILED",
+      "SemanticCheck",
+      "ErrorCode: 404"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 404] Source data needed by this overwrite is missing, dataMapping={operation=overwrite, sourceMemorySlice={rankId=1, memoryType=INPUT, offset=0x0, length=0x800}, targetMemorySlice={rankId=1, memoryType=OUTPUT, offset=0x0, length=0x800}, launchIdx=18446744073709551615, blockId=4294967295, pipeId=4294967295, taskId=4294967295}"
+    ],
+    "symptom": "overwrite 依赖的源区间语义不完整。当前语义实现会继续模拟，但会告警提示该 overwrite 不是“完整 memcpy 语义”，后续语义分析结果可能受影响。",
+    "guidance": "【可能原因】\n1. overwrite 的源区间在此前没有被完整初始化，或只建立了部分来源语义。\n2. 前序搬运/切片任务的源地址、长度配置有误，导致 overwrite 读取到未建立语义的空洞区间。\n3. 某些依赖任务缺失、顺序异常，导致 overwrite 执行时对应源数据尚未准备好。\n\n【排查步骤】\n1. 根据 `sourceMemorySlice` 定位 overwrite 读取的源 buffer 区间，确认该区间在前序任务中是否已建立完整语义。\n2. 检查 overwrite 前的搬运、切片、reduce 等任务，确认地址范围连续、长度匹配，且不存在中间空洞。\n3. 如果这是预期行为，需进一步确认后续分析是否允许“部分来源语义”继续传播；否则应补齐前序数据链路。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK405",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "最终输出校验前置条件不满足",
+    "errorCode": "SEMANTIC_FINAL_CHECK_FAILED (405)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_FINAL_CHECK_FAILED",
+      "SemanticCheck",
+      "ErrorCode: 405"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 405] Send/Recv final output validation supports exactly 2 ranks, but got expectedRankSize=2, actualRankSize=3, sourceRank=1, targetRank=5"
+    ],
+    "symptom": "最终输出校验的前置条件不满足，例如 Send/Recv 场景使用的 rank 数不是 2。",
+    "guidance": "【可能原因】\n1. 输入 rank 数配置不正确。\n2. 把不属于同一个 Send/Recv 的 rank 混到了一起。\n\n【排查步骤】\n1. 确认本轮 Send/Recv 校验理论上是否只应包含两个 rank。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK406",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "最终输出存在缺失",
+    "errorCode": "SEMANTIC_FINAL_MISSING (406)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_FINAL_MISSING",
+      "SemanticCheck",
+      "ErrorCode: 406",
+      "SemanticCheck"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 406] AllGatherV produced no result data for rank 3, but this rank is expected to receive data from all 8 participating ranks with an expected total result size of 0x1c00 bytes.\n    \n\n[SemanticCheck] [ErrorCode: 406] Send/Recv output for rank 5 should continue at 0x0, but the next actual range starts at 0x400 (actual range: [0x400,0x800)).\n    Current result range detail:\n      range=[0x400,0x800), size=0x400, sourceCount=1\n      sources:\n        - sourceRank=1, sourceBufferType=INPUT, sourceAddr=0x0\n    \n\n[SemanticCheck] [ErrorCode: 406] ReduceScatter output for rank 6 ends too early: the checker validated 0x1800 bytes in total, but the expected result size is 0x1c00."
+    ],
+    "symptom": "最终输出存在缺失，常见表现为某个 rank 完全没有结果、结果起始地址不对，或结果尾部未写满。",
+    "guidance": "【可能原因】\n1. 结果写入链路没有完整执行。\n2. 内存搬运过程有缺失或异常偏移。\n3. 地址偏移或分片大小不符合预期。\n\n【排查步骤】\n1. 先根据 `expectedStartAddr/actualStartAddr`、`expectedSize/checkedSize` 判断缺的是哪一段结果。\n2. 再从对应 rank 的内存搬运任务往前回溯，确认各处内存搬运任务是否符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK407",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "最终输出来源属性错误",
+    "errorCode": "SEMANTIC_FINAL_SRC_ERROR (407)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_FINAL_SRC_ERROR",
+      "SemanticCheck",
+      "ErrorCode: 407",
+      "0x1000,0x1400) for rank 3 should come from rank 4, but it actually comes from rank 5.\n    Current result range detail:\n      range=[0x1000,0x1400), size=0x400, sourceCount=1\n      sources:\n        - sourceRank=5, sourceBufferType=INPUT, sourceAddr=0x0\n    \n\n[SemanticCheck",
+      "HCCL_REDUCE_SUM"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 407] AllGatherV output range [0x1000,0x1400) for rank 3 should come from rank 4, but it actually comes from rank 5.\n    Current result range detail:\n      range=[0x1000,0x1400), size=0x400, sourceCount=1\n      sources:\n        - sourceRank=5, sourceBufferType=INPUT, sourceAddr=0x0\n    \n\n[SemanticCheck] [ErrorCode: 407] AllReduce result range [0x0,0x400) for rank 0 should come from INPUT, but source rank 3 actually provides buffer type CCL.\n    Current result range detail:\n      range=[0x0,0x400), size=0x400, reduce=HCCL_REDUCE_SUM, sourceCount=8\n      sources:\n        - sourceRank=0, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=1, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=2, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=3, sourceBufferType=CCL, sourceAddr=0x0\n        - sourceRank=4, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=5, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=6, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=7, sourceBufferType=INPUT, sourceAddr=0x0\n    \n\n[SemanticCheck] [ErrorCode: 407] Send/Recv output range [0x400,0x800) for rank 5 should take data from source rank 1 at input address 0x400, but it actually takes data from source rank 1 at input address 0x0.\n    Current result range detail:\n      range=[0x400,0x800), size=0x400, sourceCount=1\n      sources:\n        - sourceRank=1, sourceBufferType=INPUT, sourceAddr=0x0"
+    ],
+    "symptom": "最终输出的来源属性不正确，可能表现为来源 rank、来源 buffer 类型或来源地址与预期不一致。",
+    "guidance": "【可能原因】\n1. 结果拼接顺序或 rank 语义标记错误。\n2. 中间 buffer 被错误当成最终来源。\n3. 地址偏移或分片顺序不符合预期。\n\n【排查步骤】\n1. 先观察 `actualSourceRank`、`actualSourceBufferType`、`expectedAddr` 和 `actualAddr`，判断问题类型。\n2. 再查看对应的内存搬运任务，确认各处内存搬运任务是否符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK408",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "单个来源数据量过大",
+    "errorCode": "SEMANTIC_FINAL_SIZE_ERROR (408)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_FINAL_SIZE_ERROR",
+      "SemanticCheck",
+      "ErrorCode: 408"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 408] AllGatherV data collected from rank 4 for rank 3 becomes larger than expected after outputRange [0x1000,0x1600). The accumulated size is 0x600, but the expected size from this source rank is 0x400.\n    Current result range detail:\n      range=[0x1000,0x1600), size=0x600, sourceCount=1\n      sources:\n        - sourceRank=4, sourceBufferType=INPUT, sourceAddr=0x0"
+    ],
+    "symptom": "最终输出中某个源 rank 的贡献数据量超过算子语义允许的范围。",
+    "guidance": "【可能原因】\n1. 该 source rank 的长度配置不正确。\n2. 同一段数据被重复拼接。\n\n【排查步骤】\n1. 先核对 `expectedSize` 对应的 counts/displs 配置，再确认该源 rank 的结果是否被重复拼接。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK409",
+    "module": "Checker",
+    "submodule": "语义校验",
+    "errorCodeGroup": "",
+    "title": "最终输出 Reduce 语义错误",
+    "errorCode": "SEMANTIC_FINAL_REDUCE_ERROR (409)",
+    "errorFunctions": [],
+    "keywords": [
+      "SEMANTIC_FINAL_REDUCE_ERROR",
+      "SemanticCheck",
+      "ErrorCode: 409",
+      "0x0,0x400) for rank 5 should come from exactly one source, but it actually comes from 2 sources.\n    Current result range detail:\n      range=[0x0,0x400), size=0x400, sourceCount=2\n      sources:\n        - sourceRank=1, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=2, sourceBufferType=INPUT, sourceAddr=0x0\n    \n\n[SemanticCheck",
+      "HCCL_REDUCE_MAX",
+      "HCCL_REDUCE_SUM"
+    ],
+    "logPatterns": [
+      "[SemanticCheck] [ErrorCode: 409] Send/Recv output range [0x0,0x400) for rank 5 should come from exactly one source, but it actually comes from 2 sources.\n    Current result range detail:\n      range=[0x0,0x400), size=0x400, sourceCount=2\n      sources:\n        - sourceRank=1, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=2, sourceBufferType=INPUT, sourceAddr=0x0\n    \n\n[SemanticCheck] [ErrorCode: 409] AllReduce result range [0x0,0x400) for rank 0 was reduced with mode HCCL_REDUCE_MAX, but the operator expects reduce mode HCCL_REDUCE_SUM.\n    Current result range detail:\n      range=[0x0,0x400), size=0x400, reduce=HCCL_REDUCE_MAX, sourceCount=8\n      sources:\n        - sourceRank=0, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=1, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=2, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=3, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=4, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=5, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=6, sourceBufferType=INPUT, sourceAddr=0x0\n        - sourceRank=7, sourceBufferType=INPUT, sourceAddr=0x0\n    \n\n[SemanticCheck] [ErrorCode: 409] ReduceScatter output range [0x0,0x400) for rank 6 expected 8 source ranks but got 6.\n    Current result range detail:\n      range=[0x0,0x400), size=0x400, reduce=HCCL_REDUCE_SUM, sourceCount=6\n      sources:\n        - sourceRank=0, sourceBufferType=INPUT, sourceAddr=0x1800\n        - sourceRank=1, sourceBufferType=INPUT, sourceAddr=0x1800\n        - sourceRank=2, sourceBufferType=INPUT, sourceAddr=0x1800\n        - sourceRank=3, sourceBufferType=INPUT, sourceAddr=0x1800\n        - sourceRank=4, sourceBufferType=INPUT, sourceAddr=0x1800\n        - sourceRank=5, sourceBufferType=INPUT, sourceAddr=0x1800"
+    ],
+    "symptom": "最终输出的 reduce 语义不正确，可能表现为单源算子出现多源、`reduceType` 不匹配，或来源 rank 个数不足。",
+    "guidance": "【可能原因】\n1. overwrite / reduce 合并逻辑不符合预期。\n2. `reduceOp` 不一致，或中间语义被污染。\n3. 某些 rank 的贡献没有进入结果区间。\n\n【排查步骤】\n1. 先观察 `sourceCount`、`expectedSourceCount`、`actualReduceType` 和 `sources` 列表，判断是多源、类型不一致还是来源缺失。\n2. 再查看对应内存搬运和 Reduce 类任务，确认各处内存操作是否符合预期。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK501",
+    "module": "Checker",
+    "submodule": "Dump 输出",
+    "errorCodeGroup": "",
+    "title": "Dump 输出失败",
+    "errorCode": "DUMP_FAILED (501)",
+    "errorFunctions": [],
+    "keywords": [
+      "DUMP_FAILED"
+    ],
+    "logPatterns": [],
+    "symptom": "Dump 管理器初始化、文件写出或序列化过程失败，导致校验结果无法正常落盘。",
+    "guidance": "【可能原因】\n1. 输出目录或目标路径不可写。\n2. 磁盘空间不足，或 dump 路径没有准备好。\n3. 文件句柄、flush 或序列化失败。\n\n【排查步骤】\n1. 先检查 dump 输出目录、权限和磁盘空间。\n2. 可联系工具支撑人员协助定位。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK901",
+    "module": "Checker",
+    "submodule": "主流程与配置",
+    "errorCodeGroup": "",
+    "title": "运行时通用错误",
+    "errorCode": "CHECKER_RUNTIME_ERROR (901)",
+    "errorFunctions": [],
+    "keywords": [
+      "CHECKER_RUNTIME_ERROR",
+      "Main",
+      "ErrorCode: 901",
+      "Main"
+    ],
+    "logPatterns": [
+      "[Main] [ErrorCode: 901] Failed to load instruction data for this rank, rankId=3\n    \n\n[Main] [ErrorCode: 901] Unsupported collective type, collectiveTypeCode=37\n    \n\n[SemanticCheck] [ErrorCode: 901] Semantic check initialization failed because the rank count is 0, collectiveType=AllReduce, dataType=FLOAT, elementCount=1024, reduceType=SUM\n    \n\n[SemanticCheck] [ErrorCode: 901] Output simulation stopped because some tasks still have unresolved dependencies, handledNodeCount=410, totalNodeCount=415, firstRemainingNode=[TaskReduce] node=233, rank=2, stream=5, protocol=CCU, dataType=0, reduceOp=0, srcs=[rank 2 CCL [0x2000,0x2400)], dst=rank 2 OUTPUT [0x0,0x400)"
+    ],
+    "symptom": "主流程运行时发生通用异常。",
+    "guidance": "【可能原因】\n1. 该问题通常为 Checker 内部问题。\n\n【排查步骤】\n1. 先确定报错类型，如为 `Unsupported` 等不支持类型，可自行排查数据是否符合 Checker 要求。\n2. 可联系工具支撑人员协助定位。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-CHK902",
+    "module": "Checker",
+    "submodule": "主流程与配置",
+    "errorCodeGroup": "",
+    "title": "配置或运行策略告警",
+    "errorCode": "SETTING_WARNING (902)",
+    "errorFunctions": [],
+    "keywords": [
+      "SETTING_WARNING",
+      "Main",
+      "ErrorCode: 902"
+    ],
+    "logPatterns": [
+      "[Main] [ErrorCode: 902] This op is skipped because both the new checker and the old checker are disabled, opIndex=47, newCheckerEnabled=0, oldCheckerEnabled=0"
+    ],
+    "symptom": "配置开关或运行策略不满足当前 op 的执行条件，例如新旧 checker 同时被关闭。",
+    "guidance": "【可能原因】\n1. manifest.json 或运行参数将 checker 关闭了。\n\n【排查步骤】\n1. 优先检查开关配置，确认至少启动一个 Checker。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "checker_faq.md"
+  },
+  {
+    "id": "FAQ-C001",
+    "module": "CANN包安装和WSL环境配置",
+    "submodule": "",
+    "errorCodeGroup": "",
+    "title": "WSL环境配置",
+    "errorCode": "NA (4)",
+    "errorFunctions": [
+      "NA"
+    ],
+    "keywords": [
+      " 85%",
+      "2",
+      "src/legacy/ascend910/framework/CMakeFiles/hcomm.dir/build.make:160: src/legacy/ascend910/framework/CMakeFiles/hcomm.dir/common/src/topo/topoinfo_ranktableParser.cc.o"
+    ],
+    "logPatterns": [
+      "[ 85%] Building CXX object src/legacy/ascend910/framework/CMakeFiles/hcomm.dir/common/src/config/env_config_host.cc.o\n{standard input}: Assembler messages:\n{standard input}:61985: Warning: end of file not at end of a line; newline inserted\n{standard input}:61986: Error: expecting operand after ','; got nothing\n{standard input}: Error: open CFI at the end of file; missing .cfi_endproc directive\nc++: fatal error: Killed signal terminated program cc1plus\ncompilation terminated.\ngmake[2]: *** [src/legacy/ascend910/framework/CMakeFiles/hcomm.dir/build.make:160: src/legacy/ascend910/framework/CMakeFiles/hcomm.dir/common/src/topo/topoinfo_ranktableParser.cc.o] Error 1\ngmake[2]: *** Waiting for unfinished jobs....\ngmake[1]: *** [CMakeFiles/Makefile2:6400: src/legacy/ascend910/framework/CMakeFiles/hcomm.dir/all] Error 2\ngmake: *** [Makefile:156: all] Error 2\n  完整日志: /home/zhf/workspace/.hccl_vm_install_logs/build-pkg-20260705-234844.log\n  也可手动执行: bash /home/zhf/workspace/hcomm/test/hccl_vm/build_pkg.sh --tool_path /home/zhf/workspace/hcomm/test/hccl_vm\n[ERROR] 子包编译未通过，请检查日志后重试。"
+    ],
+    "symptom": "在wsl环境采用一键式命令编译hcomm子包，或手动编译hcomm子包，报错如上。",
+    "guidance": "【可能原因】\n编译hcomm子包对wsl虚拟linux环境有一定的要求。\n1. 确保wsl的系统版本是ubuntu22.04或Ubuntu24.04;\n2. 确保wsl setting配置满足如下条件：可用内存>=8GB, swap space>=4GB;用户可以通过wsl setting进行配置。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-E001",
+    "module": "HCCL-VM",
+    "submodule": "命令行",
+    "errorCodeGroup": "",
+    "title": "未配置通信域",
+    "errorCode": "NA (4)",
+    "errorFunctions": [
+      "db_sim_runner_common.cc::GetDeviceByRankId()"
+    ],
+    "keywords": [
+      "error",
+      "PID:173579",
+      "TID:173579"
+    ],
+    "logPatterns": [
+      "[error][PID:173579][TID:173579][db_sim_runner_common.cc][GetDeviceByRankId] cannot find rank by rank id 0\n[error][PID:173579][TID:173579][aclrt_device_stub.cc][aclrtSetDevice] [DEVICE_STUB]device not found by rankId:0\nacl interface return err ./common/src/hccl_test_common.cc:861, retcode: 100000.\nThis is an error in device_init."
+    ],
+    "symptom": "执行业务用例，报找不到rank id为0的设备。",
+    "guidance": "【可能原因】\n在执行业务用例前，需要用户自行判断本次算子所使用的通信域规模，并通过hccl-vm mock-comm aa命令配置通信域。其中aa.yaml文件所在路径为$HCCL_VM_INSTALL_DIR/config/topo_meta/aa.yaml。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-E002",
+    "module": "HCCL-VM",
+    "submodule": "命令行",
+    "errorCodeGroup": "",
+    "title": "RANK_TABLE_FILE 未设置",
+    "errorCode": "HCCL_SIM_E_PARA (1)",
+    "errorFunctions": [
+      "hccl_comm_stub.cc::HcclCommInitRootInfo()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_PARA",
+      "RANK_TABLE_FILE"
+    ],
+    "logPatterns": [
+      "RANK_TABLE_FILE env not set, please check your config."
+    ],
+    "symptom": "通信域初始化时找不到 rank table 配置文件。",
+    "guidance": "【可能原因】\n1. 环境变量未设置\n2. 文件路径错误\n\n【解决方案】\nexport RANK_TABLE_FILE=/path/to/rank_table.json",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-E003",
+    "module": "HCCL-VM",
+    "submodule": "命令行",
+    "errorCodeGroup": "",
+    "title": "HCCL_VM_INSTALL_DIR 未设置",
+    "errorCode": "HCCL_SIM_E_INTERNAL (4)",
+    "errorFunctions": [
+      "hccl_op_stub.cc::VirtualExecuteAivKernel()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_INTERNAL",
+      "virtual-aiv",
+      "HCCL_VM_INSTALL_DIR"
+    ],
+    "logPatterns": [
+      "[virtual-aiv] env HCCL_VM_INSTALL_DIR is not set, can not locate <path> for kernel <name>"
+    ],
+    "symptom": "AIV kernel 虚拟执行失败，找不到对应的 .so 文件。",
+    "guidance": "【解决方案】\nexport HCCL_VM_INSTALL_DIR=/path/to/hccl_vm/install/dir",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-E004",
+    "module": "HCCL-VM",
+    "submodule": "命令行",
+    "errorCodeGroup": "",
+    "title": "在子shell中重复执行start命令",
+    "errorCode": "NA (无错误码，仅WARNING)",
+    "errorFunctions": [
+      "subcmd_start.cc::StartCommand::Execute()"
+    ],
+    "keywords": [
+      "warning",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[warning][PID:<PID>][TID:<TID>][subcmd_start.cc][Execute] hccl-vm has already started. Please do not start it again in a sub-bash."
+    ],
+    "symptom": "在hvm子shell环境中再次执行`hccl-vm start`命令，系统提示已启动并忽略本次操作。",
+    "guidance": "【可能原因】\n`hccl-vm start`会fork一个子bash进程，用户在该子bash（提示符为`(hvm)$>`）内再次输入`hccl-vm start`时，系统拒绝重复启动。\n\n【解决方案】\n不要在子shell内重复执行`hccl-vm start`。如需重新启动仿真环境，先退出当前子shell（输入`exit`），再重新执行`hccl-vm start`。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-E005",
+    "module": "HCCL-VM",
+    "submodule": "命令行",
+    "errorCodeGroup": "",
+    "title": "fork子进程失败",
+    "errorCode": "HCCL_SIM_HOST_ERROR_CMD (无标准错误码)",
+    "errorFunctions": [
+      "cmd_base_utils.cc::StartHvmCmd()"
+    ],
+    "keywords": [
+      "HCCL_SIM_HOST_ERROR_CMD"
+    ],
+    "logPatterns": [
+      "fork failed: Resource temporarily unavailable"
+    ],
+    "symptom": "执行`hccl-vm start`命令后，系统无法创建子shell进程，仿真环境启动失败。",
+    "guidance": "【可能原因】\n1. 系统用户进程数已达上限（ulimit -u）\n2. 系统内存不足，无法为新进程分配资源\n3. PID资源耗尽（/proc/sys/kernel/pid_max）\n\n【排查步骤】\nulimit -u\ncat /proc/sys/kernel/pid_max\nfree -m\nps -eLf | wc -l\n\n【解决方案】\n1. 增大用户进程数限制：`ulimit -u <更大的值>`\n2. 清理系统中残留的僵尸进程\n3. 检查是否有其他程序占用过多系统资源",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-E006",
+    "module": "HCCL-VM",
+    "submodule": "命令行",
+    "errorCodeGroup": "",
+    "title": "插件名称格式错误",
+    "errorCode": "NA (CLI参数校验)",
+    "errorFunctions": [
+      "subcmd_plugin.cc::PluginCommand::Setup()"
+    ],
+    "keywords": [
+      "HVM",
+      "ERROR",
+      "HVM"
+    ],
+    "logPatterns": [
+      "[HVM] [ERROR] Install plugin : Invalid format! Plugin name must start with '@' (e.g., @myplugin).\n[HVM] [ERROR] Uninstall plugin : Invalid format! Plugin name must start with '@' (e.g., @myplugin).\n[HVM] [ERROR] Run plugin : Invalid format! Plugin name must start with '@' (e.g., @myplugin)."
+    ],
+    "symptom": "执行`hccl-vm plugin install/run/uninstall`命令时，CLI参数校验失败，拒绝执行。",
+    "guidance": "【可能原因】\n插件名称未以`@`符号开头。例如输入`hccl-vm plugin install runner`而非`hccl-vm plugin install @runner`。\n\n【解决方案】\n确保插件名称以`@`开头，例如：\nhccl-vm plugin install @runner\nhccl-vm plugin install @checker\nhccl-vm plugin uninstall @runner",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-E007",
+    "module": "HCCL-VM",
+    "submodule": "命令行",
+    "errorCodeGroup": "",
+    "title": "拓扑配置文件不存在",
+    "errorCode": "NA (CLI参数校验)",
+    "errorFunctions": [
+      "cmd_base_utils.cc::FileInModelDir()"
+    ],
+    "keywords": [
+      "HVM"
+    ],
+    "logPatterns": [
+      "[HVM] model File not found: <install_path>/config/topo_meta/<name>.yaml"
+    ],
+    "symptom": "执行`hccl-vm mock-comm <name>`命令时，指定的拓扑yaml配置文件不存在，CLI参数校验直接拒绝。通信域配置文件是用于描述算子执行通信域的规模（如通信域包含几个超节点，几个server，以及每个server内取哪几张卡，具体详见文件描述）。",
+    "guidance": "【可能原因】\n1. 指定的拓扑名称拼写错误\n2. 对应的yaml文件未放置在`$HCCL_VM_INSTALL_DIR/config/topo_meta/`目录下\n3. 文件扩展名错误（应为`.yaml`）\n\n【排查步骤】\nls $HCCL_VM_INSTALL_DIR/config/topo_meta/\n\n【解决方案】\n确认拓扑yaml文件已放置在正确目录中，且文件名与命令参数一致。例如执行`hccl-vm mock-comm 121`需要`config/topo_meta/121.yaml`文件存在。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-E008",
+    "module": "HCCL-VM",
+    "submodule": "命令行",
+    "errorCodeGroup": "",
+    "title": "YAML拓扑文件格式解析异常",
+    "errorCode": "NA (运行时解析错误)",
+    "errorFunctions": [
+      "cmd_cluster_model_utils.cc::ParseYamlTopoImpl()"
+    ],
+    "keywords": [
+      "error",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[error][PID:<PID>][TID:<TID>][cmd_cluster_model_utils.cc][ParseYamlTopoImpl] Exception when parsing YAML: <detail>"
+    ],
+    "symptom": "执行`hccl-vm mock-comm <name>`命令时，YAML拓扑配置文件解析失败，通信域初始化中断。",
+    "guidance": "【可能原因】\n1. YAML文件存在语法错误（如缩进不正确、冒号后缺少空格、非法字符等）\n2. YAML文件中包含不支持的字段类型或格式\n3. YAML文件编码非UTF-8\n\n【排查步骤】\n# 使用python验证yaml格式\npython3 -c \"import yaml; yaml.safe_load(open('$HCCL_VM_INSTALL_DIR/config/topo_meta/<name>.yaml'))\"\n\n【解决方案】\n根据日志中的`<detail>`信息修正YAML文件的语法错误。常见问题包括：\n1. 缩进必须使用空格，不能使用Tab\n2. 键值对的冒号后需要有空格\n3. 列表项（`-`）的缩进需要与所在层级一致",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-M001",
+    "module": "HCCL-VM",
+    "submodule": "内存管理",
+    "errorCodeGroup": "",
+    "title": "设备内存分配超限",
+    "errorCode": "HCCL_SIM_E_MEMORY (3)",
+    "errorFunctions": [
+      "store_sim_device_memory_manager.cc::AllocPhyMem()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_MEMORY"
+    ],
+    "logPatterns": [
+      "dev:<N> alloc phy mem:<ADDR> size:<SIZE> exceeds pool ceiling:<CEILING>, reject"
+    ],
+    "symptom": "设备内存分配请求超出模拟的内存池上限。",
+    "guidance": "",
+    "diagram": "graph LR\n    A[内存分配请求] --> B{检查池上限}\n    B -->|未超限| C[分配成功]\n    B -->|超限| D[拒绝分配]\n    D --> E[报错:exceeds pool ceiling]",
+    "diagramType": "mermaid",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-M002",
+    "module": "HCCL-VM",
+    "submodule": "内存管理",
+    "errorCodeGroup": "",
+    "title": "共享内存创建失败",
+    "errorCode": "HCCL_SIM_E_SYSCALL (8)",
+    "errorFunctions": [
+      "store_sim_shm_ops.cc::ShmCreate()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_SYSCALL",
+      "SHM_OPS",
+      "SHM_OPS",
+      "SHM_OPS"
+    ],
+    "logPatterns": [
+      "[SHM_OPS] create: shm_open failed, name: <name>\n[SHM_OPS] create: ftruncate failed, name: <name>\n[SHM_OPS] create: mmap failed, name: <name>"
+    ],
+    "symptom": "无法创建共享内存段。",
+    "guidance": "【可能原因】\n1. `/dev/shm` 空间不足\n2. 权限不足\n3. 同名共享内存已存在且冲突\n\n【排查步骤】\ndf -h /dev/shm\nls /dev/shm/ | grep hccl",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-M003",
+    "module": "HCCL-VM",
+    "submodule": "内存管理",
+    "errorCodeGroup": "",
+    "title": "通信内存分配失败",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "store_sim_comm_memory_manager.cc"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND",
+      "COMM_MEM",
+      "COMM_MEM",
+      "COMM_MEM"
+    ],
+    "logPatterns": [
+      "[COMM_MEM] alloc failed, name: <name>\n[COMM_MEM] acquire failed, name: <name>\n[COMM_MEM] write size too large, size: <N>, max: <MAX>"
+    ],
+    "symptom": "跨进程通信内存操作失败。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-M004",
+    "module": "HCCL-VM",
+    "submodule": "内存管理",
+    "errorCodeGroup": "",
+    "title": "操作设备内存出现BUS error程序崩溃",
+    "errorCode": "",
+    "errorFunctions": [],
+    "keywords": [],
+    "logPatterns": [
+      "Bus error"
+    ],
+    "symptom": "业务进程直接崩溃报错bus error。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX001",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "AIV Kernel虚拟执行失败",
+    "errorCode": "HCCL_SIM_E_INTERNAL (4)",
+    "errorFunctions": [
+      "hccl_op_stub.cc::VirtualExecuteAivKernel()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_INTERNAL",
+      "virtual-aiv",
+      "virtual-aiv",
+      "virtual-aiv",
+      "HCCL_VM_INSTALL_DIR"
+    ],
+    "logPatterns": [
+      "[virtual-aiv] env HCCL_VM_INSTALL_DIR is not set\n[virtual-aiv] missing aiv stub shared library, kernel=<name>\n[virtual-aiv] dlopen <so> failed, err = <error>\n[virtual-aiv] dlsym <symbol> from <so> failed, err = <error>"
+    ],
+    "symptom": "AIV kernel在虚拟环境中执行失败。",
+    "guidance": "【排查步骤】\necho $HCCL_VM_INSTALL_DIR\nls -la $HCCL_VM_INSTALL_DIR/lib/aiv/\nnm -D $HCCL_VM_INSTALL_DIR/lib/aiv/<kernel>.so | grep <symbol>",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX002",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "算子数据库记录失败",
+    "errorCode": "HCCL_SIM_E_INTERNAL (4)",
+    "errorFunctions": [
+      "hccl_op_stub.cc::RecordOpDbInfo()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_INTERNAL",
+      "RecordOpDbInfo",
+      "HcclAllReduce"
+    ],
+    "logPatterns": [
+      "[RecordOpDbInfo] insert op detail+mem failed\n[HcclAllReduce] record op db info failed"
+    ],
+    "symptom": "HCCL集合通信算子的参数无法写入仿真数据库。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX003",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "QP未找到或状态错误",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "hccp_stub.cc::RaSendWr()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND",
+      "HCCP",
+      "HCCP"
+    ],
+    "logPatterns": [
+      "[HCCP] RaSendWr: QP <N> not found\n[HCCP] RaSendWr: QP <N> not in RTS state, current state:<N>"
+    ],
+    "symptom": "RDMA QP操作失败——QP不存在或未达到RTS状态。",
+    "guidance": "",
+    "diagram": "stateDiagram-v2\n    [*] --> INIT\n    INIT --> RTR: RaQpConnect\n    RTR --> RTS: RaTypicalQpModify\n    RTS --> [*]: 可以发送数据\n    RTS --> ERROR: 状态异常\n    INIT --> ERROR: 未正确初始化",
+    "diagramType": "mermaid",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX004",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "EndPoint查找失败",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "hccp_stub.cc::RaCtxQpImport()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND",
+      "HCCP"
+    ],
+    "logPatterns": [
+      "[HCCP] cannot find endpoint addr:<IP>\nGet remote endpoint failed. ip:<IP>, eid:<EID>"
+    ],
+    "symptom": "网络端点查找失败。",
+    "guidance": "【可能原因】\nIP地址不在rank table配置的端点列表中。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX005",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "CCU微码加载失败",
+    "errorCode": "HCCL_SIM_E_INTERNAL (4)",
+    "errorFunctions": [
+      "hccp_ccu_stub.cc::LoadMicrocodeInstruction()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_INTERNAL",
+      "LoadMicrocodeInstruction",
+      "LoadMicrocodeInstruction",
+      "LoadMicrocodeInstruction"
+    ],
+    "logPatterns": [
+      "[LoadMicrocodeInstruction] get device by logic id <N> failed.\n[LoadMicrocodeInstruction] get ccu from device by die id <N> failed.\n[LoadMicrocodeInstruction] insert instr failed"
+    ],
+    "symptom": "CCU微码指令加载到模拟器失败。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX006",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "无法获取当前Context",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "hccp_stub.cc::RaRdevInit()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND",
+      "error",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[error][PID:<PID>][TID:<TID>][hccp_stub.cc][RaRdevInit] can not get CurrContext: <N>"
+    ],
+    "symptom": "在RDMA设备初始化时，无法通过当前Runner获取活跃的Context，导致RDMA设备创建失败。",
+    "guidance": "【可能原因】\n1. 应用层未调用`aclrtSetDevice`/`aclrtCreateContext`初始化设备和上下文\n2. Context已被提前销毁\n3. Runner的TLS（线程局部存储）中current_ctx_id无效\n4. 应用层在调用`aclrtSetDevice`初始化设备上下文前，调用了其他runtime接口获取了上下文\n\n【排查步骤】\n# 检查Context表\nhccl-vm table show Context\n# 检查Runner表中的current_ctx_id\nhccl-vm table show Runner\n\n【解决方案】\n确认应用层在调用RDMA操作前已正确调用`aclrtSetDevice`和`aclrtCreateContext`，且Context未被提前销毁。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX007",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "找不到AICPU二进制文件",
+    "errorCode": "ACL_ERROR_RT_FEATURE_NOT_SUPPORT",
+    "errorFunctions": [
+      "aclrt_kernel_stub.cc::aclrtDestroyBinary()"
+    ],
+    "keywords": [
+      "error",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[error][PID:<PID>][TID:<TID>][aclrt_kernel_stub.cc][aclrtDestroyBinary] can not find this binary"
+    ],
+    "symptom": "销毁AICPU二进制对象时，在全局kernel binary注册表中找不到对应的二进制句柄。",
+    "guidance": "【可能原因】\n1. 该二进制文件未被正确加载（`aclrtLoadBinary`未执行或失败）\n2. 二进制句柄已被重复销毁（double-free）\n3. 二进制对象在多线程环境下被并发操作导致状态不一致\n\n【排查步骤】\n# 检查是否存在重复的destroy调用\n# 确认aclrtLoadBinary的返回值\n\n【解决方案】\n确保`aclrtLoadBinary`成功返回后再调用`aclrtDestroyBinary`，且不要对同一二进制对象重复销毁。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX008",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "AICPU设备进程异常退出",
+    "errorCode": "NA (进程级错误)",
+    "errorFunctions": [
+      "aclrt_kernel_stub.cc::WaitAicpuProcess()"
+    ],
+    "keywords": [
+      "error",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[error][PID:<PID>][TID:<TID>][aclrt_kernel_stub.cc][WaitAicpuProcess] device process[<PID>] exited with status <N>\n[error][PID:<PID>][TID:<TID>][aclrt_kernel_stub.cc][WaitAicpuProcess] device process[<PID>] killed by signal <N>"
+    ],
+    "symptom": "AICPU设备子进程异常退出或被信号杀死，导致主进程随后也退出（`exit(EXIT_FAILURE)`）。",
+    "guidance": "【可能原因】\n1. AICPU进程内部发生未捕获异常或段错误\n2. 系统资源不足（内存、文件描述符等）导致子进程被OOM killer杀死\n3. AICPU二进制文件本身存在bug\n4. 子进程依赖的共享库缺失\n\n【排查步骤】\n# 检查系统日志是否有OOM记录\ndmesg | grep -i \"oom\\|killed\"\n# 确认AICPU二进制文件是否完整\nls -la $HCCL_VM_INSTALL_DIR/bin/\n# 检查系统资源\nulimit -a\nfree -m\n\n【解决方案】\n1. 检查AICPU二进制文件是否正确编译和部署\n2. 确认系统资源充足（内存、文件描述符限制等）\n3. 如为信号杀死，根据信号编号（如11=SIGSEGV, 9=SIGKILL）进一步定位原因",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX009",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "CCU加载微码时找不到任何rank",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "hccp_ccu_stub.cc::LoadMicrocodeInstruction()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND",
+      "error",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[error][PID:<PID>][TID:<TID>][hccp_ccu_stub.cc][LoadMicrocodeInstruction] can not find any rank"
+    ],
+    "symptom": "CCU微码指令加载过程中，无法在当前设备对应的Rank表中找到任何rank记录。",
+    "guidance": "【可能原因】\n1. 通信域未通过`mock-comm`命令初始化，Rank表为空\n2. 当前设备ID在通信域配置中不存在\n\n【排查步骤】\n# 检查Rank表是否有数据\nhccl-vm table show Rank\n# 检查设备表\nhccl-vm table show Device\n\n【解决方案】\n确保在执行CCU相关操作前，已通过`hccl-vm mock-comm`命令正确初始化通信域，且通信域配置覆盖当前设备。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX010",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "按rankId查找设备失败",
+    "errorCode": "HCCL_E_NOT_FOUND",
+    "errorFunctions": [],
+    "keywords": [
+      "error",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[error][PID:<PID>][TID:<TID>][aclrt_device_stub.cc][hrtSetDevice] device not found by rankId:<N>"
+    ],
+    "symptom": "调用`aclrtSetDevice`设置当前设备时，根据rankId查找对应的设备失败。",
+    "guidance": "【可能原因】\n1. rankId超出了通信域中实际存在的rank范围  —— 如通信域配置4个NPU，但实际mpirun起了6个NPU进程，导致rankid 4, 5都报找不到device。\n2. 通信域未初始化（未执行`mock-comm`命令） —— 【大概率】初始化通信域后，工具内部才会初始化Rank表\n3. ranktable配置与实际使用的rank数量不匹配 —— 可能是`RANK_TABLE_FILE`配置了错误的文件路径\n\n【排查步骤】\n# 检查rankId是否在有效范围内\nhccl-vm table show Rank\n\n【解决方案】\n确认rankId在通信域配置的合法范围内（0 到 rank_count-1），且`RANK_TABLE_FILE`环境变量指向正确的ranktable.json文件。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX011",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "桩接口暂未实现",
+    "errorCode": "HCCL_SIM_E_INTERNAL (4) 或 NA",
+    "errorFunctions": [
+      "多个桩函数文件"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_INTERNAL",
+      "warning",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[warning][PID:<PID>][TID:<TID>][ascend_hal_stub.cc][*] [STUB] is empty\n[warning][PID:<PID>][TID:<TID>][hccp_stub.cc][*] [STUB] is empty\n[error][PID:<PID>][TID:<TID>][hccp_stub.cc][RaCtxGetAuxInfo] Not support yet\n[error][PID:<PID>][TID:<TID>][hccp_stub.cc][RaCtxGetCrErrInfoList] Not support yet"
+    ],
+    "symptom": "应用层调用了仿真器尚未实现的底层驱动或运行时接口，日志中出现`[STUB] is empty`或`Not support yet`告警/错误。此类桩函数直接返回默认值（通常为0或成功），不进行任何实际操作。",
+    "guidance": "【可能原因】\n仿真器当前版本仅实现了HCCL集合通信所需的核心接口子集。部分底层驱动接口（如drvGetDeviceCapability、RaCtxGetAuxInfo、drvMemPrefetch等）不在HCCL通信的核心路径上，因此桩函数体为空或标记为不支持。\n  一般情况下，对于HCCL-VM工具支持的流程不会调用这些接口，因此不会出现此类告警。若用户调用错误应用层接口，或进入了错误的HCCL业务流程，可能会出现此类告警。\n\n【解决方案】\n1. 此类告警通常不影响HCCL算子的正确性仿真，可安全忽略\n2. 如果该告警伴随功能异常，说明应用依赖了未实现的接口，请反馈给仿真器开发团队\n3. 如需特定接口的桩实现，可联系开发团队优先适配",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX012",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "获取socket失败",
+    "errorCode": "",
+    "errorFunctions": [],
+    "keywords": [
+      "RASOCKET_STUB"
+    ],
+    "logPatterns": [
+      "[RASOCKET_STUB]get socket failed local:socketFd peerAddr:ipaddr role:0"
+    ],
+    "symptom": "获取希望的建链socket句柄失败。",
+    "guidance": "",
+    "diagram": "graph TD\n    A[1. RaSocketInit] --> B[2. RaSocketListenStart]\n    B --> C[3. RaSocketBatchConnect]\n    C --> D[4. RaGetSockets]\n    D --> E[4. RaSend/Recv]\n    E --> F[5. RaSocketBatchClose]",
+    "diagramType": "mermaid",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX013",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "申请socket buffer失败",
+    "errorCode": "",
+    "errorFunctions": [],
+    "keywords": [
+      "RASOCKET_STUB"
+    ],
+    "logPatterns": [
+      "[RASOCKET_STUB] alloc sock name ra_sock_1_c2s mem failed"
+    ],
+    "symptom": "socket申请链路缓冲区内存失败。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX014",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "waitpid等待AICPU设备进程失败",
+    "errorCode": "NA (进程级错误)",
+    "errorFunctions": [
+      "aclrt_kernel_stub.cc::WaitAicpuProcess()"
+    ],
+    "keywords": [
+      "error",
+      "PID:<PID>",
+      "TID:<TID>"
+    ],
+    "logPatterns": [
+      "[error][PID:<PID>][TID:<TID>][aclrt_kernel_stub.cc][WaitAicpuProcess] waitpid failed for pid <PID>, errno: <N> (<description>)"
+    ],
+    "symptom": "主进程在等待AICPU设备子进程退出时，`waitpid`系统调用未返回目标设备进程PID，主进程随后调用`exit(EXIT_FAILURE)`退出，仿真中断。与FAQ-PX008不同，本场景下设备子进程的退出状态未被成功采集（waitpid本身失败），而非子进程主动崩溃。",
+    "guidance": "【可能原因】\nwaitpid返回值不对，常见errno原因：\n1. ECHILD (10): 当前进程无可被等待的子进程——设备子进程已被其他线程/进程回收，或fork父子关系错乱（如子进程已被signal handler中的wait4抢先回收）\n2. EINVAL (22): 传入的options或signal参数非法（一般为代码逻辑bug）\n3. EINTR (4): waitpid被信号中断且未自动重启（罕见，waitpid默认对EINTR会重试，但部分调用路径未处理）\n\n【排查步骤】\n# 确认目标PID是否存在及其父进程是否为当前进程\nps -eo pid,ppid,stat,cmd | grep <PID>\n# 查看系统日志是否有进程被异常回收或信号处理\ndmesg | grep -i \"process\\|killed\"\n# 确认是否存在重复的WaitAicpuProcess调用或多线程竞争回收子进程\n# （代码侧）检查是否注册了SIGCHLD处理函数并内部调用了wait/waitpid",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX015",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "Socket建链找不到远端IP端点",
+    "errorCode": "NA (返回-1，无标准错误码)",
+    "errorFunctions": [
+      "hccp_ra_socket_stub.cc::RaSocketInit()",
+      "hccp_ra_socket_stub.cc::RaSocketBatchConnect()"
+    ],
+    "keywords": [
+      "RASOCKET_STUB",
+      "RASOCKET_STUB"
+    ],
+    "logPatterns": [
+      "[RASOCKET_STUB] get device by phy id <N> failed\n[RASOCKET_STUB] cannot find remote ip <IP>"
+    ],
+    "symptom": "`RaSocketInit`根据`rdevInfo.localIp`或`RaSocketBatchConnect`根据`conn[i].remoteIp`解析出IP后，在EndPoint表中查不到对应端点，socket初始化/建链直接返回-1中断。日志中`<IP>`通常为IPv6字符串去掉前缀后的地址。",
+    "guidance": "【可能原因】\n1. ranktable.json中未配置该IP对应的端点（EndPoint表缺失该条目）\n2. 通信域未初始化（未执行`mock-comm`），EndPoint表为空\n3. IP地址不匹配——ranktable中配置的IP与运行时实际下发的IP不一致（如IPv6地址缩写/前缀映射差异）\n4. ranktable中server_count或device_list数量不足，部分rank的IP未纳入端点表\n\n【排查步骤】\n# 查看端点表是否包含该IP\nhccl-vm table show EndPoint\n# 确认ranktable配置\necho $RANK_TABLE_FILE\ncat $RANK_TABLE_FILE | python3 -m json.tool\n# 确认通信域是否已初始化\nhccl-vm table show Rank",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX016",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "Socket建链对端超时未就绪",
+    "errorCode": "NA (函数返回0，但该条连接未建立pair，后续RaGetSockets会触发FAQ-PX012)",
+    "errorFunctions": [
+      "hccp_ra_socket_stub.cc::RaSocketBatchConnect()"
+    ],
+    "keywords": [
+      "RASOCKET_STUB",
+      "RASOCKET_STUB"
+    ],
+    "logPatterns": [
+      "[RASOCKET_STUB] can not find remote dev:<N>, endpoint:<N>\n[RASOCKET_STUB] can not get break dev:<N> sock:<N> connect dev:<N> ip addr:<IP> tag:<tag>"
+    ],
+    "symptom": "`RaSocketBatchConnect`轮询等待对端在RaSocket表中出现对应记录，循环600次×100ms=60s后仍未找到，超时`break`。该条连接未建立RaSocketPair，后续`RaGetSockets`将取不到socket并报FAQ-PX012。",
+    "guidance": "【可能原因】\n1. 对端rank进程未启动，或尚未调用`RaSocketInit`/`RaSocketListenStart`\n2. 多rank启动顺序错乱——发起BatchConnect时对端还未完成socket初始化\n3. 对端的device_id/endpoint_id与本端查询条件不匹配（ranktable端点配置不一致）\n4. 对端进程异常退出，RaSocket记录未写入DB\n\n【排查步骤】\n# 查看RaSocket表，确认对端是否已创建socket记录\nhccl-vm table show RaSocket\n# 确认所有rank进程均已启动\nps -ef | grep <业务进程名>\n# 确认通信域内rank数量与进程数一致\nhccl-vm table show Rank",
+    "diagram": "sequenceDiagram\n    participant L as 本端\n    participant DB as RaSocket表\n    participant R as 对端\n    L->>DB: RaSocketInit(写入本端socket)\n    L->>DB: 轮询对端socket(600次×100ms)\n    R-->>DB: RaSocketInit(写入对端socket)\n    DB-->>L: 命中对端 → 建立Pair\n    Note over L,DB: 若60s内对端未写入 → 超时break",
+    "diagramType": "mermaid",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX017",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "socketHandle在RaSocket表中不存在",
+    "errorCode": "NA (返回-1)",
+    "errorFunctions": [
+      "hccp_ra_socket_stub.cc::RaSocketListenStart()",
+      "hccp_ra_socket_stub.cc::RaSocketListenStop()",
+      "hccp_ra_socket_stub.cc::RaSocketBatchConnect()",
+      "hccp_ra_socket_stub.cc::RaGetSockets()"
+    ],
+    "keywords": [
+      "RASOCKET_STUB",
+      "RASOCKET_STUB",
+      "RASOCKET_STUB"
+    ],
+    "logPatterns": [
+      "[RASOCKET_STUB] can not get Socket:<N>\n[RASOCKET_STUB] can not get Local Ra Socket:<N>\n[RASOCKET_STUB] can not get local socket fd:<N>"
+    ],
+    "symptom": "调用`RaSocketListenStart`/`RaSocketListenStop`/`RaSocketBatchConnect`/`RaGetSockets`时，传入的`socketHandle`在RaSocket表中`GetById`查不到记录，对应操作失败返回-1。",
+    "guidance": "【可能原因】\n1. 该socketHandle已被`RaSocketDeinit`删除（先Deinit后使用）\n2. socketHandle值非法——来自未初始化内存、或其他进程的句柄\n3. 跨进程传递了句柄——仿真器RaSocket表为进程内DB，句柄不跨进程共享，若业务层在进程间传递fd会导致对端进程查不到\n4. RaSocketInit返回失败（如FAQ-PX015），调用方未检查返回值仍使用空句柄\n\n【排查步骤】\n# 确认handle是否存在于RaSocket表\nhccl-vm table show RaSocket\n# 确认调用顺序——是否在Deinit之后仍使用该handle\n# 确认handle来源——是否由RaSocketInit成功返回",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-PX018",
+    "module": "HCCL-VM",
+    "submodule": "桩代理（proxy）",
+    "errorCodeGroup": "",
+    "title": "Socket链路收发读写失败",
+    "errorCode": "NA (返回-1)",
+    "errorFunctions": [
+      "hccp_ra_socket_stub.cc::RaSocketSend()",
+      "hccp_ra_socket_stub.cc::RaSocketRecv()",
+      "hccp_ra_socket_stub.cc::RaSocketRecvAsync()"
+    ],
+    "keywords": [
+      "RASOCKET_STUB",
+      "RASOCKET_STUB",
+      "RASOCKET_STUB"
+    ],
+    "logPatterns": [
+      "[RASOCKET_STUB] cannot pair socket:<N> role:<N>, key=<key>\n[RASOCKET_STUB] socket pair:<N> role:<N>, key=<key> recv failed\n[RASOCKET_STUB] socket pair:<N> role:<N>, key=<key> read try again"
+    ],
+    "symptom": "`RaSocketSend`调用`WriteCommMem`写入c2s/s2c共享内存失败返回-1；或`RaSocketRecv`/`RaSocketRecvAsync`调用`ReadCommMem`返回-1。链路数据收发中断。其中`read try again`为WARN，表示暂无数据可读（对端尚未发送），会sleep后重试返回0，非本FAQ范畴。",
+    "guidance": "【可能原因】\n1. pair的c2s/s2c共享内存已被`RaSocketBatchClose`释放——ref_cnt归零后`DestoryRaSocketBufKeyByPairId`删除了buffer，但仍有线程在Send/Recv\n2. /dev/shm空间不足或存在残留的ra_sock_*旧buffer导致内存段冲突\n3. key对应的共享内存段不存在（pair创建时`GenRaSocketBufKeyByPairId`失败但pair记录已存在）\n4. 调用方传入了错误的fdHandle——pairId解析错误，对应的key从未创建\n\n【排查步骤】\n# 检查/dev/shm是否残留ra_sock_* buffer\nls /dev/shm/ | grep ra_sock\n# 检查/dev/shm空间\ndf -h /dev/shm\n# 查看RaSocketPair状态及buf_status\nhccl-vm table show RaSocketPair",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-N001",
+    "module": "HCCL-VM",
+    "submodule": "组网",
+    "errorCodeGroup": "",
+    "title": "Ranktable环境变量配置错误",
+    "errorCode": "NA (1)",
+    "errorFunctions": [
+      "param_check_v2.cc::RanktableRealPath"
+    ],
+    "keywords": [
+      "error",
+      "PID:172019",
+      "TID:172019",
+      "HCCL_LOG",
+      "HCCL_LOG"
+    ],
+    "logPatterns": [
+      "[error][PID:172019][TID:172019][log_stub.cc][DlogPrintStub] [HCCL_LOG][param_check_v2.cc:457][172019]RanktableRealPath: /home/teamserver/workspace/CheckerL2_2128/hccl_vm_install/ranktable.json is not a valid real path\n\n[info][PID:172021][TID:172021][log_stub.cc][DlogPrintStub] [HCCL_LOG][adapter_rts.cc:234] [172021][hrtGetDeviceRefresh]deviceLogicId[3]\n[error][PID:172020][TID:172020][log_stub.cc][DlogPrintStub] [HCCL_LOG][param_check_v2.cc:457][172020]RanktableRealPath: /home/teamserver/workspace/CheckerL2_2128/hccl_vm_install/ranktable.json is not a valid real path\n\n[info][PID:172018][TID:172018][log_stub.cc][DlogPrintStub] [HCCL_LOG][adapter_rts.cc:234] [172018][hrtGetDeviceRefresh]deviceLogicId[0]\n[error][PID:172019][TID:172019][log_stub.cc][DlogPrintStub] [HCCL_LOG][op_base_v2.cc:294][172019][HcclCommInitClusterInfoV2]call trace: hcclRet -> 1\n\n[error][PID:172019][TID:172019][log_stub.cc][DlogPrintStub] [HCCL_LOG][op_base.cc:811] [172019][operator()]call trace: hcclRet -> 1"
+    ],
+    "symptom": "运行用例，初始化通信域失败。",
+    "guidance": "【可能原因】\nranktable.json文件路径配置错误，请查看RANK_TABLE_FILE环境变量的配置。ranktable.json由工具生成，其路径为$HCCL_VM_INSTALL_DIR/data/ranktable.json。\n\n【排查步骤】\necho $RANK_TABLE_FILE\n\n【解决方案】\n确认RANK_TABLE_FILE环境变量配置正确，指向ranktable.json文件的路径。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-N002",
+    "module": "HCCL-VM",
+    "submodule": "组网",
+    "errorCodeGroup": "",
+    "title": "topo.json路径配置错误",
+    "errorCode": "NA (1)",
+    "errorFunctions": [
+      "communicator_impl.cc::GetTopoFilePath"
+    ],
+    "keywords": [
+      "error",
+      "PID:172635",
+      "TID:172635",
+      "HCCL_LOG"
+    ],
+    "logPatterns": [
+      "[error][PID:172635][TID:172635][log_stub.cc][DlogPrintStub] [HCCL_LOG][communicator_impl.cc:1339][172635][GetTopoFilePath] topo_file_path[/home/teamserver/workspace/CheckerL2_2128/hccl_vm_install/topo.json] is not a valid real path"
+    ],
+    "symptom": "运行用例，初始化通信域失败。",
+    "guidance": "【可能原因】\ntopo.json文件路径在/etc/hccl_rootinfo.json文件中配置错误，请查看topo_file_path字段。topo.json由工具生成，其路径为$HCCL_VM_INSTALL_DIR/data/topo.json。\n\n【排查步骤】\necho $TOPO_FILE_PATH\n\n【解决方案】\n确认TOPO_FILE_PATH环境变量配置正确，指向topo.json文件的路径。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-N003",
+    "module": "HCCL-VM",
+    "submodule": "组网",
+    "errorCodeGroup": "",
+    "title": "mock-comm命令报错",
+    "errorCode": "NA",
+    "errorFunctions": [
+      "db_sim_runner_ops.cc::GetServerKeyById"
+    ],
+    "keywords": [
+      "error",
+      "PID:172799",
+      "TID:172875"
+    ],
+    "logPatterns": [
+      "(hvm)$> hccl-vm mock-comm 144\n[error][PID:172799][TID:172875][db_sim_runner_ops.cc][GetServerKeyById] can not find server by id: 0, 2\n[error][PID:172799][TID:172875][topo_ascend_cluster_parser.cc][InitDynamicModelData] cannot find device by physical id 0\n[error][PID:172799][TID:172875][cmd_base_utils.cc][InitHvmCommEnv] [HVM] InitHvmCommEnv failed\n[error][PID:172799][TID:172875][subcmd_mock_comm.cc][Execute] [HVM] Failed to initialize mock communication environment. Cleaning up environment."
+    ],
+    "symptom": "运行用例前，通过mock-comm命令配置通信域失败。",
+    "guidance": "【可能原因】\nmock-comm命令配置的通信域144配置，超过了工具启动的集群配置。比如工具启动的集群，一个超节点只有2个server，但通信域144表示该超节点下有4个server。\n\n【排查步骤】\n确认工具启动时的集群配置文件和mock-comm命令配置的通信域配置文件。\n\n【解决方案】\n检查工具启动的集群配置，确认每个超节点下的server数量。若确实需要配置144通信域，则确保工具启动时选择一个更大的集群组网配置。\n确保mock-comm命令配置的通信域，不超过工具启动的集群配置。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-N004",
+    "module": "HCCL-VM",
+    "submodule": "组网",
+    "errorCodeGroup": "",
+    "title": "EndPoint IP 查找失败",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "topo_ascend_cluster_parser.cc::AddLinkInfo()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND"
+    ],
+    "logPatterns": [
+      "cannot find endPoint by ip <IP_ADDR>"
+    ],
+    "symptom": "网络链路配置中引用的 IP 地址在拓扑中不存在。",
+    "guidance": "",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-N005",
+    "module": "HCCL-VM",
+    "submodule": "组网",
+    "errorCodeGroup": "",
+    "title": "superpod索引越界",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "topo_ascend_cluster_parser.cc::InitDynamicModelData()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND",
+      "InitDynamicModelData"
+    ],
+    "logPatterns": [
+      "[InitDynamicModelData] superpod index <N> out of range"
+    ],
+    "symptom": "解析ranktable生成ranktable.json时，引用的superpod索引超出集群实际的superpod数量，导致初始化失败。",
+    "guidance": "【可能原因】\nranktable中配置的设备所属superpod数量，超过了工具启动的集群组网配置。例如集群只有1个superpod，但ranktable中引用了第2个superpod。\n\n【排查步骤】\n1. 检查工具启动时的集群组网配置（topo_meta/*.yaml），确认superpod数量。\n2. 检查ranktable配置（$HCCL_VM_INSTALL_DIR/data/ranktable.json），确认其中引用的superpod索引是否超出范围。\n\n【解决方案】\n确保mock-comm命令配置的通信域所引用的superpod数量不超过集群组网配置。若需要更多superpod，请选择更大的集群组网配置启动工具。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-N006",
+    "module": "HCCL-VM",
+    "submodule": "组网",
+    "errorCodeGroup": "",
+    "title": "server索引越界",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "topo_ascend_cluster_parser.cc::InitDynamicModelData()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND",
+      "InitDynamicModelData"
+    ],
+    "logPatterns": [
+      "[InitDynamicModelData] server index <N> out of range in superpod <M>"
+    ],
+    "symptom": "解析ranktable生成ranktable.json时，引用的server索引超出superpod内实际的server数量，导致初始化失败。",
+    "guidance": "【可能原因】\nranktable中配置的某个superpod下的server数量，超过了工具启动的集群组网配置中该superpod的server数量。例如集群组网中每个superpod有2个server，但ranktable中引用了第3个server。\n\n【排查步骤】\n1. 检查工具启动时的集群组网配置（topo_meta/*.yaml），确认每个superpod下的server数量。\n2. 检查ranktable配置（$HCCL_VM_INSTALL_DIR/data/ranktable.json），确认其中引用的server索引是否超出范围。\n\n【解决方案】\n确保mock-comm命令配置的通信域中每个superpod下的server数量不超过集群组网配置。若需要更多server，请选择更大的集群组网配置启动工具。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-N007",
+    "module": "HCCL-VM",
+    "submodule": "组网",
+    "errorCodeGroup": "",
+    "title": "按物理ID查找设备失败",
+    "errorCode": "HCCL_SIM_E_NOT_FOUND (6)",
+    "errorFunctions": [
+      "topo_ascend_cluster_parser.cc::InitDynamicModelData()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_NOT_FOUND",
+      "InitDynamicModelData"
+    ],
+    "logPatterns": [
+      "[InitDynamicModelData] cannot find device by physical id <N>"
+    ],
+    "symptom": "解析ranktable时，按物理设备ID查找设备失败，通常发生在mock-comm配置通信域时。",
+    "guidance": "【可能原因】\nmock-comm命令配置的通信域中引用的物理设备ID（physical id），超出了集群组网中实际的设备范围。例如集群只有2个设备（physical id 0和1），但通信域配置引用了physical id 2。\n\n【排查步骤】\n1. 检查工具启动时的集群组网配置（topo_meta/*.yaml），确认每个server下的设备数量。\n2. 检查ranktable配置（$HCCL_VM_INSTALL_DIR/data/ranktable.json），确认其中引用的device_id是否超出范围。\n\n【解决方案】\n确保mock-comm命令配置的通信域中引用的物理设备ID不超过集群组网配置中的设备范围。若需要更多设备，请选择更大的集群组网配置启动工具。",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-DB001",
+    "module": "HCCL-VM",
+    "submodule": "数据库",
+    "errorCodeGroup": "",
+    "title": "SQLite 数据库连接失败",
+    "errorCode": "HCCL_SIM_E_OPEN_FILE_FAILURE (10)",
+    "errorFunctions": [
+      "db_hccl_db_sqlite.cc::Connect()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_OPEN_FILE_FAILURE",
+      "dbInit"
+    ],
+    "logPatterns": [
+      "[dbInit] Connect database failed\nConnect database:<path> failed"
+    ],
+    "symptom": "无法连接到 SQLite 数据库文件。",
+    "guidance": "【可能原因】\n1. 数据库文件不存在\n2. 文件权限不足\n3. 文件被其他进程锁定",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-DB002",
+    "module": "HCCL-VM",
+    "submodule": "数据库",
+    "errorCodeGroup": "",
+    "title": "数据库备份文件未找到",
+    "errorCode": "HCCL_SIM_E_OPEN_FILE_FAILURE (10)",
+    "errorFunctions": [
+      "sim_loader.cc::BackupDatabase()"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_OPEN_FILE_FAILURE",
+      "Loader"
+    ],
+    "logPatterns": [
+      "[Loader] Backup database file not found: <dbPath>"
+    ],
+    "symptom": "Loader 无法找到仿真数据库文件。",
+    "guidance": "【可能原因】\n1. 仿真数据文件路径配置错误\n2. 仿真数据尚未生成\n3. 文件权限不足\n\n【排查步骤】\nls -la <dbPath>",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-DB003",
+    "module": "HCCL-VM",
+    "submodule": "数据库",
+    "errorCodeGroup": "",
+    "title": "SQLite 查询失败",
+    "errorCode": "HCCL_SIM_E_INTERNAL (4)",
+    "errorFunctions": [
+      "db_hccl_db_sqlite.cc"
+    ],
+    "keywords": [
+      "HCCL_SIM_E_INTERNAL"
+    ],
+    "logPatterns": [
+      "Prepare failed: <error> sql:<SQL>\nStep failed: <error>, sql:<SQL>"
+    ],
+    "symptom": "SQL 查询执行失败。",
+    "guidance": "【可能原因】\n1. 数据库表结构不匹配（版本不兼容）\n2. 数据库文件损坏\n3. 磁盘空间不足",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  },
+  {
+    "id": "FAQ-C008",
+    "module": "插件",
+    "submodule": "checker",
+    "errorCodeGroup": "",
+    "title": "二进制文件magic number不匹配",
+    "errorCode": "",
+    "errorFunctions": [
+      "binary_data_operator.cc::FileHeaderRead()"
+    ],
+    "keywords": [
+      "FileHeaderRead"
+    ],
+    "logPatterns": [
+      "[FileHeaderRead] Unmatched magic number:0x<N>≠0x<M>"
+    ],
+    "symptom": "读取仿真数据文件时，文件头中的magic number不匹配。",
+    "guidance": "【可能原因】\n1. 数据文件版本与工具版本不兼容\n2. 文件损坏",
+    "diagram": "",
+    "diagramType": "",
+    "sourceFile": "faq.md"
+  }
+];
+        const modules = ["Checker", "CANN包安装和WSL环境配置", "HCCL-VM", "插件"];
+        const submodules = {"Checker": ["成图阶段", "单任务与从流校验", "内存冲突校验", "语义校验", "Dump 输出", "主流程与配置"], "HCCL-VM": ["命令行", "内存管理", "桩代理（proxy）", "组网", "数据库"], "插件": ["checker"]};
+        const errorCodes = ["GRAPH_TRANSLATE_FAILED", "GRAPH_DEADLOCK", "GRAPH_UNMATCHED", "GRAPH_MEMBER_MISSING", "GRAPH_STRUCTURE_INVALID", "GRAPH_SNAPSHOT_MISMATCH", "GRAPH_RESOURCE_NOT_FOUND", "GRAPH_REGISTER_UNINITIALIZED", "GRAPH_OUT_OF_RANGE", "GRAPH_ADDRESS_INVALID", "GRAPH_UNSUPPORTED", "GRAPH_REMOTE_RANK_MISMATCH", "GRAPH_LOOP_MERGE_ERROR", "SINGLETASK_SLICE_INVALID", "SINGLETASK_SLICE_CONFLICT", "SINGLETASK_SLAVE_STREAM_INVALID", "MEMCONFLICT_DAG_INVALID", "MEMCONFLICT_DETECTED", "SEMANTIC_BUFFER_EMPTY", "SEMANTIC_GAP", "SEMANTIC_REDUCE_ERROR", "SEMANTIC_SIMULATE_FAILED", "SEMANTIC_FINAL_CHECK_FAILED", "SEMANTIC_FINAL_MISSING", "SEMANTIC_FINAL_SRC_ERROR", "SEMANTIC_FINAL_SIZE_ERROR", "SEMANTIC_FINAL_REDUCE_ERROR", "DUMP_FAILED", "CHECKER_RUNTIME_ERROR", "SETTING_WARNING", "HCCL_SIM_E_PARA", "HCCL_SIM_E_INTERNAL", "HCCL_SIM_HOST_ERROR_CMD", "HCCL_SIM_E_MEMORY", "HCCL_SIM_E_SYSCALL", "HCCL_SIM_E_NOT_FOUND", "HCCL_SIM_E_OPEN_FILE_FAILURE"];
+        const state = {
+            keyword: '',
+            moduleFilter: '',
+            submoduleFilter: '',
+            errorCodeFilter: '',
+            activeFaqId: ''
+        };
+        const expandedModules = new Set();
+        const expandedSubmodules = new Set();
+        const hasMermaid = typeof window.mermaid !== 'undefined';
+
+        if (hasMermaid) {
+            mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        }
+
+        function initModuleFilter() {
+            const select = document.getElementById('moduleFilter');
+            select.innerHTML = '<option value="">全部模块</option>';
+            modules.forEach(moduleName => {
+                const option = document.createElement('option');
+                option.value = moduleName;
+                option.textContent = moduleName;
+                select.appendChild(option);
+            });
+        }
+
+        function collectSubmoduleOptions(moduleName) {
+            if (moduleName && submodules[moduleName]) {
+                return submodules[moduleName];
+            }
+            const seen = [];
+            faqData.forEach(item => {
+                if (item.submodule && !seen.includes(item.submodule)) {
+                    seen.push(item.submodule);
+                }
+            });
+            return seen;
+        }
+
+        function initSubmoduleFilter(moduleName) {
+            const select = document.getElementById('submoduleFilter');
+            const previousValue = select.value;
+            select.innerHTML = '<option value="">全部子模块</option>';
+            collectSubmoduleOptions(moduleName).forEach(submoduleName => {
+                const option = document.createElement('option');
+                option.value = submoduleName;
+                option.textContent = submoduleName;
+                select.appendChild(option);
+            });
+            if (Array.from(select.options).some(option => option.value === previousValue)) {
+                select.value = previousValue;
+            }
+        }
+
+        function initErrorCodeFilter() {
+            const select = document.getElementById('errorCodeFilter');
+            select.innerHTML = '<option value="">全部错误码</option>';
+            errorCodes.forEach(code => {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = code;
+                select.appendChild(option);
+            });
+        }
+
+        function seedExpandedState() {
+            modules.forEach(moduleName => expandedModules.add(moduleName));
+            faqData.forEach(item => {
+                if (item.module && item.submodule) {
+                    expandedSubmodules.add(makeSubmoduleKey(item.module, item.submodule));
+                }
+            });
+        }
+
+        function applyStateToControls() {
+            document.getElementById('keywordInput').value = state.keyword;
+            document.getElementById('moduleFilter').value = state.moduleFilter;
+            initSubmoduleFilter(state.moduleFilter);
+            document.getElementById('submoduleFilter').value = state.submoduleFilter;
+            document.getElementById('errorCodeFilter').value = state.errorCodeFilter;
+        }
+
+        function syncStateFromControls() {
+            state.keyword = document.getElementById('keywordInput').value.trim();
+            state.moduleFilter = document.getElementById('moduleFilter').value;
+            state.submoduleFilter = document.getElementById('submoduleFilter').value;
+            state.errorCodeFilter = document.getElementById('errorCodeFilter').value;
+        }
+
+        function getFilteredFaqs() {
+            const keyword = state.keyword.toLowerCase();
+            return faqData.filter(item => {
+                if (state.moduleFilter && item.module !== state.moduleFilter) return false;
+                if (state.submoduleFilter && item.submodule !== state.submoduleFilter) return false;
+                if (state.errorCodeFilter) {
+                    const matchesErrorCode =
+                        (item.errorCode && item.errorCode.includes(state.errorCodeFilter)) ||
+                        (item.errorCodeGroup && item.errorCodeGroup === state.errorCodeFilter);
+                    if (!matchesErrorCode) return false;
+                }
+                if (!keyword) return true;
+                const searchFields = [
+                    item.title,
+                    item.errorCode,
+                    item.errorCodeGroup,
+                    item.id,
+                    item.module,
+                    item.submodule,
+                    item.symptom,
+                    ...(item.errorFunctions || []),
+                    ...(item.keywords || []),
+                    ...(item.logPatterns || []),
+                    item.guidance || ''
+                ].join(' ').toLowerCase();
+                return searchFields.includes(keyword);
+            });
+        }
+
+        function findFaqById(faqId) {
+            return faqData.find(item => item.id === faqId) || null;
+        }
+
+        function getFaqIdFromHash() {
+            return decodeURIComponent(window.location.hash.replace(/^#/, '').trim());
+        }
+
+        function setHash(faqId) {
+            const nextUrl = faqId
+                ? `${window.location.pathname}${window.location.search}#${encodeURIComponent(faqId)}`
+                : `${window.location.pathname}${window.location.search}`;
+            window.history.replaceState(null, '', nextUrl);
+        }
+
+        function makeSubmoduleKey(moduleName, submoduleName) {
+            return `${moduleName}:::${submoduleName}`;
+        }
+
+        function expandPath(item) {
+            if (!item) return;
+            if (item.module) expandedModules.add(item.module);
+            if (item.module && item.submodule) {
+                expandedSubmodules.add(makeSubmoduleKey(item.module, item.submodule));
+            }
+        }
+
+        function ensureActiveFaq(filteredFaqs) {
+            if (filteredFaqs.length === 0) {
+                state.activeFaqId = '';
+                setHash('');
+                return null;
+            }
+
+            const filteredIds = new Set(filteredFaqs.map(item => item.id));
+            const hashFaqId = getFaqIdFromHash();
+
+            if (state.activeFaqId && filteredIds.has(state.activeFaqId)) {
+                const activeItem = findFaqById(state.activeFaqId);
+                expandPath(activeItem);
+                setHash(state.activeFaqId);
+                return activeItem;
+            }
+
+            if (hashFaqId && filteredIds.has(hashFaqId)) {
+                state.activeFaqId = hashFaqId;
+                const activeItem = findFaqById(state.activeFaqId);
+                expandPath(activeItem);
+                setHash(state.activeFaqId);
+                return activeItem;
+            }
+
+            state.activeFaqId = filteredFaqs[0].id;
+            const fallbackItem = filteredFaqs[0];
+            expandPath(fallbackItem);
+            setHash(state.activeFaqId);
+            return fallbackItem;
+        }
+
+        function groupFaqs(items) {
+            const grouped = {};
+            items.forEach(item => {
+                const moduleName = item.module || '未分类模块';
+                const submoduleName = item.submodule || '其他';
+                if (!grouped[moduleName]) grouped[moduleName] = {};
+                if (!grouped[moduleName][submoduleName]) grouped[moduleName][submoduleName] = [];
+                grouped[moduleName][submoduleName].push(item);
+            });
+            return grouped;
+        }
+
+        function getOrderedModules(grouped) {
+            const ordered = modules.filter(moduleName => grouped[moduleName]);
+            Object.keys(grouped)
+                .filter(moduleName => !modules.includes(moduleName))
+                .forEach(moduleName => ordered.push(moduleName));
+            return ordered;
+        }
+
+        function getOrderedSubmodules(moduleName, groupedModule) {
+            const known = submodules[moduleName] || [];
+            const ordered = known.filter(submoduleName => groupedModule[submoduleName]);
+            Object.keys(groupedModule)
+                .filter(submoduleName => !known.includes(submoduleName))
+                .forEach(submoduleName => ordered.push(submoduleName));
+            return ordered;
+        }
+
+        function updateSummary(filteredFaqs, activeItem) {
+            document.getElementById('matchInfo').textContent = `${filteredFaqs.length} 条`;
+        }
+
+        function renderBreadcrumb(activeItem) {
+            const breadcrumbNav = document.getElementById('breadcrumbNav');
+            if (!activeItem) {
+                breadcrumbNav.innerHTML = '<span class="crumb current">没有可显示的 FAQ</span>';
+                return;
+            }
+
+            const crumbs = [
+                '<span class="crumb">FAQ</span>',
+                activeItem.module ? `<span class="crumb">${escapeHtml(activeItem.module)}</span>` : '',
+                activeItem.submodule ? `<span class="crumb">${escapeHtml(activeItem.submodule)}</span>` : '',
+                `<span class="crumb current">${escapeHtml(activeItem.id)}</span>`
+            ].filter(Boolean);
+
+            breadcrumbNav.innerHTML = crumbs.join('<span class="crumb-sep">/</span>');
+        }
+
+        function renderSidebar(filteredFaqs) {
+            const directoryTree = document.getElementById('directoryTree');
+            if (filteredFaqs.length === 0) {
+                directoryTree.innerHTML = '<div class="directory-empty">没有命中结果。<br>可以尝试放宽关键词或清空筛选。</div>';
+                return;
+            }
+
+            const grouped = groupFaqs(filteredFaqs);
+            const moduleOrder = getOrderedModules(grouped);
+            let html = '';
+
+            moduleOrder.forEach(moduleName => {
+                const submoduleMap = grouped[moduleName];
+                const moduleCount = Object.values(submoduleMap).reduce((sum, items) => sum + items.length, 0);
+                const moduleOpen = expandedModules.has(moduleName);
+                html += `<section class="nav-module">
+                    <button class="module-toggle" data-action="toggle-module" data-module="${encodeAttr(moduleName)}">
+                        <span class="nav-chevron">${moduleOpen ? '▾' : '▸'}</span>
+                        <span class="toggle-text">
+                            <span class="toggle-title">${formatText(moduleName)}</span>
+                            <span class="toggle-subtitle">模块级目录导航</span>
+                        </span>
+                        <span class="count-badge">${moduleCount}</span>
+                    </button>`;
+
+                if (moduleOpen) {
+                    html += '<div class="module-content">';
+                    getOrderedSubmodules(moduleName, submoduleMap).forEach(submoduleName => {
+                        const items = submoduleMap[submoduleName];
+                        const submoduleKey = makeSubmoduleKey(moduleName, submoduleName);
+                        const submoduleOpen = expandedSubmodules.has(submoduleKey);
+                        html += `<div class="submodule-block">
+                            <button class="submodule-toggle" data-action="toggle-submodule" data-module="${encodeAttr(moduleName)}" data-submodule="${encodeAttr(submoduleName)}">
+                                <span class="nav-chevron">${submoduleOpen ? '▾' : '▸'}</span>
+                                <span class="toggle-text">
+                                    <span class="toggle-title">${formatText(submoduleName)}</span>
+                                </span>
+                                <span class="count-badge">${items.length}</span>
+                            </button>`;
+
+                        if (submoduleOpen) {
+                            html += '<div class="submodule-content">';
+                            items.forEach(item => {
+                                const activeClass = item.id === state.activeFaqId ? ' active' : '';
+                                html += `<button class="nav-faq${activeClass}" data-action="select-faq" data-faq-id="${encodeAttr(item.id)}" title="${escapeHtml(item.title || item.id)}">
+                                    <span class="nav-faq-id">${escapeHtml(item.id)}</span>
+                                    <span class="nav-faq-title">${formatText(item.title || item.id)}</span>
+                                </button>`;
+                            });
+                            html += '</div>';
+                        }
+
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                html += '</section>';
+            });
+
+            directoryTree.innerHTML = html;
+        }
+
+        function renderDetailSection(title, bodyHtml) {
+            return `<section class="detail-section"><h3>${title}</h3>${bodyHtml}</section>`;
+        }
+
+        function renderList(items) {
+            return `<ul>${items.map(item => `<li>${formatText(item)}</li>`).join('')}</ul>`;
+        }
+
+        function renderCodeBlocks(blocks) {
+            return blocks.map(block => `<div class="code-block">${formatCode(block)}</div>`).join('');
+        }
+
+        function renderDetail(activeItem, filteredFaqs) {
+            const detailContainer = document.getElementById('detailContainer');
+            if (!activeItem) {
+                detailContainer.innerHTML = `<div class="detail-empty">
+                    <h2>没有可显示的 FAQ</h2>
+                    <p>当前筛选条件下没有匹配结果。你可以放宽关键词、切换模块，或者点击“清空筛选”回到完整目录。</p>
+                </div>`;
+                return;
+            }
+
+            const tags = [
+                activeItem.module ? `<span class="tag tag-path">${escapeHtml(activeItem.module)}</span>` : '',
+                activeItem.submodule ? `<span class="tag tag-path">${escapeHtml(activeItem.submodule)}</span>` : ''
+            ].filter(Boolean).join('');
+
+            const sections = [];
+            sections.push(renderDetailSection(
+                '所属位置',
+                `<p><strong>${escapeHtml(activeItem.module || '未分类模块')}</strong>${activeItem.submodule ? ` / ${escapeHtml(activeItem.submodule)}` : ''}</p>`
+            ));
+
+            if (activeItem.errorCode || activeItem.errorCodeGroup) {
+                sections.push(renderDetailSection(
+                    '错误信息',
+                    `<p>${activeItem.errorCode ? formatText(activeItem.errorCode) : formatText(activeItem.errorCodeGroup)}</p>`
+                ));
+            }
+            if (activeItem.errorFunctions && activeItem.errorFunctions.length > 0) {
+                sections.push(renderDetailSection('错误函数', renderList(activeItem.errorFunctions)));
+            }
+            if (activeItem.logPatterns && activeItem.logPatterns.length > 0) {
+                sections.push(renderDetailSection('关键日志', renderCodeBlocks(activeItem.logPatterns)));
+            }
+            if (activeItem.symptom) {
+                sections.push(renderDetailSection('问题现象', `<p>${formatText(activeItem.symptom)}</p>`));
+            }
+            if (activeItem.guidance) {
+                sections.push(renderDetailSection('定位指导', renderCodeBlocks([activeItem.guidance])));
+            }
+            if (activeItem.diagram) {
+                const diagramBody = activeItem.diagramType === 'mermaid'
+                    ? (hasMermaid
+                        ? `<div class="diagram-container"><pre class="mermaid">${escapeHtml(activeItem.diagram)}</pre></div>`
+                        : '<div class="diagram-container"><p>当前浏览器无法加载 Mermaid，流程图暂时无法显示。</p></div>')
+                    : `<div class="diagram-container"><img src="${escapeHtml(activeItem.diagram)}" alt="示意图"></div>`;
+                sections.push(renderDetailSection('图示说明', diagramBody));
+            }
+
+            detailContainer.innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-eyebrow">${escapeHtml(activeItem.id)}</div>
+                    <h2 class="detail-title">${formatText(activeItem.title || activeItem.id)}</h2>
+                    <p class="detail-summary">${activeItem.symptom ? formatText(activeItem.symptom) : '当前 FAQ 没有单独描述问题现象，请结合下方日志和定位指导阅读。'}</p>
+                    <div class="detail-tags">${tags}</div>
+                </div>
+                <div class="detail-body">
+                    <div class="section-grid">
+                        ${sections.join('')}
+                    </div>
+                </div>`;
+
+            renderMermaidIn(detailContainer);
+        }
+
+        async function renderMermaidIn(container) {
+            if (!hasMermaid || !container) return;
+            const diagrams = Array.from(container.querySelectorAll('.mermaid:not([data-mermaid-rendered])'));
+            for (const diagram of diagrams) {
+                const originalSource = diagram.textContent;
+                try {
+                    await mermaid.run({ nodes: [diagram] });
+                    diagram.dataset.mermaidRendered = 'true';
+                } catch (error) {
+                    diagram.dataset.mermaidRendered = 'error';
+                    diagram.classList.remove('mermaid');
+                    diagram.classList.add('code-block');
+                    diagram.textContent = `Mermaid 渲染失败，请检查图语法。\n\n${originalSource}`;
+                    console.error('Mermaid render failed:', error);
+                }
+            }
+        }
+
+        function renderApp() {
+            const filteredFaqs = getFilteredFaqs();
+            const activeItem = ensureActiveFaq(filteredFaqs);
+            updateSummary(filteredFaqs, activeItem);
+            renderBreadcrumb(activeItem);
+            renderSidebar(filteredFaqs);
+            renderDetail(activeItem, filteredFaqs);
+        }
+
+        function extractErrorCode(codeStr) {
+            const match = codeStr.match(/HCCL_SIM_\w+/);
+            return match ? match[0] : codeStr;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        function highlightText(text) {
+            if (!state.keyword || !text) return text;
+            const regex = new RegExp(escapeRegExp(state.keyword), 'gi');
+            return text.replace(regex, match => `<span class="highlight">${match}</span>`);
+        }
+
+        function formatText(value) {
+            return highlightText(escapeHtml(value));
+        }
+
+        function formatCode(value) {
+            return highlightText(escapeHtml(value));
+        }
+
+        function encodeAttr(value) {
+            return encodeURIComponent(value || '');
+        }
+
+        function escapeRegExp(value) {
+            return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function clearFilters() {
+            state.keyword = '';
+            state.moduleFilter = '';
+            state.submoduleFilter = '';
+            state.errorCodeFilter = '';
+            applyStateToControls();
+            renderApp();
+        }
+
+        function handleModuleChange() {
+            const moduleSelect = document.getElementById('moduleFilter');
+            initSubmoduleFilter(moduleSelect.value);
+            document.getElementById('submoduleFilter').value = '';
+            syncStateFromControls();
+            renderApp();
+        }
+
+        function handleDirectoryClick(event) {
+            const actionElement = event.target.closest('[data-action]');
+            if (!actionElement) return;
+
+            const action = actionElement.dataset.action;
+            if (action === 'toggle-module') {
+                const moduleName = decodeURIComponent(actionElement.dataset.module || '');
+                if (expandedModules.has(moduleName)) {
+                    expandedModules.delete(moduleName);
+                } else {
+                    expandedModules.add(moduleName);
+                }
+                renderSidebar(getFilteredFaqs());
+                return;
+            }
+
+            if (action === 'toggle-submodule') {
+                const moduleName = decodeURIComponent(actionElement.dataset.module || '');
+                const submoduleName = decodeURIComponent(actionElement.dataset.submodule || '');
+                const submoduleKey = makeSubmoduleKey(moduleName, submoduleName);
+                if (expandedSubmodules.has(submoduleKey)) {
+                    expandedSubmodules.delete(submoduleKey);
+                } else {
+                    expandedSubmodules.add(submoduleKey);
+                }
+                renderSidebar(getFilteredFaqs());
+                return;
+            }
+
+            if (action === 'select-faq') {
+                state.activeFaqId = decodeURIComponent(actionElement.dataset.faqId || '');
+                expandPath(findFaqById(state.activeFaqId));
+                setHash(state.activeFaqId);
+                renderApp();
+                if (window.innerWidth < 980) {
+                    document.getElementById('detailContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+
+        function handleHashChange() {
+            const faqId = getFaqIdFromHash();
+            const targetItem = findFaqById(faqId);
+            if (!targetItem) return;
+            state.keyword = '';
+            state.moduleFilter = '';
+            state.submoduleFilter = '';
+            state.errorCodeFilter = '';
+            state.activeFaqId = faqId;
+            expandPath(targetItem);
+            applyStateToControls();
+            renderApp();
+        }
+
+        function bindEvents() {
+            document.getElementById('moduleFilter').addEventListener('change', handleModuleChange);
+            document.getElementById('submoduleFilter').addEventListener('change', () => {
+                syncStateFromControls();
+                renderApp();
+            });
+            document.getElementById('errorCodeFilter').addEventListener('change', () => {
+                syncStateFromControls();
+                renderApp();
+            });
+            document.getElementById('keywordInput').addEventListener('input', () => {
+                syncStateFromControls();
+                renderApp();
+            });
+            document.getElementById('clearBtn').addEventListener('click', clearFilters);
+            document.getElementById('directoryTree').addEventListener('click', handleDirectoryClick);
+            window.addEventListener('hashchange', handleHashChange);
+        }
+
+        window.onload = function() {
+            initModuleFilter();
+            initErrorCodeFilter();
+            initSubmoduleFilter('');
+            seedExpandedState();
+            const hashFaqId = getFaqIdFromHash();
+            if (hashFaqId && findFaqById(hashFaqId)) {
+                state.activeFaqId = hashFaqId;
+            }
+            applyStateToControls();
+            bindEvents();
+            renderApp();
+        };
+    </script>
+</body>
+</html>

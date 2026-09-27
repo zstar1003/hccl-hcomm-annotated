@@ -1,0 +1,335 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#include <cmath>
+
+#include "ins_all_gather_sole_executor.h"
+
+#include "log.h"
+#include "ins_coll_alg_registry.h"
+
+#ifndef CCL_KERNEL_AICPU
+#include "ccu_temp_all_gather_mesh_1D.h"
+#include "ccu_temp_all_gather_mesh_1D_detour.h"
+#include "ccu_temp_all_gather_mesh_1D_mem2mem.h"
+#include "ccu_temp_all_gather_mesh_2D.h"
+#endif
+
+#include "topo_match_mesh.h"
+#include "topo_match_concurr_mesh.h"
+
+namespace Hccl {
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+InsAllGatherSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InsAllGatherSoleExecutor() : InsCollAlgBase()
+{}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+InsAllGatherSoleExecutor<AlgTopoMatch, InsAlgTemplate>::~InsAllGatherSoleExecutor()
+{}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+HcclResult InsAllGatherSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
+{
+    (void)dataSize;
+    resReq.requiredScratchMemSize = 0;
+    // Topo Match
+    AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
+    CHK_RET(topoMatch.MatchTopo(vTopo_, virtRanks_, virtRankMap_));
+
+    // instantiate a template
+    InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
+
+    // calculate required insQueues and prepare queue
+    AlgTempResReq tempResReq;
+    if (enableDetour_) {
+        CHK_RET(tempAlg.CalcResDetour(rankGraph, tempResReq));
+    } else {
+        CHK_RET(tempAlg.CalcRes(tempResReq));
+    }
+
+    resReq.requiredSubQueNum = tempResReq.streamNum - 1;
+
+    return HcclResult::HCCL_SUCCESS;
+}
+
+// dataSize_ as input
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+HcclResult InsAllGatherSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
+{
+    // init and check params
+    CHK_RET(Init(op, params, insQue));
+
+    // Topo Match
+    AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
+    CHK_RET(topoMatch.MatchTopo(vTopo_, virtRanks_, virtRankMap_));
+    HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], [%s].", myRank_, topoMatch.Describe().c_str());
+
+    // instantiate a template
+    InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
+    tempAlg.SetDmaMode(dmaMode_);
+    tempAlg.SetCollOp(op); // CCU template需要传递op信息
+
+    // calculate required insQues and prepare queue
+    AlgTempResReq tempResReq;
+    if (enableDetour_) {
+        tempAlg.SetDataType(dataType_);
+        CHK_RET(tempAlg.CalcResDetour(rankGraph, tempResReq));
+    } else {
+        CHK_RET(tempAlg.CalcRes(tempResReq));
+    }
+
+    CHK_RET(InitQueue(tempResReq.queNum, requiredQue_));
+    HCCL_DEBUG(
+        "[InsCollAlgFactory] [InsAllGatherSoleExecutor] Rank[%d], template [%s], requiredQue Num [%u].", myRank_,
+        tempAlg.Describe().c_str(), tempResReq.queNum);
+
+    CHK_RET(PrepResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, tempResLinks_));
+
+    u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
+    dataSize_ = dataCount_ * dataSizePerVolume;
+
+    if (opMode_ == OpMode::OFFLOAD) {
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsAllGatherSoleExecutor] Rank[%d], Generating Instruction Queues in OFFLOAD Mode "
+            "for HOST.",
+            myRank_);
+        CHK_RET(GenInsQues4Offload(tempAlg));
+    } else { // OPBASE
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsAllGatherSoleExecutor] Rank[%d], Generating Instruction Queues in OPBASE Mode for "
+            "HOST.",
+            myRank_);
+        CHK_RET(GenInsQues4Opbase(tempAlg));
+    }
+
+    return HcclResult::HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+HcclResult
+InsAllGatherSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
+{
+    // Topo Match
+    AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
+    CHK_RET(topoMatch.MatchTopo(vTopo_, virtRanks_, virtRankMap_));
+    algResReq.topoInfo.UpdateSingleLevelTopo(virtRanks_, virtRankMap_, vTopo_);
+
+    // instantiate a template
+    InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
+
+    // calculate required insQues and prepare queue
+    AlgTempResReq tempResReq;
+    if (enableDetour_) {
+        HCCL_DEBUG("Algorithm: Allgather. [%s] Rank[%d], CalcRes with detouring enabled.", __func__, myRank_);
+        CHK_RET(tempAlg.CalcResDetour(rankGraph, tempResReq));
+    } else {
+        HCCL_DEBUG("Algorithm: Allgather. [%s] Rank[%d], CalcRes with detouring disabled.", __func__, myRank_);
+        CHK_RET(tempAlg.CalcRes(tempResReq));
+    }
+    CHK_RET(CalcLinkInfo(myRank_, rankGraph, tempResReq.links, algResReq.levelRankPairs));
+    algResReq.primQueueNum = tempResReq.streamNum;
+    algResReq.queueNotifys = tempResReq.queNotifys;
+    algResReq.localWaitGroupCntNotify = tempResReq.localWaitGroupCntNotify;
+    algResReq.localBcastPostCntNotify = tempResReq.localBcastPostCntNotify;
+    HCCL_DEBUG("[%s] Rank[%d], requiredQueNum [%u].", __func__, myRank_, algResReq.primQueueNum);
+    CHK_RET(CalcResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, algResReq.links));
+
+    return HcclResult::HCCL_SUCCESS;
+}
+
+// 算子执行aicpu接口
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+HcclResult InsAllGatherSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    InsQuePtr insQue)
+{
+    // init and check params
+    CHK_RET(Init(op, params, insQue));
+
+    // instantiate a template
+    InsAlgTemplate tempAlg(myRank_, rankSize_, topoInfo.vTopo[0], topoInfo.virtRankMap[0]);
+
+    tempAlg.SetDmaMode(dmaMode_);
+    tempAlg.SetCollOp(op); // CCU template需要传递op信息
+    virtRankMap_ = topoInfo.virtRankMap[0];
+
+    HCCL_DEBUG(
+        "[InsCollAlgFactory] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].", myRank_, rankSize_,
+        dmaMode_.Describe().c_str());
+
+    // calculate required insQues and prepare queue
+    AlgTempResReq tempResReq;
+    if (enableDetour_) {
+        tempAlg.SetDataType(dataType_);
+        CHK_RET(tempAlg.CalcResDetour(linkMgr, tempResReq));
+    } else {
+        CHK_RET(tempAlg.CalcRes(tempResReq));
+    }
+
+    CHK_RET(InitQueue(tempResReq.queNum, requiredQue_));
+    HCCL_DEBUG(
+        "[InsCollAlgFactory] Rank[%d], template [%s], requiredQue Num [%u] for AICPU.", myRank_,
+        tempAlg.Describe().c_str(), tempResReq.queNum);
+
+    CHK_RET(PrepResLinks(myRank_, tempResReq.links, linkMgr, tempResLinks_));
+
+    u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
+    dataSize_ = dataCount_ * dataSizePerVolume;
+
+    if (opMode_ == OpMode::OFFLOAD) {
+        HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], Generating Instruction Queues in OFFLOAD Mode for AICPU.", myRank_);
+        CHK_RET(GenInsQues4Offload(tempAlg));
+    } else { // OPBASE
+        HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], Generating Instruction Queues in OPBASE Mode for AICPU.", myRank_);
+        CHK_RET(GenInsQues4Opbase(tempAlg));
+    }
+
+    return HcclResult::HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+HcclResult InsAllGatherSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GenInsQues4Offload(InsAlgTemplate& tempAlg)
+{
+    u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
+    CHK_PRT_RET(
+        dataSizePerVolume == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
+        HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(rankSize_ == 0, HCCL_ERROR("[CollAlgFactory] RankSize is zero!"), HcclResult::HCCL_E_PARA);
+    u64 transportBoundDataSize = UB_MAX_DATA_SIZE; // algTemplate->CalcLoopMaxCount();
+    BuffInfo buffInfo;
+    buffInfo.inBuffType = BufferType::INPUT;
+    buffInfo.outBuffType = BufferType::OUTPUT;
+    buffInfo.inBuffBaseOff = 0;
+    buffInfo.outBuffBaseOff = 0;
+
+    HCCL_DEBUG(
+        "[InsCollAlgFactory] Rank[%d], input buffer type [%s], output buffer type [%s], input buffer base "
+        "offset [%u], output buffer base offset [%u].",
+        myRank_, buffInfo.inBuffType.Describe().c_str(), buffInfo.outBuffType.Describe().c_str(),
+        buffInfo.inBuffBaseOff, buffInfo.outBuffBaseOff);
+
+    u64 sendRecvTimes = (dataSize_ / transportBoundDataSize) + ((dataSize_ % transportBoundDataSize) == 0 ? 0 : 1);
+    HCCL_DEBUG("[CollAlgFactory] Rank [%d], sendRecvTimes [%u].", myRank_, sendRecvTimes);
+    for (u64 idx = 0; idx < sendRecvTimes; idx++) {
+        u64 currDataSize = (idx == (sendRecvTimes - 1)) ? (dataSize_ - idx * transportBoundDataSize) :
+                                                          transportBoundDataSize; // 判断是否为最后一轮
+        RankSliceInfo sliceInfoVec;
+        AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
+        CHK_RET(tempAlg.CalcSliceInfo(allignInfo, currDataSize, sliceInfoVec));
+        HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], done calculating slice information.", myRank_);
+
+        TempFuncs tempFuncs;
+        tempFuncs.opMode = opMode_;
+        tempFuncs.enableCounterNotify = IsEnableCounterNotifyByDevType(myRank_, devType_);
+        tempFuncs.isForepart = true;
+        tempFuncs.isBottom = true;
+
+        UsrData usrData;
+        DataSlice usrInSlice = DataSlice(BufferType::INPUT, idx * transportBoundDataSize, currDataSize);
+        DataSlice scratchInSlice = DataSlice(BufferType::SCRATCH, virtRankMap_[myRank_] * currDataSize, currDataSize);
+        usrData.usrInSlices.push_back(usrInSlice);
+        usrData.scratchInSlices.push_back(scratchInSlice);
+
+        for (u64 rankIdx = 0; rankIdx < rankSize_; rankIdx++) {
+            DataSlice scratchOutSlice
+                = DataSlice(BufferType::SCRATCH, virtRankMap_[rankIdx] * currDataSize, currDataSize);
+            DataSlice usrOutSlice = DataSlice(
+                BufferType::OUTPUT, virtRankMap_[rankIdx] * dataSize_ + idx * transportBoundDataSize, currDataSize);
+            usrData.scratchOutSlices.push_back(scratchOutSlice);
+            usrData.usrOutSlices.push_back(usrOutSlice);
+        }
+
+        tempFuncs.usrData = usrData;
+        CHK_RET(tempAlg.Run(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
+    }
+
+    return HcclResult::HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+HcclResult InsAllGatherSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GenInsQues4Opbase(InsAlgTemplate& tempAlg)
+{
+    HCCL_DEBUG("[CollAlgFactory] AlgTemplate is [%s]", tempAlg.Describe().c_str());
+    u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
+    CHK_PRT_RET(
+        dataSizePerVolume == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
+        HcclResult::HCCL_E_INTERNAL);
+
+    CHK_PRT_RET(rankSize_ == 0, HCCL_ERROR("[CollAlgFactory] RankSize is zero!"), HcclResult::HCCL_E_PARA);
+    u64 scratchInputMemSize
+        = static_cast<u64>(floor(maxTmpMemSize_ / (rankSize_ * dataSizePerVolume)) * dataSizePerVolume);
+    u64 transportBoundDataSize = UB_MAX_DATA_SIZE;
+    scratchInputMemSize = min(scratchInputMemSize, transportBoundDataSize);
+    HCCL_INFO("[InsCollAlgFactory] [InsAllGatherSoleExecutor] maxTmpMemSize_ [%u]", maxTmpMemSize_);
+    CHK_PRT_RET(
+        scratchInputMemSize == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
+        HcclResult::HCCL_E_PARA);
+
+    BuffInfo buffInfo;
+    buffInfo.inBuffType = BufferType::SCRATCH;
+    buffInfo.outBuffType = BufferType::SCRATCH;
+    buffInfo.inBuffBaseOff = 0;
+    buffInfo.outBuffBaseOff = 0;
+
+    u64 sendRecvTimes = (dataSize_ / scratchInputMemSize) + ((dataSize_ % scratchInputMemSize) == 0 ? 0 : 1);
+    HCCL_DEBUG("[InsCollAlgFactory] [InsAllGatherSoleExecutor] Rank [%d], sendRecvTimes [%u].", myRank_, sendRecvTimes);
+
+    for (u64 idx = 0; idx < sendRecvTimes; idx++) {
+        u64 currDataSize = (idx == (sendRecvTimes - 1)) ? (dataSize_ - idx * scratchInputMemSize) : scratchInputMemSize;
+
+        RankSliceInfo sliceInfoVec;
+        AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
+        CHK_RET(tempAlg.CalcSliceInfo(allignInfo, currDataSize, sliceInfoVec));
+
+        TempFuncs tempFuncs;
+        tempFuncs.opMode = opMode_;
+        tempFuncs.enableCounterNotify = IsEnableCounterNotifyByDevType(myRank_, devType_);
+        tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+        tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
+
+        UsrData usrData;
+        DataSlice usrInSlice = DataSlice(BufferType::INPUT, idx * scratchInputMemSize, currDataSize);
+        DataSlice scratchInSlice = DataSlice(BufferType::SCRATCH, virtRankMap_[myRank_] * currDataSize, currDataSize);
+        usrData.usrInSlices.push_back(usrInSlice);
+        usrData.scratchInSlices.push_back(scratchInSlice);
+
+        for (u64 rankIdx = 0; rankIdx < rankSize_; rankIdx++) {
+            DataSlice scratchOutSlice
+                = DataSlice(BufferType::SCRATCH, virtRankMap_[rankIdx] * currDataSize, currDataSize);
+            DataSlice usrOutSlice = DataSlice(
+                BufferType::OUTPUT, virtRankMap_[rankIdx] * dataSize_ + idx * scratchInputMemSize, currDataSize);
+            usrData.scratchOutSlices.push_back(scratchOutSlice);
+            usrData.usrOutSlices.push_back(usrOutSlice);
+        }
+
+        tempFuncs.usrData = usrData;
+        CHK_RET(tempAlg.Run(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
+    }
+
+    return HcclResult::HCCL_SUCCESS;
+}
+
+#ifndef CCL_KERNEL_AICPU
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLGATHER, CcuAllGatherMesh1D, InsAllGatherSoleExecutor, TopoMatchMesh, CcuTempAllGatherMesh1D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLGATHER, CcuAllGatherMeshDetour1D, InsAllGatherSoleExecutor, TopoMatchMesh, CcuTempAllGatherMeshDetour1D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLGATHER, CcuAllGatherMeshMem2Mem1D, InsAllGatherSoleExecutor, TopoMatchMesh,
+    CcuTempAllGatherMeshMem2Mem1D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLGATHER, CcuAllGatherMesh2D, InsAllGatherSoleExecutor, TopoMatchConcurrMesh, CcuTempAllGatherMesh2D);
+#endif
+} // namespace Hccl

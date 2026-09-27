@@ -1,0 +1,79 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#include "load_x_executor.h"
+
+#include <cstdint>
+
+#include "ccu_executor_manager.h"
+#include "ccu_string_util.h"
+
+using namespace std;
+using namespace hcomm::CcuRep;
+
+REG_CCU_EXECUTOR_CREATE_FUNC_V2(SimCcuV2::LOAD_TYPE, SimCcuV2::LOADX_CODE, LoadXExecutor);
+
+void LoadXExecutor::Parser()
+{
+    ValidateVersionExclusive(RunnerCcuVersion::CCU_V2, "LoadXExecutor");
+    xdId_ = instr_.v2.loadStoreX.xdId;
+    xsId_ = instr_.v2.loadStoreX.xsId;
+    xsoId_ = instr_.v2.loadStoreX.xso;
+    xdoId_ = instr_.v2.loadStoreX.xdo;
+    oMode_ = instr_.v2.loadStoreX.oMode;
+    ckeId_ = instr_.v2.loadStoreX.setCKEId;
+    ckeMask_ = instr_.v2.loadStoreX.setCKEMask;
+}
+
+void LoadXExecutor::Run()
+{
+    uint16_t xdId = GetXnId(xdId_);
+    uint16_t xsId = GetXnId(xsId_);
+    uint64_t xdValue = 0;
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
+    uint64_t xsValue = ccuResMgr.GetXnValue(rankId_, dieId_, xsId);
+
+    if (oMode_ == 0) {
+        uint16_t xsTmpId = static_cast<uint16_t>(xsValue) + xsoId_;
+        uint64_t xsTmpValue = ccuResMgr.GetXnValue(rankId_, dieId_, xsTmpId);
+        xdValue = xsTmpValue + xdoId_;
+        HCCL_VM_INFO("LoadX Xd[{}] = *X(Xs[{}]+{})+{}", xdId, xsTmpId, xsoId_, xdoId_);
+    } else if (oMode_ == 1) {
+        uint16_t xsSoId = GetXnId(xsoId_);
+        uint64_t xsSoValue = ccuResMgr.GetXnValue(rankId_, dieId_, xsSoId);
+        uint16_t xsDoId = GetXnId(xdoId_);
+        uint64_t xsDoValue = ccuResMgr.GetXnValue(rankId_, dieId_, xsDoId);
+        uint16_t xsTmpId = static_cast<uint16_t>(xsValue + xsSoValue);
+        uint64_t xsTmpValue = ccuResMgr.GetXnValue(rankId_, dieId_, xsTmpId);
+        xdValue = xsTmpValue + xsDoValue;
+    } else {
+        HCCL_VM_ERROR("LoadXExecutor unsupport mode[{}]", oMode_);
+        return;
+    }
+
+    ccuResMgr.UpdateXnValue(rankId_, dieId_, xdId, xdValue);
+    uint16_t ckeId = UpdateCkeId(ckeId_);
+    SetCkeSignal(ccuResMgr, ckeId, ckeMask_);
+}
+
+std::string LoadXExecutor::Describe()
+{
+    return HcclSim::StringFormat(
+        "[LoadXExecutor] xdId:[%u],xsId[%u],xsoId[%u],xdoId[%u],oMode[%u]\n", xdId_, xsId_, xsoId_, xdoId_, oMode_);
+}
+
+CcuTrace::CcuInstrTraceDetail LoadXExecutor::CollectTraceDetail()
+{
+    CcuTrace::CcuInstrTraceDetail detail;
+    detail.typeName = "LoadX";
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
+    detail.args["xsValue"] = std::to_string(ccuResMgr.GetXnValue(rankId_, dieId_, xsId_));
+    return detail;
+}

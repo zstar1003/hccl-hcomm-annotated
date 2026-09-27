@@ -1,0 +1,69 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+set(src_list
+    externalinput.cc
+    sal.cc
+    log.cc
+    workflow.cc
+    ${HCOMM_DIR}/src/base_comm/common/hccl_dl.cc
+    hccl_ip_address.cc
+    dlhal_function.cc
+    dlibv_function.cc
+    dlra_function.cc
+    dltdt_function.cc
+    peterson_lock.cc
+    device_capacity.cc
+    dlprof_func.cc
+    dltrace_function.cc
+    dlhns_function.cc
+)
+
+if(TARGET hccl_plf)
+    target_sources(hccl_plf PRIVATE
+        ${src_list}
+    )
+endif()
+
+if(TARGET ccl_kernel_plf)
+    target_sources(ccl_kernel_plf PRIVATE
+        ${src_list}
+    )
+endif()
+
+if(TARGET ccl_kernel_plf_a)
+    target_sources(ccl_kernel_plf_a  PRIVATE
+        ${src_list}
+    )
+endif()
+
+if(TARGET hccd)
+    target_sources(hccd PRIVATE
+        sal.cc
+        log.cc
+        dlra_function.cc
+        mr_manager.cc
+        externalinput.cc
+        dlhal_function.cc
+        hccl_ip_address.cc
+        ${HCOMM_DIR}/src/base_comm/common/hccl_dl.cc
+        device_capacity.cc
+        workflow.cc
+        dltdt_function.cc
+        dlprof_func.cc
+        dlibv_function.cc
+        dlhns_function.cc
+    )
+endif()
+
+add_subdirectory(adapter)
+add_subdirectory(misc)
+add_subdirectory(p2p_mgmt)
+add_subdirectory(unfold_cache)

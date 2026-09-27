@@ -1,0 +1,66 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#include "load_kernel.h"
+#include "log.h"
+#include "adapter_acl.h"
+#include <mutex>
+namespace ops_hccl {
+
+std::atomic<aclrtBinHandle> g_binKernelHandle{nullptr};
+static std::mutex g_binKernelMutex;
+
+HcclResult GetKernelFilePath(std::string& binaryPath)
+{
+    // 获取二进制文件路径
+    std::string libPath;
+    char* getPath = std::getenv("ASCEND_HOME_PATH");
+    if (getPath != nullptr) {
+        libPath = getPath;
+    } else {
+        libPath = "/usr/local/Ascend/cann/";
+        HCCL_WARNING("[GetKernelFilePath]ENV:ASCEND_HOME_PATH is not set");
+    }
+
+    libPath += "/opp/built-in/op_impl/aicpu/config/";
+    binaryPath = libPath;
+    HCCL_DEBUG("[GetKernelFilePath]kernel folder path[%s]", binaryPath.c_str());
+
+    return HCCL_SUCCESS;
+}
+
+// 当前不提供卸载能力，流程上没有点可以卸载
+HcclResult LoadAICPUKernel(void)
+{
+    // 不需要重复加载
+    if (g_binKernelHandle.load(std::memory_order_acquire) != nullptr) {
+        return HCCL_SUCCESS;
+    }
+    const std::lock_guard<std::mutex> lock(g_binKernelMutex);
+    if (g_binKernelHandle.load(std::memory_order_relaxed) != nullptr) {
+        return HCCL_SUCCESS;
+    }
+    std::string jsonPath;
+    CHK_RET(GetKernelFilePath(jsonPath));
+    jsonPath += "libscatter_aicpu_kernel.json";
+    aclrtBinHandle handle = nullptr;
+    HcclResult ret = LoadBinaryFromFile(jsonPath.c_str(), ACL_RT_BINARY_LOAD_OPT_CPU_KERNEL_MODE, 0, handle);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[LoadAICPUKernel]errNo[0x%016llx]load aicpu file fail, path[%s] optionType[%u]"
+            "cpuKernelMode[%u].",
+            ret, jsonPath.c_str(), ACL_RT_BINARY_LOAD_OPT_CPU_KERNEL_MODE, 0),
+        ret);
+    g_binKernelHandle.store(handle, std::memory_order_release);
+    return HCCL_SUCCESS;
+}
+
+} // namespace ops_hccl

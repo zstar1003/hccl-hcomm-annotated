@@ -1,0 +1,151 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#ifndef HCCL_RES_DL_H
+#define HCCL_RES_DL_H
+
+#include "dlsym_common.h"
+#include "hccl_res.h"
+
+#if CANN_VERSION_NUM >= CANN_VERSION(9, 0, 0)
+#include "hccl_res_expt.h"
+#include "hcomm_res_defs.h"
+#endif
+
+/* 8.5.0 桩: hccl_res.h / hcomm_res_defs.h / hccl_res_expt.h 中 9.0.0 新增类型 */
+#if CANN_VERSION_NUM < CANN_VERSION(9, 0, 0, 2)
+typedef void* HcclMemHandle;
+typedef int32_t(Callback)(uint64_t, int32_t);
+typedef int32_t HcommResult;
+
+typedef enum { COMM_MEM_TYPE_INVALID = -1, COMM_MEM_TYPE_DEVICE = 0, COMM_MEM_TYPE_HOST = 1 } CommMemType;
+
+typedef struct {
+    CommMemType type;
+    void* addr;
+    uint64_t size;
+} CommMem;
+
+#define COMM_PROTOCOL_UB_CTP ((CommProtocol)4)
+#define COMM_PROTOCOL_UBC_CTP COMM_PROTOCOL_UB_CTP
+/* Value 5 is retained by HCOMM as COMM_PROTOCOL_UBC_TP for compatibility; HCCL does not select it. */
+#define COMM_PROTOCOL_UB_MEM ((CommProtocol)6)
+
+#define COMM_ADDR_TYPE_EID ((CommAddrType)3)
+#define COMM_ADDR_EID_LEN 36
+#endif // CANN_VERSION_NUM < CANN_VERSION(9, 0, 0)
+
+/* CANN 9.0.x HCOMM exposes only the legacy COMM_PROTOCOL_UBC_CTP name. */
+#if CANN_VERSION_NUM >= CANN_VERSION(9, 0, 0, 2) && CANN_VERSION_NUM < CANN_VERSION(9, 2, 0, 2)
+#define COMM_PROTOCOL_UB_CTP COMM_PROTOCOL_UBC_CTP
+#endif
+
+#if CANN_VERSION_NUM < CANN_VERSION(9, 1, 0)
+#define COMM_PROTOCOL_UBOE ((CommProtocol)7)
+typedef enum { THREAD_TYPE_INVALID = -1, THREAD_TYPE_TS = 0 } ThreadType;
+
+typedef struct {
+    uint32_t notifyNumPerThread;
+} ThreadConfig;
+
+static inline HcommResult ThreadConfigInit(ThreadConfig* config, uint32_t num)
+{
+    for (uint32_t i = 0; i < num; i++) {
+        config[i].notifyNumPerThread = 0;
+    }
+    return 0;
+}
+
+#endif
+
+#if CANN_VERSION_NUM < CANN_VERSION(9, 2, 0, 2)
+typedef enum {
+    HCCL_DED_THREAD_TYPE_INVALID = -1,
+    HCCL_DED_THREAD_TYPE_AICPU_LAUNCH = 0,
+    HCCL_DED_THREAD_TYPE_AICPU_LAUNCH_GE = 1,
+    HCCL_DED_THREAD_TYPE_AICPU_ORDER_LAUNCH_OPBASE = 2,
+    HCCL_DED_THREAD_TYPE_AICPU_ORDER_LAUNCH_ACLGRAPH = 3,
+    HCCL_DED_THREAD_TYPE_AICPU_ORDER_LAUNCH_GE = 4,
+    HCCL_DED_THREAD_TYPE_AICPU_ORDER_LAUNCH_DEVICE = 5
+} HcclDedicatedThreadType;
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+DECL_WEAK_FUNC(HcclResult, HcclGetRemoteIpcHcclBuf, HcclComm comm, uint64_t remoteRank, void** addr, uint64_t* size);
+DECL_WEAK_FUNC(int32_t, HcclTaskRegister, HcclComm comm, const char* msgTag, Callback cb);
+DECL_WEAK_FUNC(int32_t, HcclTaskUnRegister, HcclComm comm, const char* msgTag);
+DECL_WEAK_FUNC(
+    HcclResult, HcclDevMemAcquire, HcclComm comm, const char* memTag, uint64_t* size, void** addr, bool* newCreated);
+DECL_WEAK_FUNC(
+    HcclResult, HcclThreadExportToCommEngine, HcclComm comm, uint32_t threadNum, const ThreadHandle* threads,
+    CommEngine dstCommEngine, ThreadHandle* exportedThreads);
+DECL_WEAK_FUNC(
+    HcclResult, HcclChannelGetRemoteMems, HcclComm comm, ChannelHandle channel, uint32_t* memNum, CommMem** remoteMems,
+    char*** memTags);
+DECL_WEAK_FUNC(
+    HcclResult, HcclChannelQuery, HcclComm comm, CommEngine engine, const HcclChannelDesc* channelDescs,
+    uint32_t channelNum, ChannelHandle* channels);
+DECL_SUPPORT_FLAG(HcclChannelQuery);
+DECL_WEAK_FUNC(HcclResult, HcclChannelDestroy, HcclComm comm, const ChannelHandle* channels, uint32_t channelNum);
+DECL_SUPPORT_FLAG(HcclChannelDestroy);
+DECL_WEAK_FUNC(
+    HcclResult, HcclCommMemReg, HcclComm comm, const char* memTag, const CommMem* mem, HcclMemHandle* memHandle);
+DECL_WEAK_FUNC(HcclResult, HcclEngineCtxDestroy, HcclComm comm, const char* ctxTag, CommEngine engine);
+
+DECL_SUPPORT_FLAG(HcclThreadExportToCommEngine);
+
+DECL_WEAK_FUNC(
+    HcclResult, HcclThreadAcquireWithConfig, HcclComm comm, CommEngine engine, uint32_t threadNum, ThreadType type,
+    const ThreadConfig* config, ThreadHandle* threads);
+DECL_SUPPORT_FLAG(HcclThreadAcquireWithConfig);
+
+DECL_WEAK_FUNC(
+    HcclResult, HcclDedicatedThreadAcquire, HcclComm comm, HcclDedicatedThreadType useType, uint32_t notifyNumPerThread,
+    ThreadHandle* thread);
+DECL_SUPPORT_FLAG(HcclDedicatedThreadAcquire);
+// 动态库管理接口（大驼峰命名）
+void HcclResDlInit(void* libHcommHandle);
+
+constexpr uint32_t DFX_ALG_TAG_LENGTH = 288; // 对应HCOMM_ALG_TAG_LENGTH
+struct HcclDfxOpInfoCompat {
+    CommAbiHeader header;
+    // DfxOpInfo_base
+    uint64_t beginTime = 0;
+    uint64_t endTime = 0;
+    // baseCollOperator
+    uint32_t opMode = 0; // 单算子和图模式
+    uint32_t opType = 0; // 算子名称类型
+    uint32_t reduceOp = 0;
+    uint32_t dataType = 0;
+    uint32_t outputType = 0; // 暂不删除，考虑后续算子使用
+    uint64_t dataCount = 0;
+    uint32_t root = ~0U;
+    char algTag[DFX_ALG_TAG_LENGTH]; // 算法名 = "算子类型 + 通信域id + 选择的算法"
+    CommEngine engine = COMM_ENGINE_RESERVED;
+    // task_exception
+    uint64_t cpuTsThread = 0;             // host侧算子主流的threadhandle
+    uint32_t cpuWaitAicpuNotifyIdx = ~0U; // host wait device notifyIdx
+    uint32_t cpuWaitAicpuNotifyId = ~0U;  // host wait device notifyId
+    // 算子内存信息
+    uint64_t inputMemAddr = 0;
+    uint64_t inputMemSize = 0;
+    uint64_t outputMemAddr = 0;
+    uint64_t outputMemSize = 0;
+    int8_t reserve[96]; // 预留扩展字段
+};
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // HCCL_RES_DL_H

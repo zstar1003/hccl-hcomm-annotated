@@ -1,0 +1,17 @@
+# 拓扑信息查询
+
+- [HcclGetRankId](HcclGetRankId.md)
+- [HcclGetRankSize](HcclGetRankSize.md)
+- [HcclRankGraphGetLayers](HcclRankGraphGetLayers.md)
+- [HcclRankGraphGetRanksByLayer](HcclRankGraphGetRanksByLayer.md)
+- [HcclRankGraphGetRankSizeByLayer](HcclRankGraphGetRankSizeByLayer.md)
+- [HcclRankGraphGetTopoTypeByLayer](HcclRankGraphGetTopoTypeByLayer.md)
+- [HcclRankGraphGetInstSizeListByLayer](HcclRankGraphGetInstSizeListByLayer.md)
+- [HcclRankGraphGetLinks](HcclRankGraphGetLinks.md)
+- [HcclRankGraphGetTopoInstsByLayer](HcclRankGraphGetTopoInstsByLayer.md)
+- [HcclRankGraphGetTopoType](HcclRankGraphGetTopoType.md)
+- [HcclRankGraphGetRanksByTopoInst](HcclRankGraphGetRanksByTopoInst.md)
+- [HcclGetHeterogMode](HcclGetHeterogMode.md)
+- [HcclRankGraphGetEndpointNum](HcclRankGraphGetEndpointNum.md)
+- [HcclRankGraphGetEndpointDesc](HcclRankGraphGetEndpointDesc.md)
+- [HcclRankGraphGetEndpointInfo](HcclRankGraphGetEndpointInfo.md)

@@ -1,0 +1,144 @@
+# hostPackBuf 详细内存布局分析
+
+## 数据流程概述
+
+```
+H2DResPack() → PackOpData() → GetUniqueIdV2() + AicpuResPackageHelper::GetPackedData()
+                                      ↓
+                              CombineHostMemory()
+                                      ↓
+                               hostPackBuf
+```
+
+## 整体结构
+
+`hostPackBuf` 是由 `listNum` 个 channel 的序列化数据按顺序拼接而成的连续内存块：
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         hostPackBuf (totalListNum 字节)                      │
+├───────────────────────────┬───────────────────────────┬─────────────────────┤
+│  Channel[0] PackedData    │  Channel[1] PackedData    │  ...                │
+│  (singleUniqueIdSize字节)  │  (singleUniqueIdSize字节)  │                     │
+└───────────────────────────┴───────────────────────────┴─────────────────────┘
+```
+
+## 每个 Channel 的 PackedData 详细布局
+
+每个 channel 的数据通过 `AicpuResPackageHelper::GetPackedData()` 打包，结构如下：
+
+### 1. 外层 Package 结构 (vector<ModuleData> 序列化)
+
+| 字段 | 类型 | 大小 | 说明 |
+|------|------|------|------|
+| dataVec.size() | size_t | 8 字节 | ModuleData 数组长度 (值为 `__COUNT__` = 10) |
+
+### 2. 每个 ModuleData 结构
+
+对于数组中的每个元素：
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                    ModuleData 元素                          │
+├─────────────────────────┬──────────────────────────────────┤
+│ name (string序列化)      │ data (vector<char>序列化)         │
+│ - size_t len (8字节)     │ - size_t len (8字节)              │
+│ - char[] (128字节固定)   │ - char[] (实际数据)               │
+└─────────────────────────┴──────────────────────────────────┘
+```
+
+### 3. 实际数据位置 (AicpuResMgrType::STREAM 索引)
+
+只有 `STREAM` 类型 (索引0) 包含实际数据，其他类型为空：
+
+**ModuleData[STREAM]:**
+- **name**: `"UbMemTransport"` (字符串序列化)
+- **data**: 包含 `GetUniqueIdV2()` 返回的完整数据
+
+### 4. GetUniqueIdV2() 返回的数据布局 (嵌套在 data 字段中)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Header (16 bytes)                         │
+├─────────────────────────────────────────────────────────────────┤
+│ type (u32, 4字节)      │ transportType (UB类型)                  │
+│ notifyNum (u32, 4字节) │ notify数量                              │
+│ bufferNum (u32, 4字节) │ buffer数量                              │
+│ connNum (u32, 4字节)   │ connection数量                          │
+├─────────────────────────────────────────────────────────────────┤
+│                    notifyUniqueIds 数据块                        │
+│ - size_t (8字节): 数据长度                                        │
+│ - 每个 Notify uniqueId (8字节): id(u32) + devPhyId(u32)          │
+├─────────────────────────────────────────────────────────────────┤
+│                   rmtNotifyUniqueIds 数据块                      │
+│ - size_t (8字节): 数据长度                                        │
+│ - 每个远程 Notify uniqueId (24字节):                              │
+│   addr(u64) + size(u64) + tokenId(u32) + tokenValue(u32)        │
+├─────────────────────────────────────────────────────────────────┤
+│                   locBufferUniqueIds 数据块                      │
+│ - size_t (8字节): 数据长度                                        │
+│ - 每个本地 Buffer uniqueId (24字节)                               │
+├─────────────────────────────────────────────────────────────────┤
+│                   rmtBufferUniqueIds 数据块                      │
+│ - size_t (8字节): 数据长度                                        │
+│ - 每个远程 Buffer uniqueId (24字节)                               │
+├─────────────────────────────────────────────────────────────────┤
+│                     connUniqueIds 数据块                         │
+│ - size_t (8字节): 数据长度                                        │
+│ - 每个 Connection uniqueId (DevUbConnection):                    │
+│   dieId(u32) + funcId(u32) + jettyId(u32) + jfcPollMode(u32)    │
+│   + dwqeCacheLocked(bool, 1字节) + dbAddr(u64) + sqCiAddr(u64)  │
+│   + sqBuffVa(u64) + sqDepth(u32) + tpn(u32)                      │
+│   + rmtEid.raw + locEid.raw                                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 完整的单个 Channel 内存布局示意
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ dataVec.size() = 10                                     │ 8 字节           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ModuleData[0] (STREAM)                                                      │
+│ ├─ name.length = 14                                     │ 8 字节           │
+│ ├─ name.data = "UbMemTransport"                         │ 14 字节          │
+│ ├─ data.length = N                                      │ 8 字节           │
+│ └─ data.data = GetUniqueIdV2() 序列化数据                │ N 字节           │
+│    (包含上述 GetUniqueIdV2() 的完整布局)                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ModuleData[1] (QUEUE_NOTIFY)                                                │
+│ ├─ name.length                                          │ 8 字节           │
+│ ├─ name.data                                            │ 变长             │
+│ ├─ data.length = 0                                      │ 8 字节           │
+│ └─ data.data (空)                                       │ 0 字节           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ... ModuleData[2-9] (其他类型，结构与 ModuleData[1] 类似，data 为空)        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 关键代码逻辑
+
+```cpp
+// 单个 Channel 的打包流程
+std::vector<Hccl::ModuleData> dataVec;
+dataVec.resize(Hccl::AicpuResMgrType::__COUNT__);  // 10个元素
+
+Hccl::AicpuResMgrType resType = Hccl::AicpuResMgrType::STREAM;
+dataVec[resType].name = "UbMemTransport";
+dataVec[resType].data = memTransport_->GetUniqueIdV2();  // 实际数据
+
+// 最终打包
+AicpuResPackageHelper helper;
+buffer = helper.GetPackedData(dataVec);  // 序列化为 vector<char>
+```
+
+## 总大小计算
+
+```
+totalListNum = listNum × singleUniqueIdSize
+
+其中 singleUniqueIdSize (每个Channel的大小) ≈:
+  8 (dataVec.size)
+  + (8 + 14 + 8 + N)  // ModuleData[STREAM], N是GetUniqueIdV2的大小
+  + 9 × (8 + nameLen + 8)  // 其他9个空的ModuleData
+```

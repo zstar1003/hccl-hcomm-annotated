@@ -1,0 +1,41 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#include "stub_rank_table.h"
+#include <fstream>
+#include <iostream>
+#include <unistd.h>
+#include "nlohmann/json.hpp"
+
+// ranktable.json 和正式代码中的文件名相同，参照 CommunicatorImpl::InitRankGraph()
+const char filePath[] = "ranktable.json";
+
+void GenRankTableFile(const std::string& rankTable)
+{
+    try {
+        nlohmann::json rankTableJson = nlohmann::json::parse(rankTable);
+        std::ofstream out(filePath, std::ofstream::out);
+        out << rankTableJson;
+    } catch (...) {
+        std::cout << filePath << " generate failed!" << std::endl;
+        return;
+    }
+    std::cout << filePath << " generated." << std::endl;
+}
+
+void DelRankTableFile()
+{
+    int res = unlink(filePath);
+    if (res == -1) {
+        std::cout << filePath << " delete failed!" << std::endl;
+        return;
+    }
+    std::cout << filePath << " deleted." << std::endl;
+}

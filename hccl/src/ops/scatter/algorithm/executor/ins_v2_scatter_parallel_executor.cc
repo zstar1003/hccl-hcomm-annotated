@@ -1,0 +1,870 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#include "ins_v2_scatter_parallel_executor.h"
+#include "cost_model.h"
+#include "ins_temp_scatter_mesh_1D.h"
+#include "ins_temp_scatter_nhr.h"
+#include "alg_attrs_registry.h"
+#include "template_utils.h"
+#ifndef AICPU_COMPILE
+#if CANN_VERSION_NUM >= CANN_VERSION(9, 0, 0)
+#include "ccu_temp_scatter_mesh1d.h"
+#include "ccu_temp_scatter_nhr1d_mem2mem.h"
+#include "ccu_kernel_scatter_nhr1d_mem2mem.h"
+#endif // CANN_VERSION_NUM >= CANN_VERSION(9, 0, 0)
+#endif
+
+#include "alg_attrs_registry.h"
+#include "auto_selector_base.h"
+
+namespace ops_hccl {
+constexpr u64 OMNI2D_UBX_SC_DATA_SIZE = 16 * 1024 * 1024; // UBX机型ccu并行/流水算法数据量分界，与selector保持一致
+constexpr uint32_t NUM_CONTROL_THREADS = 2;
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::InsV2ScatterParallelExecutor()
+{}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+std::vector<CostModelParam> InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::CalcCostCoeff(
+    HcclComm comm, TopoInfoWithNetLayerDetails* topoInfo, const char* algName, const OpParam& param)
+{
+    (void)comm;
+    // 层划分与拓扑事实取自 V2 topo match, 替代 CalcRankSizeByTopo 与 {1}/{6,2}/{8} 打桩
+    AlgHierarchyInfoForAllLevel algHierarchyInfo;
+#ifndef AICPU_COMPILE
+    const AlgAttrs* attrs = AlgAttrsRegistry::Instance().Get(std::string(algName));
+#else
+    // AICPU 独立核库(scatter_aicpu_kernel.so)不链接 host-only 的 AlgAttrsRegistry,
+    // device 侧亦无 costmodel 调用链, 置空走 skip 分支
+    const AlgAttrs* attrs = nullptr;
+#endif
+    // 探测路径直接调 MatchTopo（不走 CalcAlgHierarchyInfoV2 的 CHK_RET）：
+    // costmodel 迭代时"不匹配"是正常事件，避免执行路径语义的 ERROR 日志刷屏
+    AlgTopoMatch topoMatch;
+    HcclResult matchRet
+        = (attrs != nullptr) ? topoMatch.MatchTopo(topoInfo, algHierarchyInfo, *attrs) : HcclResult::HCCL_E_PARA;
+    if (matchRet != HcclResult::HCCL_SUCCESS) {
+        HCCL_INFO("[CalcCostCoeff] algName=%s topo match not support, skip.", algName);
+        return {};
+    }
+    u32 rankSize = topoInfo->userRankSize;
+    bool isPod = topoInfo->isPod;
+    u32 rankSizeLevel0 = algHierarchyInfo.infos[0][0].size();
+    u32 rankSizeLevel1 = (algHierarchyInfo.infos.size() > 1) ? algHierarchyInfo.infos[1][0].size() : 1;
+    // 任一维退化为 1(单级拓扑 L1 兜底为 1, 或两级匹配但某维为 1)时, parallel 的
+    // 两维数据划分失去意义, 不注册 costmodel, 新选择器不参与竞争
+    if (rankSizeLevel0 <= 1 || rankSizeLevel1 <= 1) {
+        HCCL_INFO(
+            "[CalcCostCoeff] algName=%s parallel dims degenerate (L0=%u, L1=%u), skip.", algName, rankSizeLevel0,
+            rankSizeLevel1);
+        return {};
+    }
+    const auto& physIdx = algHierarchyInfo.physicalIdxForAlgoLevels;
+    u32 physIdxLevel0 = static_cast<u32>(physIdx[0][0]);
+    u32 physIdxLevel1 = (physIdx.size() > 1) ? static_cast<u32>(physIdx[1][0]) : physIdxLevel0;
+    CommTopo netTypeLevel0 = GetPhysicalLevelTopoType(topoInfo, physIdxLevel0);
+    CommTopo netTypeLevel1 = GetPhysicalLevelTopoType(topoInfo, physIdxLevel1);
+    std::vector<u32> portNumLevel0 = GetPhysicalLevelPortNums(topoInfo, physIdxLevel0);
+    std::vector<u32> portNumLevel1 = GetPhysicalLevelPortNums(topoInfo, physIdxLevel1);
+    // 匹配层链路降级(portNums 为空)时算法不参与 costmodel(与其余算子统一口径)
+    if (portNumLevel0.empty() || portNumLevel1.empty()) {
+        HCCL_WARNING("[CalcCostCoeff] portNum is empty");
+        return {};
+    }
+    // 数据按 ratio 分成 part0 + part1: 与运行态 GetParallelDataSplit 同源,
+    // 直接调 CalcParallelDataSplitRatio 的 portNum 重载(与 all_reduce parallel 同模式),
+    // 仅在内置公式来源时计算, 外部设置时透传
+    float ratio = param.opConfig.multipleDimensionSplitRatio;
+    if (param.opConfig.multipleDimensionSplitRatioSource == MultipleDimensionSplitRatioSource::BUILTIN_FORMULA) {
+        ratio = CalcParallelDataSplitRatio(
+            rankSizeLevel0, rankSizeLevel1, portNumLevel1, topoInfo, ParallelDataSplitType::SCATTER,
+            param.opConfig.multipleDimensionSplitRatio);
+    }
+    float ratio0 = ratio;
+    float ratio1 = 1.0f - ratio;
+    HCCL_INFO(
+        "[InsV2ScatterParallelExecutor] CalcCostCoeff rankSizeLevel0:%u, rankSizeLevel1:%u, rankSize:%u, ratio:%f",
+        rankSizeLevel0, rankSizeLevel1, rankSize, ratio);
+    std::vector<CostModelParam> params = [rankSizeLevel0, rankSizeLevel1, ratio0, ratio1, portNumLevel0, portNumLevel1,
+                                          isPod, netTypeLevel0, netTypeLevel1] {
+        std::vector<CostModelParam> v;
+        // Step1: intra 处理 ratio0 比例数据, inter 处理 ratio1 比例数据（并行）
+        // buffer 组合对齐运行态真实数据流（GenTemplateAlgParamsIntra0/Inter1）：
+        // 两段均为 INPUT→HCCL_BUFFER，只有 root PreCopy（NHR 段 root 铺开 dataRatio×rankSize 份）
+        auto p0 = InsAlgTemplate0::CalcCostCoeff(CalcCostCoeffParam{
+            rankSizeLevel0, ratio0 * rankSizeLevel1, netTypeLevel0, BufferType::INPUT, BufferType::HCCL_BUFFER,
+            BufferType::HCCL_BUFFER, portNumLevel0, isPod});
+        auto p1 = InsAlgTemplate1::CalcCostCoeff(CalcCostCoeffParam{
+            rankSizeLevel1, ratio1 * rankSizeLevel0, netTypeLevel1, BufferType::INPUT, BufferType::HCCL_BUFFER,
+            BufferType::HCCL_BUFFER, portNumLevel1, isPod});
+        // Step2: inter 处理 ratio0 比例数据, intra 处理 ratio1 比例数据（并行）
+        // buffer 组合对齐运行态真实数据流（GenTemplateAlgParamsInter0/Intra1）：
+        // 两段均为 HCCL_BUFFER→OUTPUT，inter 段每 rank PostCopy 1 份；
+        // intra 段 root PreCopy/非 root PostCopy 折合每 rank 1 份
+        auto p2 = InsAlgTemplate1::CalcCostCoeff(CalcCostCoeffParam{
+            rankSizeLevel1, ratio0, netTypeLevel1, BufferType::HCCL_BUFFER, BufferType::OUTPUT, BufferType::HCCL_BUFFER,
+            portNumLevel1, isPod});
+        auto p3 = InsAlgTemplate0::CalcCostCoeff(CalcCostCoeffParam{
+            rankSizeLevel0, ratio1, netTypeLevel0, BufferType::HCCL_BUFFER, BufferType::OUTPUT, BufferType::HCCL_BUFFER,
+            portNumLevel0, isPod});
+        // 任一 template 未实现 CalcCostCoeff（返回空）则整个算法不参与 CostModel
+        if (p0.empty() || p1.empty() || p2.empty() || p3.empty()) {
+            HCCL_WARNING(
+                "[InsV2ScatterParallelExecutor] CalcCostCoeff incomplete, skip (p0=%zu p1=%zu p2=%zu p3=%zu).",
+                p0.size(), p1.size(), p2.size(), p3.size());
+            return v;
+        }
+        v.insert(v.end(), p0.begin(), p0.end());
+        v.insert(v.end(), p1.begin(), p1.end());
+        v.insert(v.end(), p2.begin(), p2.end());
+        v.insert(v.end(), p3.begin(), p3.end());
+        return v;
+    }();
+    return params;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+AlgNetMeta InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GetAlgNetMeta(
+    const TopoInfoWithNetLayerDetails* topoInfo, const OpParam& param, const char* algName) const
+{
+    (void)algName;
+    AlgHierarchyInfoForAllLevel algHierarchyInfo;
+#ifndef AICPU_COMPILE
+    const AlgAttrs* attrs = AlgAttrsRegistry::Instance().Get(std::string(algName));
+#else
+    // AICPU 独立核库(scatter_aicpu_kernel.so)不链接 host-only 的 AlgAttrsRegistry,
+    // device 侧亦无 costmodel 调用链, 置空走 skip 分支
+    const AlgAttrs* attrs = nullptr;
+#endif
+    // 探测路径直接调 MatchTopo：无 CHK_RET 的 ERROR，且免去 V2 调用所需的多层 const_cast
+    AlgTopoMatch topoMatch;
+    HcclResult matchRet
+        = (attrs != nullptr) ?
+              topoMatch.MatchTopo(const_cast<TopoInfoWithNetLayerDetails*>(topoInfo), algHierarchyInfo, *attrs) :
+              HcclResult::HCCL_E_PARA;
+    if (matchRet != HcclResult::HCCL_SUCCESS) {
+        HCCL_INFO("[GetAlgNetMeta] algName=%s topo match not support, return empty.", algName);
+        return {};
+    }
+    AlgNetMeta meta;
+    u32 rankSizeLevel0 = algHierarchyInfo.infos[0][0].size();
+    u32 rankSizeLevel1 = (algHierarchyInfo.infos.size() > 1) ? algHierarchyInfo.infos[1][0].size() : 1;
+    const auto& physIdx = algHierarchyInfo.physicalIdxForAlgoLevels;
+    u32 physIdxLevel0 = static_cast<u32>(physIdx[0][0]);
+    u32 physIdxLevel1 = (physIdx.size() > 1) ? static_cast<u32>(physIdx[1][0]) : physIdxLevel0;
+    CommTopo netTypeLevel0 = GetPhysicalLevelTopoType(topoInfo, physIdxLevel0);
+    CommTopo netTypeLevel1 = GetPhysicalLevelTopoType(topoInfo, physIdxLevel1);
+    std::vector<u32> portNumLevel1 = GetPhysicalLevelPortNums(topoInfo, physIdxLevel1);
+    // 与 CalcCostCoeff 同口径: portNums 为空时返回空 meta(算法已不注册)
+    if (portNumLevel1.empty()) {
+        HCCL_WARNING("[GetAlgNetMeta] portNum is empty");
+        return {};
+    }
+    // 对齐 CalcCostCoeff 的段划分与 dataRatio 逐段相等(与 all_gather parallel 同约定):
+    // p0=intra0(ratio0·L1), p1=inter1(ratio1·L0), p2=inter0(ratio0), p3=intra1(ratio1)
+    // ratio 与 CalcCostCoeff 同源(CalcParallelDataSplitRatio 同参数)
+    float ratio = param.opConfig.multipleDimensionSplitRatio;
+    if (param.opConfig.multipleDimensionSplitRatioSource == MultipleDimensionSplitRatioSource::BUILTIN_FORMULA) {
+        ratio = CalcParallelDataSplitRatio(
+            rankSizeLevel0, rankSizeLevel1, portNumLevel1, topoInfo, ParallelDataSplitType::SCATTER,
+            param.opConfig.multipleDimensionSplitRatio);
+    }
+    meta.netTypes.push_back(netTypeLevel0);
+    meta.netTypes.push_back(netTypeLevel1);
+    meta.netTypes.push_back(netTypeLevel1);
+    meta.netTypes.push_back(netTypeLevel0);
+    meta.intraGroupMode = CostAggMode::MAX;
+    meta.groupSizes = {2, 2};
+    meta.dataRatios = {ratio * rankSizeLevel1, (1.0f - ratio) * rankSizeLevel0, ratio, 1.0f - ratio};
+    meta.rankSizes = {rankSizeLevel0, rankSizeLevel1, rankSizeLevel1, rankSizeLevel0};
+    return meta;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::CalcAlgHierarchyInfo(
+    HcclComm comm, TopoInfoWithNetLayerDetails* topoInfo, AlgHierarchyInfoForAllLevel& algHierarchyInfo)
+{
+    (void)comm;
+    AlgTopoMatch topoMatch;
+    CHK_RET(topoMatch.MatchTopo(topoInfo, algHierarchyInfo, AlgAttrs{}));
+    return HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::CalcAlgHierarchyInfoV2(
+    TopoInfoWithNetLayerDetails* topoInfo, AlgHierarchyInfoForAllLevel& algHierarchyInfo, const AlgAttrs& algAttrs)
+{
+    AlgTopoMatch topoMatch;
+    CHK_RET(topoMatch.MatchTopo(topoInfo, algHierarchyInfo, algAttrs));
+    return HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::CalcRes(
+    HcclComm comm, const OpParam& param, const TopoInfoWithNetLayerDetails* topoInfo,
+    const AlgHierarchyInfoForAllLevel& algHierarchyInfo, AlgResourceRequest& resourceRequest)
+{
+    CHK_PTR_NULL(topoInfo);
+    CHK_PRT_RET(
+        algHierarchyInfo.infos.empty(),
+        HCCL_ERROR("[InsV2ScatterParallelExecutor][CalcRes] algHierarchyInfo.infos is empty"), HCCL_E_PARA);
+    // 构建template
+    std::vector<std::vector<u32>> temp0HierarchyInfo;
+    std::vector<std::vector<u32>> temp1HierarchyInfo;
+    if (algHierarchyInfo.infos.empty()) {
+        HCCL_ERROR("[%s] algHierarchyInfo.infos is empty.", __func__);
+        return HCCL_E_PARA;
+    }
+    CHK_PRT_RET(
+        algHierarchyInfo.infos.size() < TOPO_LEVEL_NUM_2 || algHierarchyInfo.infos[0].empty()
+            || algHierarchyInfo.infos[1].empty(),
+        HCCL_ERROR("[%s] algHierarchyInfo.infos is invalid.", __func__), HcclResult::HCCL_E_PARA);
+    temp0HierarchyInfo = algHierarchyInfo.infos[0];
+    temp1HierarchyInfo = algHierarchyInfo.infos[1];
+    std::shared_ptr<InsAlgTemplate0> intraAlgTemplate
+        = std::make_shared<InsAlgTemplate0>(param, topoInfo->userRank, temp0HierarchyInfo);
+    std::shared_ptr<InsAlgTemplate1> interAlgTemplate
+        = std::make_shared<InsAlgTemplate1>(param, topoInfo->userRank, temp1HierarchyInfo);
+
+    // 调用计算资源的函数,暂不考虑Detour
+    AlgResourceRequest intraResourceRequest;
+    AlgResourceRequest interResourceRequest;
+
+    myRank_ = topoInfo->userRank;
+    root_ = param.root;
+
+    rankSizeLevel0_ = GetRankSize(temp0HierarchyInfo);
+    rankSizeLevel1_ = GetRankSize(temp1HierarchyInfo);
+    if (rankSizeLevel0_ == 0) {
+        HCCL_ERROR("[%s] rankSizeLevel0_ is 0.", __func__);
+        return HCCL_E_PARA;
+    }
+    rankIdxLevel0_ = myRank_ % rankSizeLevel0_;
+    rankIdxLevel1_ = myRank_ / rankSizeLevel0_;
+
+    HCCL_INFO(
+        "[CalcLocalRankSize] localRankSize: myRank[%d] rankSizeLevel0_[%u] rankSizeLevel1_[%u]", myRank_,
+        rankSizeLevel0_, rankSizeLevel1_);
+
+    intraAlgTemplate->SetRoot(
+        root_ % rankSizeLevel0_ + rankIdxLevel1_ * rankSizeLevel0_); // 各框内与root相连的rank作为新server内模板的新root
+    interAlgTemplate->SetRoot(
+        root_ / rankSizeLevel0_ * rankSizeLevel0_ + rankIdxLevel0_); // 与root同框的同列rank作为新server间模板的root
+
+    CHK_RET(intraAlgTemplate->CalcRes(comm, param, topoInfo, intraResourceRequest));
+    CHK_RET(interAlgTemplate->CalcRes(comm, param, topoInfo, interResourceRequest));
+
+    // 合并两个template的资源
+    resourceRequest.notifyNumOnMainThread = NUM_CONTROL_THREADS; // 用于两个template间同步
+    resourceRequest.slaveThreadNum
+        = intraResourceRequest.slaveThreadNum + interResourceRequest.slaveThreadNum + NUM_CONTROL_THREADS;
+    resourceRequest.notifyNumPerThread.emplace_back(intraResourceRequest.slaveThreadNum + 1); // intra模板控制流
+    resourceRequest.notifyNumPerThread.insert(
+        resourceRequest.notifyNumPerThread.end(), intraResourceRequest.notifyNumPerThread.begin(),
+        intraResourceRequest.notifyNumPerThread.end());
+    resourceRequest.notifyNumPerThread.emplace_back(interResourceRequest.slaveThreadNum + 1); // inter模板控制流
+    resourceRequest.notifyNumPerThread.insert(
+        resourceRequest.notifyNumPerThread.end(), interResourceRequest.notifyNumPerThread.begin(),
+        interResourceRequest.notifyNumPerThread.end());
+    if (param.engine != COMM_ENGINE_CCU) {
+        HCCL_DEBUG(
+            "[InsV2ScatterParallelExecutor][CalcRes] intraResourceRequest.channels[0].size[%u]",
+            intraResourceRequest.channels[0].size());
+        resourceRequest.channels.emplace_back(intraResourceRequest.channels[0]);
+        resourceRequest.channels.emplace_back(interResourceRequest.channels[0]);
+    } else {
+        // ccu
+        HCCL_INFO(
+            "[InsV2ScatterParallelExecutor][CalcRes] intraTemplate has [%d] kernels.",
+            intraResourceRequest.ccuKernelNum[0]);
+        resourceRequest.ccuKernelInfos.insert(
+            resourceRequest.ccuKernelInfos.end(), intraResourceRequest.ccuKernelInfos.begin(),
+            intraResourceRequest.ccuKernelInfos.end());
+        resourceRequest.ccuKernelNum.emplace_back(intraResourceRequest.ccuKernelNum[0]);
+        HCCL_INFO(
+            "[InsV2ScatterParallelExecutor][CalcRes] interTemplate has [%d] kernels.",
+            interResourceRequest.ccuKernelNum[0]);
+        resourceRequest.ccuKernelInfos.insert(
+            resourceRequest.ccuKernelInfos.end(), interResourceRequest.ccuKernelInfos.begin(),
+            interResourceRequest.ccuKernelInfos.end());
+        resourceRequest.ccuKernelNum.emplace_back(interResourceRequest.ccuKernelNum[0]);
+#ifndef AICPU_COMPILE
+        // CCU模式的资源上下文中没有ChannelInfo，此处采集端口信息，供执行阶段计算数据切分比例
+        CHK_RET(CollectParallelPortInfoFromCcuKernels(
+            comm, topoInfo->userRank, intraResourceRequest.ccuKernelInfos, interResourceRequest.ccuKernelInfos,
+            resourceRequest.parallelPortInfo));
+#endif
+    }
+    HCCL_DEBUG(
+        "[InsV2ScatterParallelExecutor][CalcRes] myRank[%u], notifyNumOnMainThread[%u], slaveThreadNum[%u], "
+        "channels[%u]",
+        myRank_, resourceRequest.notifyNumOnMainThread, resourceRequest.slaveThreadNum,
+        resourceRequest.channels.size());
+    for (size_t i = 0; i < resourceRequest.notifyNumPerThread.size(); i++) {
+        HCCL_DEBUG(
+            "[InsV2ScatterParallelExecutor][CalcRes] myRank[%u], notifyNumPerThread[%zu]=[%u]", myRank_, i,
+            resourceRequest.notifyNumPerThread[i]);
+    }
+    return HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+uint64_t InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GetRankSize(
+    const std::vector<std::vector<u32>>& vTopo) const
+{
+    uint64_t count = 1;
+    for (const auto& i : vTopo) {
+        count *= i.size();
+    }
+    return count;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::Orchestrate(
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx)
+{
+    HCCL_INFO("[InsV2ScatterParallelExecutor][Orchestrate] Orchestrate Start");
+    maxTmpMemSize_ = resCtx.cclMem.size;
+    myRank_ = resCtx.topoInfo.userRank;
+    root_ = param.root;
+    // 给channels_和threads_赋值
+    threads_ = resCtx.threads;
+    HCCL_INFO(
+        "[InsV2ScatterParallelExecutor][Orchestrate] resCtx.threads.size()[%u], resCtx.cclMem.size[%u]",
+        resCtx.threads.size(), resCtx.cclMem.size);
+    if (param.engine != CommEngine::COMM_ENGINE_AIV && param.engine != CommEngine::COMM_ENGINE_CCU) {
+        CHK_RET(RestoreChannelMap(resCtx, remoteRankToChannelInfo_));
+        intraChannelInfo_ = remoteRankToChannelInfo_[0];
+        interChannelInfo_ = remoteRankToChannelInfo_[1];
+    }
+    // CCU模式下executor在资源阶段采集的端口信息，执行阶段用于计算数据切分比例
+    parallelPortInfo_ = resCtx.parallelPortInfo;
+    dataCount_ = param.DataDes.count;
+    dataType_ = param.DataDes.dataType;
+    dataTypeSize_ = DATATYPE_SIZE_TABLE[param.DataDes.dataType];
+    dataSize_ = dataCount_ * dataTypeSize_;
+
+    HCCL_INFO(
+        "[InsV2ScatterParallelExecutor][Orchestrate] dataCount_[%u] dataTypeSize_[%u]", dataCount_, dataTypeSize_);
+    if (resCtx.algHierarchyInfo.infos.empty()) {
+        HCCL_ERROR("[%s] algHierarchyInfo.infos is empty.", __func__);
+        return HCCL_E_PARA;
+    }
+    CHK_PRT_RET(
+        resCtx.algHierarchyInfo.infos.size() < TOPO_LEVEL_NUM_2 || resCtx.algHierarchyInfo.infos[0].empty()
+            || resCtx.algHierarchyInfo.infos[1].empty(),
+        HCCL_ERROR("[%s] algHierarchyInfo.infos is invalid.", __func__), HcclResult::HCCL_E_PARA);
+    temp0HierarchyInfo_ = resCtx.algHierarchyInfo.infos[0];
+    temp1HierarchyInfo_ = resCtx.algHierarchyInfo.infos[1];
+
+    rankSizeLevel0_ = GetRankSize(temp0HierarchyInfo_);
+    rankSizeLevel1_ = GetRankSize(temp1HierarchyInfo_);
+    rankIdxLevel0_ = myRank_ % rankSizeLevel0_;
+    rankIdxLevel1_ = myRank_ / rankSizeLevel0_;
+
+    HCCL_INFO(
+        "[InsV2ScatterParallelExecutor] localRankSize: myRank[%d] rankSizeLevel0_[%u] rankSizeLevel1_[%u]", myRank_,
+        rankSizeLevel0_, rankSizeLevel1_);
+
+    HcclResult ret = OrchestrateLoop(param, resCtx);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[InsV2ScatterParallelExecutor][Orchestrate]errNo[0x%016llx] Scatter executor kernel run failed",
+            HCCL_ERROR_CODE(ret)),
+        ret);
+    return HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::OrchestrateLoop(
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx)
+{
+    HCCL_INFO("[InsV2ScatterParallelExecutor][OrchestrateLoop] Start");
+
+    TemplateDataParams tempAlgParams;
+    tempAlgParams.buffInfo.inputPtr = param.inputPtr;
+    tempAlgParams.buffInfo.outputPtr = param.outputPtr;
+    tempAlgParams.buffInfo.hcclBuff = resCtx.cclMem;
+    tempAlgParams.buffInfo.inputSize = param.inputSize;
+    tempAlgParams.buffInfo.outputSize = param.outputSize;
+    tempAlgParams.buffInfo.inBuffType = BufferType::INPUT;
+    tempAlgParams.buffInfo.outBuffType = BufferType::OUTPUT;
+    tempAlgParams.buffInfo.hcclBuffType = BufferType::HCCL_BUFFER;
+
+    // 实例化算法模板类
+    HCCL_INFO("[InsV2ScatterParallelExecutor][OrchestrateLoop] param.root[%u]", param.root);
+    InsAlgTemplate0 tempAlgIntra(param, resCtx.topoInfo.userRank, temp0HierarchyInfo_); // server内算法，比如mesh
+    InsAlgTemplate1 tempAlgInter(param, resCtx.topoInfo.userRank, temp1HierarchyInfo_); // server间算法，比如nhr
+    if (param.engine == CommEngine::COMM_ENGINE_AICPU_TS) {
+        tempAlgInter.SetchannelsPerRank(interChannelInfo_);
+    } // 计算算法模板所需资源
+    CHK_RET(PrepareResForTemplate(tempAlgIntra));
+
+    CHK_RET(GenInsQuesHost(param, resCtx, tempAlgIntra, tempAlgInter));
+    HCCL_INFO("[InsV2ScatterParallelExecutor][OrchestrateLoop] Orchestrate success.");
+
+    return HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+void InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GetParallelDataSplit(
+    std::vector<double>& splitDataSize) const
+{
+    double ratio = multipleDimensionSplitRatio_;
+    if (multipleDimensionSplitRatioSource_ == MultipleDimensionSplitRatioSource::BUILTIN_FORMULA) {
+        ratio = CalcParallelDataSplitRatio(
+            rankSizeLevel0_, rankSizeLevel1_, intraChannelInfo_, interChannelInfo_, parallelPortInfo_,
+            ParallelDataSplitType::SCATTER, multipleDimensionSplitRatio_);
+    }
+    splitDataSize.push_back(ratio);
+    splitDataSize.push_back(1.0 - ratio);
+    HCCL_INFO(
+        "[InsV2ScatterParallelExecutor] meshFirstRatio[%f], closFirstRatio[%f]", splitDataSize[0], splitDataSize[1]);
+    return;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::PreSyncInterTemplates()
+{
+    std::vector<ThreadHandle> subThreads{intraThreads_.at(0), interThreads_.at(0)};
+    std::vector<u32> notifyIdxMainToSub{
+        static_cast<u32>(intraThreads_.size() - 1),
+        static_cast<u32>(interThreads_.size() - 1)}; // 使用末尾的notify进行同步
+    CHK_RET(PreSyncInterThreads(threads_.at(0), subThreads, notifyIdxMainToSub));
+    return HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::PostSyncInterTemplates()
+{
+    std::vector<ThreadHandle> subThreads{intraThreads_.at(0), interThreads_.at(0)};
+    std::vector<u32> notifyIdxSubToMain_{0, 1};
+    CHK_RET(PostSyncInterThreads(threads_.at(0), subThreads, notifyIdxSubToMain_));
+    return HCCL_SUCCESS;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenInsQuesHost(
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx, InsAlgTemplate0& tempAlgIntra,
+    InsAlgTemplate1& tempAlgInter)
+{
+    HCCL_INFO("[InsV2ScatterParallelExecutor] AlgTemplate intra server is [%s]", tempAlgIntra.Describe().c_str());
+    HCCL_INFO("[InsV2ScatterParallelExecutor] AlgTemplate inter server is [%s]", tempAlgInter.Describe().c_str());
+    multipleDimensionSplitRatio_ = param.opConfig.multipleDimensionSplitRatio;
+    multipleDimensionSplitRatioSource_ = param.opConfig.multipleDimensionSplitRatioSource;
+    std::vector<double> dataSplitSize;
+    GetParallelDataSplit(dataSplitSize); // <ratio, 1.0 - ratio>
+    double hcclBuffMultipleIntra = std::max(
+        dataSplitSize.at(0) * rankSizeLevel1_,
+        dataSplitSize.at(1) * rankSizeLevel0_); // intra都是mesh // x/y方向最大rank数 * y/x方向的dataSplitSize
+    double hcclBuffMultipleInter = std::max(
+        dataSplitSize.at(1) * rankSizeLevel0_ * rankSizeLevel1_,
+        dataSplitSize.at(0) * rankSizeLevel0_ * rankSizeLevel1_);
+
+    double totalScratchMultiple = hcclBuffMultipleIntra + hcclBuffMultipleInter;
+    u64 hcclMemBlockSize = maxTmpMemSize_;
+    if (totalScratchMultiple > 0) {
+        // data0和data1的count需要和申请的scratch mem大小对应
+        u64 tmpMemBlockCount = u64(maxTmpMemSize_ / totalScratchMultiple) / dataTypeSize_;
+        hcclMemBlockSize = (u64(dataSplitSize.at(0) * tmpMemBlockCount) + u64(dataSplitSize.at(1) * tmpMemBlockCount))
+                           * dataTypeSize_;
+    }
+    u64 intraScratchOffset = 0;
+    u64 interScratchOffset = static_cast<u64>(hcclBuffMultipleIntra * hcclMemBlockSize);
+    u64 maxCountPerLoop = std::min(static_cast<u64>(hcclMemBlockSize), static_cast<u64>(UB_MAX_DATA_SIZE))
+                          / HCCL_MIN_SLICE_ALIGN * HCCL_MIN_SLICE_ALIGN / dataTypeSize_;
+    CHK_PRT_RET(
+        maxCountPerLoop == 0, HCCL_ERROR("[InsV2ScatterParallelExecutor][GenInsQuesHost] maxCountPerLoop is 0"),
+        HcclResult::HCCL_E_INTERNAL);
+
+    u32 loopTimes = dataCount_ / maxCountPerLoop + ((dataCount_ % maxCountPerLoop == 0) ? 0 : 1);
+
+    TemplateDataParams tempAlgParamsIntra0;
+    TemplateDataParams tempAlgParamsInter0;
+    TemplateDataParams tempAlgParamsInter1;
+    TemplateDataParams tempAlgParamsIntra1;
+
+    // 准备资源
+    TemplateResource intraTemplateAlgRes;
+    TemplateResource interTemplateAlgRes;
+
+    if (param.engine == COMM_ENGINE_CCU) {
+        intraTemplateAlgRes.ccuKernels.insert(
+            intraTemplateAlgRes.ccuKernels.end(), resCtx.ccuKernels.begin(),
+            resCtx.ccuKernels.begin() + resCtx.ccuKernelNum[0]);
+        interTemplateAlgRes.ccuKernels.insert(
+            interTemplateAlgRes.ccuKernels.end(), resCtx.ccuKernels.begin() + resCtx.ccuKernelNum[0],
+            resCtx.ccuKernels.begin() + resCtx.ccuKernelNum[0] + resCtx.ccuKernelNum[1]);
+    } else {
+        intraTemplateAlgRes.channels = remoteRankToChannelInfo_[0];
+        interTemplateAlgRes.channels = remoteRankToChannelInfo_[1];
+        intraTemplateAlgRes.aivCommInfoPtr = resCtx.aivCommInfoPtr;
+        interTemplateAlgRes.aivCommInfoPtr = resCtx.aivCommInfoPtr;
+    }
+    intraTemplateAlgRes.threads = intraThreads_;
+
+    interTemplateAlgRes.threads = interThreads_;
+
+    u64 alignSize = AICPU_ALIGN_SIZE;
+    u64 processedCount = 0;
+    u32 loopIndex = 0;
+    while (processedCount < dataCount_) {
+        u64 remainingCount = dataCount_ - processedCount;
+        u32 remainingLoopTimes = (loopIndex < loopTimes) ? (loopTimes - loopIndex) : 1;
+        u64 currCount = (remainingCount + remainingLoopTimes - 1) / remainingLoopTimes;
+        currCount = std::min(currCount, maxCountPerLoop);
+        u64 dataCountPerLoopAxis0 = static_cast<u64>(dataSplitSize.at(0) * currCount);
+        u64 dataCountPerLoopAxis1 = currCount - dataCountPerLoopAxis0;
+        if (remainingLoopTimes > 1) {
+            u64 alignedCountPart0 = dataCountPerLoopAxis0;
+            u64 alignedCountPart1 = dataCountPerLoopAxis1;
+            alignedCountPart0 = alignedCountPart0 * dataTypeSize_ / alignSize * alignSize / dataTypeSize_;
+            alignedCountPart1 = alignedCountPart1 * dataTypeSize_ / alignSize * alignSize / dataTypeSize_;
+            if (alignedCountPart0 + alignedCountPart1 > 0) {
+                dataCountPerLoopAxis0 = alignedCountPart0;
+                dataCountPerLoopAxis1 = alignedCountPart1;
+            }
+        }
+        CHK_PRT_RET(
+            dataCountPerLoopAxis0 + dataCountPerLoopAxis1 == 0,
+            HCCL_ERROR("[InsV2ScatterParallelExecutor][GenInsQuesHost] currCount is 0"), HcclResult::HCCL_E_INTERNAL);
+        u64 dataOffset0 = processedCount * dataTypeSize_;
+        u64 dataOffset1 = dataOffset0 + dataCountPerLoopAxis0 * dataTypeSize_;
+        HCCL_DEBUG(
+            "[InsV2ScatterParallelExecutor][Orchestrate] loopIndex[%u] in loopTimes[%u], currCount[%u], "
+            "dataCountPerLoopAxis0[%u], dataCountPerLoopAxis1[%u], dataOffset0[%u], dataOffset1[%u]",
+            loopIndex, loopTimes, currCount, dataCountPerLoopAxis0, dataCountPerLoopAxis1, dataOffset0, dataOffset1);
+        // 第一步开始前同步
+        PreSyncInterTemplates();
+        if (rankIdxLevel1_ == root_ / rankSizeLevel0_) { // 数据0的server内的mesh算法
+            GenTemplateAlgParamsIntra0(
+                param, resCtx, dataOffset0, dataCountPerLoopAxis0, intraScratchOffset, tempAlgParamsIntra0);
+            CHK_RET(tempAlgIntra.KernelRun(param, tempAlgParamsIntra0, intraTemplateAlgRes));
+        }
+        if (rankIdxLevel0_ == root_ % rankSizeLevel0_) { // 数据1的server间的nhr算法
+            GenTemplateAlgParamsInter1(
+                param, resCtx, dataOffset1, dataCountPerLoopAxis1, interScratchOffset, tempAlgParamsInter1);
+            CHK_RET(tempAlgInter.KernelRun(param, tempAlgParamsInter1, interTemplateAlgRes));
+        }
+        // 第一步做完后回到主流做尾同步
+        PostSyncInterTemplates();
+        HCCL_INFO(
+            "[InsV2ScatterParallelExecutor][GenInsQuesHost] Stage1 Finished!! myRank_[%u], rankIdxLevel0_[%u], "
+            "rankIdxLevel1_[%u], rankSizeLevel0_[%u], rankSizeLevel1_[%u], inter_new_root[%u], intra_new_root[%u]",
+            myRank_, rankIdxLevel0_, rankIdxLevel1_, rankSizeLevel0_, rankSizeLevel1_,
+            root_ / rankSizeLevel0_ * rankSizeLevel0_ + rankIdxLevel0_,
+            root_ % rankSizeLevel0_ + rankIdxLevel1_ * rankSizeLevel0_);
+
+#ifndef AICPU_COMPILE
+        if (loopTimes == 1 && param.engine == CommEngine::COMM_ENGINE_CCU) {
+            ccuKernelLaunchNumIntra0_ = intraTemplateAlgRes.submitInfos.size();
+            ccuKernelLaunchNumInter1_ = interTemplateAlgRes.submitInfos.size();
+        }
+#endif
+
+        // 第二步开始前同步
+        PreSyncInterTemplates();
+        // 数据0的server间的nhr算法
+        GenTemplateAlgParamsInter0(
+            param, resCtx, dataOffset0, dataCountPerLoopAxis0, intraScratchOffset, tempAlgParamsInter0);
+        tempAlgInter.SetRoot(
+            root_ / rankSizeLevel0_ * rankSizeLevel0_ + rankIdxLevel0_); // 与root同框的同列rank作为新server间模板的root
+        CHK_RET(tempAlgInter.KernelRun(param, tempAlgParamsInter0, interTemplateAlgRes));
+        // 数据1的server内的mesh算法
+        GenTemplateAlgParamsIntra1(
+            param, resCtx, dataOffset1, dataCountPerLoopAxis1, interScratchOffset, tempAlgParamsIntra1);
+        tempAlgIntra.SetRoot(
+            root_ % rankSizeLevel0_
+            + rankIdxLevel1_ * rankSizeLevel0_); // 各框内与root相连的rank作为新server内模板的新root
+        CHK_RET(tempAlgIntra.KernelRun(param, tempAlgParamsIntra1, intraTemplateAlgRes));
+        // 尾同步
+        PostSyncInterTemplates();
+
+#ifndef AICPU_COMPILE
+        if (loopTimes == 1 && param.engine == CommEngine::COMM_ENGINE_CCU && param.opMode != OpMode::OFFLOAD) {
+            CHK_RET(FastLaunchSaveCtx(param, intraTemplateAlgRes, interTemplateAlgRes, resCtx.notifyNumOnMainThread));
+        }
+#endif
+        processedCount += dataCountPerLoopAxis0 + dataCountPerLoopAxis1;
+        loopIndex++;
+    }
+    return HcclResult::HCCL_SUCCESS;
+}
+
+#ifndef AICPU_COMPILE
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::FastLaunchSaveCtx(
+    const OpParam& param, const TemplateResource& templateAlgResIntra, const TemplateResource& templateAlgResInter,
+    u32 notifyNumOnMainThread)
+{
+    HCCL_INFO("[InsV2ScatterParallelExecutor] loopTimes==1, save fast launch ctx.");
+    ccuKernelLaunchNumIntra1_ = templateAlgResIntra.submitInfos.size() - ccuKernelLaunchNumIntra0_;
+    ccuKernelLaunchNumInter0_ = templateAlgResInter.submitInfos.size() - ccuKernelLaunchNumInter1_;
+    u32 threadNum = threads_.size();
+    u32 ccuKernelNum
+        = ccuKernelLaunchNumIntra1_ + ccuKernelLaunchNumInter0_ + ccuKernelLaunchNumIntra0_ + ccuKernelLaunchNumInter1_;
+    if (ccuKernelNum < 1) {
+        HCCL_INFO("[InsV2ScatterParallelExecutor] ccu kernel num is 0, no need to save.");
+        return HCCL_SUCCESS;
+    }
+    HCCL_INFO(
+        "[InsV2ScatterParallelExecutor][HcclEngineCtxCreate] threadNum[%llu], ccuKernelNum[%llu]", threadNum,
+        ccuKernelNum);
+
+    std::vector<u32> ccuKernelNumList
+        = {ccuKernelLaunchNumIntra0_, ccuKernelLaunchNumInter1_, ccuKernelLaunchNumInter0_, ccuKernelLaunchNumIntra1_};
+    std::vector<std::vector<CcuKernelSubmitInfo>> submitInfosList
+        = {templateAlgResIntra.submitInfos, templateAlgResInter.submitInfos};
+    return FastLaunchSaveCtxTwoTemplate(
+        param, threadNum, ccuKernelNum, threads_, ccuKernelNumList, submitInfosList, notifyNumOnMainThread);
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::FastLaunch(
+    const OpParam& param, const CcuFastLaunchCtx* ctx)
+{
+    InsAlgTemplate0 intraTempAlg{};
+    InsAlgTemplate1 interTempAlg{};
+
+    TemplateFastLaunchCtx tempFastLaunchCtxIntra0, tempFastLaunchCtxInter0;
+    TemplateFastLaunchCtx tempFastLaunchCtxInter1, tempFastLaunchCtxIntra1;
+
+    TemplateResource templateAlgResIntra, templateAlgResInter;
+    ThreadHandle* threads = ctx->GetThreadHandlePtr();
+    threads_.assign(threads, threads + ctx->threadNum);
+    PrepareResForTemplate(intraTempAlg);
+
+    CcuKernelSubmitInfo* ccuKernelSubmitInfos = ctx->GetCcuKernelSubmitInfoPtr();
+
+    // 第一步开始前同步
+    HCCL_INFO("[InsV2ScatterParallelExecutor][FastLaunch] Intra0 ccuKernelNum[%llu]", ctx->ccuKernelNum[0]);
+    PreSyncInterTemplates();
+    // 数据0的server内的mesh算法
+    CHK_RET(SetTempFastLaunchAddr(tempFastLaunchCtxIntra0, param.inputPtr, param.hcclBuff.addr, param.hcclBuff));
+    tempFastLaunchCtxIntra0.threads = intraThreads_;
+    tempFastLaunchCtxIntra0.ccuKernelSubmitInfos.assign(
+        ccuKernelSubmitInfos, ccuKernelSubmitInfos + ctx->ccuKernelNum[0]);
+    ccuKernelSubmitInfos += ctx->ccuKernelNum[0];
+    // 把每个template需要的queue传进去，比如stars的mesh要传多条queue
+    if (ctx->ccuKernelNum[0] > 0) {
+        CHK_RET(intraTempAlg.FastLaunch(param, tempFastLaunchCtxIntra0));
+    }
+    // 数据1的server间的nhr算法
+    CHK_RET(SetTempFastLaunchAddr(tempFastLaunchCtxInter1, param.inputPtr, param.hcclBuff.addr, param.hcclBuff));
+    tempFastLaunchCtxInter1.threads = interThreads_;
+    tempFastLaunchCtxInter1.ccuKernelSubmitInfos.assign(
+        ccuKernelSubmitInfos, ccuKernelSubmitInfos + ctx->ccuKernelNum[1]);
+    ccuKernelSubmitInfos += ctx->ccuKernelNum[1];
+    if (ctx->ccuKernelNum[1] > 0) {
+        CHK_RET(interTempAlg.FastLaunch(param, tempFastLaunchCtxInter1));
+    }
+    // 第一步做完后回到主流做尾同步
+    PostSyncInterTemplates();
+
+    // 第二步开始前同步
+    PreSyncInterTemplates();
+    // 数据0的server间的nhr算法
+    CHK_RET(SetTempFastLaunchAddr(tempFastLaunchCtxInter0, param.hcclBuff.addr, param.outputPtr, param.hcclBuff));
+    tempFastLaunchCtxInter0.threads = interThreads_;
+    tempFastLaunchCtxInter0.ccuKernelSubmitInfos.assign(
+        ccuKernelSubmitInfos, ccuKernelSubmitInfos + ctx->ccuKernelNum[2]);
+    ccuKernelSubmitInfos += ctx->ccuKernelNum[2];
+    CHK_RET(interTempAlg.FastLaunch(param, tempFastLaunchCtxInter0));
+    // 数据1的server内的mesh算法
+    CHK_RET(SetTempFastLaunchAddr(tempFastLaunchCtxIntra1, param.hcclBuff.addr, param.outputPtr, param.hcclBuff));
+    tempFastLaunchCtxIntra1.threads = intraThreads_;
+    tempFastLaunchCtxIntra1.ccuKernelSubmitInfos.assign(
+        ccuKernelSubmitInfos, ccuKernelSubmitInfos + ctx->ccuKernelNum[3]);
+    CHK_RET(intraTempAlg.FastLaunch(param, tempFastLaunchCtxIntra1));
+    // 尾同步
+    PostSyncInterTemplates();
+
+    HCCL_INFO("[InsV2ScatterParallelExecutor][FastLaunch] End.");
+    return HCCL_SUCCESS;
+}
+#endif
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+void InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenTemplateAlgParamsIntra0(
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx, const u64 dataOffset,
+    const u64 dataCountPerLoopAxis0, const u64 scratchOffset, TemplateDataParams& tempAlgParamsIntra0) const
+{
+    tempAlgParamsIntra0.buffInfo.inputPtr = param.inputPtr;
+    tempAlgParamsIntra0.buffInfo.outputPtr = resCtx.cclMem.addr;
+    tempAlgParamsIntra0.buffInfo.inputSize = param.inputSize;
+    tempAlgParamsIntra0.buffInfo.outputSize = param.outputSize;
+    tempAlgParamsIntra0.buffInfo.hcclBuff = resCtx.cclMem;
+    tempAlgParamsIntra0.buffInfo.inBuffType = BufferType::INPUT;
+    tempAlgParamsIntra0.buffInfo.outBuffType = BufferType::HCCL_BUFFER;
+    tempAlgParamsIntra0.buffInfo.hcclBuffType = BufferType::HCCL_BUFFER;
+    tempAlgParamsIntra0.buffInfo.inBuffBaseOff = dataOffset;
+    tempAlgParamsIntra0.buffInfo.outBuffBaseOff = scratchOffset;
+    tempAlgParamsIntra0.buffInfo.hcclBuffBaseOff = scratchOffset;
+    tempAlgParamsIntra0.sliceSize = dataCountPerLoopAxis0 * dataTypeSize_;
+    tempAlgParamsIntra0.tailSize = tempAlgParamsIntra0.sliceSize;
+
+    tempAlgParamsIntra0.inputSliceStride = dataSize_;
+    tempAlgParamsIntra0.outputSliceStride = 0;
+    tempAlgParamsIntra0.repeatNum = rankSizeLevel1_;
+    tempAlgParamsIntra0.inputRepeatStride = dataSize_ * rankSizeLevel0_;
+    tempAlgParamsIntra0.outputRepeatStride = tempAlgParamsIntra0.sliceSize;
+    HCCL_INFO(
+        "[GenTemplateAlgParamsIntra0] data0 setp1 intra, repeatNum[%llu], sliceSize[%llu], tailSize[%llu]",
+        tempAlgParamsIntra0.repeatNum, tempAlgParamsIntra0.sliceSize, tempAlgParamsIntra0.tailSize);
+    return;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+void InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenTemplateAlgParamsInter0(
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx, const u64 dataOffset,
+    const u64 dataCountPerLoopAxis0, const u64 scratchOffset, TemplateDataParams& tempAlgParamsInter0) const
+{
+    tempAlgParamsInter0.buffInfo.inputPtr = resCtx.cclMem.addr;
+    tempAlgParamsInter0.buffInfo.outputPtr = param.outputPtr;
+    tempAlgParamsInter0.buffInfo.inputSize = resCtx.cclMem.size;
+    tempAlgParamsInter0.buffInfo.outputSize = param.outputSize;
+    tempAlgParamsInter0.buffInfo.hcclBuff = resCtx.cclMem;
+    tempAlgParamsInter0.buffInfo.inBuffType = BufferType::HCCL_BUFFER;
+    tempAlgParamsInter0.buffInfo.outBuffType = BufferType::OUTPUT;
+    tempAlgParamsInter0.buffInfo.hcclBuffType = BufferType::HCCL_BUFFER;
+    tempAlgParamsInter0.buffInfo.inBuffBaseOff = scratchOffset;
+    tempAlgParamsInter0.buffInfo.outBuffBaseOff = dataOffset;
+    tempAlgParamsInter0.buffInfo.hcclBuffBaseOff = scratchOffset;
+    tempAlgParamsInter0.sliceSize = dataCountPerLoopAxis0 * dataTypeSize_;
+    tempAlgParamsInter0.tailSize = tempAlgParamsInter0.sliceSize;
+
+    tempAlgParamsInter0.inputSliceStride = tempAlgParamsInter0.sliceSize;
+    tempAlgParamsInter0.outputSliceStride = 0;
+    tempAlgParamsInter0.repeatNum = 1;
+    tempAlgParamsInter0.inputRepeatStride = 0;
+    tempAlgParamsInter0.outputRepeatStride = 0;
+    HCCL_INFO(
+        "[tempAlgParamsInter0] data0 setp2 inter, repeatNum[%llu], sliceSize[%llu], tailSize[%llu]",
+        tempAlgParamsInter0.repeatNum, tempAlgParamsInter0.sliceSize, tempAlgParamsInter0.tailSize);
+    return;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+void InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenTemplateAlgParamsInter1(
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx, const u64 dataOffset,
+    const u64 dataCountPerLoopAxis1, const u64 scratchOffset, TemplateDataParams& tempAlgParamsInter1) const
+{
+    tempAlgParamsInter1.buffInfo.inputPtr = param.inputPtr;
+    tempAlgParamsInter1.buffInfo.outputPtr = resCtx.cclMem.addr;
+    tempAlgParamsInter1.buffInfo.inputSize = param.inputSize;
+    tempAlgParamsInter1.buffInfo.outputSize = param.outputSize;
+    tempAlgParamsInter1.buffInfo.hcclBuff = resCtx.cclMem;
+    tempAlgParamsInter1.buffInfo.inBuffType = BufferType::INPUT;
+    tempAlgParamsInter1.buffInfo.outBuffType = BufferType::HCCL_BUFFER;
+    tempAlgParamsInter1.buffInfo.hcclBuffType = BufferType::HCCL_BUFFER;
+    tempAlgParamsInter1.buffInfo.inBuffBaseOff = dataOffset;
+    tempAlgParamsInter1.buffInfo.outBuffBaseOff = scratchOffset;
+    tempAlgParamsInter1.buffInfo.hcclBuffBaseOff = scratchOffset;
+    tempAlgParamsInter1.sliceSize = dataCountPerLoopAxis1 * dataTypeSize_;
+    tempAlgParamsInter1.tailSize = tempAlgParamsInter1.sliceSize;
+
+    tempAlgParamsInter1.inputSliceStride = dataSize_ * rankSizeLevel0_;
+    tempAlgParamsInter1.outputSliceStride = 0;
+    tempAlgParamsInter1.repeatNum = rankSizeLevel0_;
+    tempAlgParamsInter1.inputRepeatStride = dataSize_;
+    tempAlgParamsInter1.outputRepeatStride = tempAlgParamsInter1.sliceSize;
+    HCCL_INFO(
+        "[tempAlgParamsInter1] data1 setp1 inter, repeatNum[%llu], sliceSize[%llu], tailSize[%llu]",
+        tempAlgParamsInter1.repeatNum, tempAlgParamsInter1.sliceSize, tempAlgParamsInter1.tailSize);
+    return;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+void InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenTemplateAlgParamsIntra1(
+    const OpParam& param, const AlgResourceCtxSerializable& resCtx, const u64 dataOffset,
+    const u64 dataCountPerLoopAxis1, const u64 scratchOffset, TemplateDataParams& tempAlgParamsIntra1) const
+{
+    tempAlgParamsIntra1.buffInfo.inputPtr = resCtx.cclMem.addr;
+    tempAlgParamsIntra1.buffInfo.outputPtr = param.outputPtr;
+    tempAlgParamsIntra1.buffInfo.inputSize = resCtx.cclMem.size;
+    tempAlgParamsIntra1.buffInfo.outputSize = param.outputSize;
+    tempAlgParamsIntra1.buffInfo.hcclBuff = resCtx.cclMem;
+    tempAlgParamsIntra1.buffInfo.inBuffType = BufferType::HCCL_BUFFER;
+    tempAlgParamsIntra1.buffInfo.outBuffType = BufferType::OUTPUT;
+    tempAlgParamsIntra1.buffInfo.hcclBuffType = BufferType::HCCL_BUFFER;
+    tempAlgParamsIntra1.buffInfo.inBuffBaseOff = scratchOffset;
+    tempAlgParamsIntra1.buffInfo.outBuffBaseOff = dataOffset;
+    tempAlgParamsIntra1.buffInfo.hcclBuffBaseOff = scratchOffset;
+    tempAlgParamsIntra1.sliceSize = dataCountPerLoopAxis1 * dataTypeSize_;
+    tempAlgParamsIntra1.tailSize = tempAlgParamsIntra1.sliceSize;
+
+    tempAlgParamsIntra1.inputSliceStride = tempAlgParamsIntra1.sliceSize;
+    tempAlgParamsIntra1.outputSliceStride = 0;
+    tempAlgParamsIntra1.repeatNum = 1;
+    tempAlgParamsIntra1.inputRepeatStride = 0;
+    tempAlgParamsIntra1.outputRepeatStride = 0;
+    HCCL_INFO(
+        "[tempAlgParamsIntra1] data1 setp2 intra, repeatNum[%llu], sliceSize[%llu], tailSize[%llu]",
+        tempAlgParamsIntra1.repeatNum, tempAlgParamsIntra1.sliceSize, tempAlgParamsIntra1.tailSize);
+    return;
+}
+
+template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
+HcclResult InsV2ScatterParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::PrepareResForTemplate(
+    InsAlgTemplate0& tempAlgIntra)
+{
+    u64 intraThreadsNum = tempAlgIntra.GetThreadNum();
+    intraThreads_.assign(threads_.begin() + 1, threads_.begin() + 1 + intraThreadsNum);
+    interThreads_.assign(threads_.begin() + intraThreadsNum + 1, threads_.end());
+    return HCCL_SUCCESS;
+}
+
+#if CANN_VERSION_NUM >= CANN_VERSION(9, 0, 0)
+// 合并注册：标准 MESH_1D 两级 / PCIE-SW 场景共用，分流由 selector 保证
+REGISTER_EXECUTOR_BY_TWO_TEMPS(
+    HcclCMDType::HCCL_CMD_SCATTER, AicpuScatterParallelMeshNHR, InsV2ScatterParallelExecutor, TopoMatchTwoLevel,
+    InsTempScatterMesh1D, InsTempScatterNHR);
+REGISTER_ALG_ATTRS(
+    AicpuScatterParallelMeshNHR, topo.maxTopoLevelNum = TOPO_LEVEL_NUM_2;
+    topo.supportLevel0Topos = LEVEL0_TOPO_MESH_1D | LEVEL0_TOPO_MESH_1D_CLOS; topo.isSupportLevel0PcieMix = true;
+    topo.topoCustomCheck = [](const TopoInfoWithNetLayerDetails* topo) -> bool {
+        if (topo->level0Topo == Level0Shape::MESH_1D_CLOS) {
+            return topo->level0PcieMix
+                   && !AutoSelectorBase::IsLayerAllConnetedWithTopo(topo, 0, CommTopo::COMM_TOPO_1DMESH);
+        }
+        return true;
+    });
+REGISTER_EXECUTOR_BY_TWO_TEMPS(
+    HcclCMDType::HCCL_CMD_SCATTER, AicpuScatterParallelMeshNHRMultiJetty, InsV2ScatterParallelExecutor,
+    TopoMatchTwoLevel, InsTempScatterMesh1D, InsTempScatterNHR);
+REGISTER_ALG_ATTRS(
+    AicpuScatterParallelMeshNHRMultiJetty, topo.supportLevel0Topos = LEVEL0_TOPO_MESH_1D_CLOS; topo.maxTopoLevelNum = 1;
+    topo.topoCustomCheck = [](const TopoInfoWithNetLayerDetails* topo) -> bool {
+        return !AutoSelectorBase::IsLayerAllConnetedWithTopo(topo, 0, CommTopo::COMM_TOPO_1DMESH);
+    });
+#endif // CANN_VERSION_NUM >= CANN_VERSION(9, 0, 0)
+#ifndef AICPU_COMPILE
+#if CANN_VERSION_NUM >= CANN_VERSION(9, 0, 0)
+REGISTER_EXECUTOR_BY_TWO_TEMPS(
+    HcclCMDType::HCCL_CMD_SCATTER, CcuSchedScatterParallelMeshNHR, InsV2ScatterParallelExecutor, TopoMatchTwoLevel,
+    CcuTempScatterMesh1D, CcuTempScatterNHR1DMem2Mem);
+REGISTER_ALG_ATTRS(CcuSchedScatterParallelMeshNHR, topo.maxSupportRankSize = CCU_SCHED_MAX_RANK_SIZE;
+                   topo.minTopoLevelNum = TOPO_LEVEL_NUM_2; topo.maxTopoLevelNum = TOPO_LEVEL_NUM_2;
+                   topo.supportLevel0Topos = LEVEL0_TOPO_MESH_1D;);
+REGISTER_EXECUTOR_BY_TWO_TEMPS(
+    HcclCMDType::HCCL_CMD_SCATTER, CcuSchedScatterParallelMeshNHRMultiJetty, InsV2ScatterParallelExecutor,
+    TopoMatchTwoLevel, CcuTempScatterMesh1D, CcuTempScatterNHR1DMem2Mem);
+REGISTER_ALG_ATTRS(
+    CcuSchedScatterParallelMeshNHRMultiJetty, topo.maxSupportRankSize = CCU_SCHED_MAX_RANK_SIZE;
+    topo.supportLevel0Topos = LEVEL0_TOPO_MESH_1D_CLOS; topo.maxTopoLevelNum = 1;
+    topo.topoCustomCheck = [](const TopoInfoWithNetLayerDetails* topo) -> bool {
+        return !AutoSelectorBase::IsLayerAllConnetedWithTopo(topo, 0, CommTopo::COMM_TOPO_1DMESH);
+    });
+#endif // CANN_VERSION_NUM >= CANN_VERSION(9, 0, 0)
+#endif
+} // namespace ops_hccl

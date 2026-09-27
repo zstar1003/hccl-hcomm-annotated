@@ -1,0 +1,48 @@
+{
+  "schema_version": 2,
+  "controller": "node-01",
+  "deploy": {
+    "to_path": "/root/disp_probe",
+    "from_path": ".",
+    "default_ssh_port": 22,
+    "default_timeout": 5
+  },
+  "hosts": [
+    {
+      "id": "node-01",
+      "ip": "192.168.0.79",
+      "user": "root",
+      "ssh_key": "/root/.ssh/id_ed25519"
+    },
+    {
+      "id": "node-02",
+      "ip": "192.168.0.36",
+      "user": "root",
+      "password_env": "HOST_02_PASS"
+    }
+  ],
+  "probe": {
+    "scope": {
+      "node-01": {
+        "device_range": [0, 7]
+      },
+      "node-02": {
+        "device_range": [0, 7]
+      }
+    },
+    "topology": {
+      "sport_begin": 49152,
+      "sport_count": 32,
+      "tree_probe_sport_count": 1,
+      "topology_optimized": true,
+      "l2_path_aware": true,
+      "output_subdir": ""
+    },
+    "pingpong": {
+      "times": 50,
+      "turns": 1000,
+      "payload_len": 12,
+      "interval_ms": 1
+    }
+  }
+}

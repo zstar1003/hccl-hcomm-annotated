@@ -1,0 +1,130 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#ifndef HCCLV2_DATA_TYPE_H
+#define HCCLV2_DATA_TYPE_H
+
+#include <map>
+#include <unordered_map>
+#include <string>
+#include <cstdint>
+#include "types.h"
+#include "../utils/enum_factory.h"
+#include "hccl_res.h"
+#include "log.h"
+#include "string_util.h"
+#include <hccl/hccl_types.h>
+#include "../utils/exception_util.h"
+#include "../exception/invalid_params_exception.h"
+
+namespace Hccl {
+
+MAKE_ENUM(
+    DataType, INT8, INT16, INT32, FP16, FP32, INT64, UINT64, UINT8, UINT16, UINT32, FP64, BFP16, INT128, BF16_SAT, HIF8,
+    FP8E4M3, FP8E5M2, FP8E8M0)
+
+const std::unordered_map<DataType, u32, std::EnumClassHash> DATA_TYPE_SIZE_MAP
+    = {{DataType::INT8, sizeof(s8)},
+       {DataType::INT16, sizeof(s16)},
+       {DataType::INT32, sizeof(s32)},
+       {DataType::FP16, 2},
+       {DataType::FP32, sizeof(float)},
+       {DataType::INT64, sizeof(s64)},
+       {DataType::UINT64, sizeof(u64)},
+       {DataType::UINT8, sizeof(u8)},
+       {DataType::UINT16, sizeof(u16)},
+       {DataType::UINT32, sizeof(u32)},
+       {DataType::FP64, 8},
+       {DataType::BFP16, 2},
+       {DataType::INT128, 16},
+       {DataType::BF16_SAT, 2},
+       {DataType::HIF8, 1},
+       {DataType::FP8E4M3, 1},
+       {DataType::FP8E5M2, 1},
+       {DataType::FP8E8M0, 1}};
+
+const std::unordered_map<DataType, HcclDataType, std::EnumClassHash> HCCL_DATA_TYPE_MAP = {
+    {DataType::INT8, HCCL_DATA_TYPE_INT8},       {DataType::INT16, HCCL_DATA_TYPE_INT16},
+    {DataType::INT32, HCCL_DATA_TYPE_INT32},     {DataType::FP16, HCCL_DATA_TYPE_FP16},
+    {DataType::FP32, HCCL_DATA_TYPE_FP32},       {DataType::INT64, HCCL_DATA_TYPE_INT64},
+    {DataType::UINT64, HCCL_DATA_TYPE_UINT64},   {DataType::UINT8, HCCL_DATA_TYPE_UINT8},
+    {DataType::UINT16, HCCL_DATA_TYPE_UINT16},   {DataType::UINT32, HCCL_DATA_TYPE_UINT32},
+    {DataType::FP64, HCCL_DATA_TYPE_FP64},       {DataType::BFP16, HCCL_DATA_TYPE_BFP16},
+    {DataType::INT128, HCCL_DATA_TYPE_INT128},   {DataType::HIF8, HCCL_DATA_TYPE_HIF8},
+    {DataType::FP8E4M3, HCCL_DATA_TYPE_FP8E4M3}, {DataType::FP8E5M2, HCCL_DATA_TYPE_FP8E5M2},
+    {DataType::FP8E8M0, HCCL_DATA_TYPE_FP8E8M0},
+};
+
+const std::unordered_map<HcclDataType, DataType, std::EnumClassHash> DATA_TYPE_MAP = {
+    {HCCL_DATA_TYPE_INT8, DataType::INT8},       {HCCL_DATA_TYPE_INT16, DataType::INT16},
+    {HCCL_DATA_TYPE_INT32, DataType::INT32},     {HCCL_DATA_TYPE_FP16, DataType::FP16},
+    {HCCL_DATA_TYPE_FP32, DataType::FP32},       {HCCL_DATA_TYPE_INT64, DataType::INT64},
+    {HCCL_DATA_TYPE_UINT64, DataType::UINT64},   {HCCL_DATA_TYPE_UINT8, DataType::UINT8},
+    {HCCL_DATA_TYPE_UINT16, DataType::UINT16},   {HCCL_DATA_TYPE_UINT32, DataType::UINT32},
+    {HCCL_DATA_TYPE_FP64, DataType::FP64},       {HCCL_DATA_TYPE_BFP16, DataType::BFP16},
+    {HCCL_DATA_TYPE_INT128, DataType::INT128},   {HCCL_DATA_TYPE_HIF8, DataType::HIF8},
+    {HCCL_DATA_TYPE_FP8E4M3, DataType::FP8E4M3}, {HCCL_DATA_TYPE_FP8E5M2, DataType::FP8E5M2},
+    {HCCL_DATA_TYPE_FP8E8M0, DataType::FP8E8M0},
+};
+
+const std::unordered_map<uint32_t, std::string> DATA_TYPE_TO_STRING_MAP = {
+    {0, "INT8"},    {1, "INT16"}, {2, "INT32"},    {3, "FP16"},     {4, "FP32"},     {5, "INT64"},
+    {6, "UINT64"},  {7, "UINT8"}, {8, "UINT16"},   {9, "UINT32"},   {10, "FP64"},    {11, "BFP16"},
+    {12, "INT128"}, {14, "HIF8"}, {15, "FP8E4M3"}, {16, "FP8E5M2"}, {17, "FP8E8M0"},
+};
+
+const std::unordered_map<uint32_t, std::string> OP_TYPE_TO_STRING_MAP
+    = {{0, "sum"}, {1, "mul"}, {2, "max"}, {3, "PROD"}};
+
+inline u32 DataTypeSizeGet(DataType type)
+{
+    if (UNLIKELY(DATA_TYPE_SIZE_MAP.find(type) == DATA_TYPE_SIZE_MAP.end())) {
+        THROW<InvalidParamsException>(StringFormat("%s type[%s] is not supported.", __func__, type.Describe().c_str()));
+    }
+    return DATA_TYPE_SIZE_MAP.at(type);
+}
+
+inline HcclDataType DataTypeToHcclDataType(const DataType dataType)
+{
+    if (UNLIKELY(HCCL_DATA_TYPE_MAP.find(dataType) == HCCL_DATA_TYPE_MAP.end())) {
+        THROW<InvalidParamsException>(
+            StringFormat("%s type[%s] is not supported.", __func__, dataType.Describe().c_str()));
+    }
+    return HCCL_DATA_TYPE_MAP.at(dataType);
+}
+
+inline DataType HcclDataTypeToDataType(const HcclDataType hcclDataType)
+{
+    if (UNLIKELY(DATA_TYPE_MAP.find(hcclDataType) == DATA_TYPE_MAP.end())) {
+        HCCL_ERROR("%s hcclDataType[%d] is not supported.", __func__, hcclDataType);
+        return DataType::INVALID;
+    }
+    return DATA_TYPE_MAP.at(hcclDataType);
+}
+
+inline std::string DataTypeToSerialString(const uint32_t dataType)
+{
+    if (UNLIKELY(DATA_TYPE_TO_STRING_MAP.find(dataType) == DATA_TYPE_TO_STRING_MAP.end())) {
+        return "UNDEFINED";
+    }
+    return DATA_TYPE_TO_STRING_MAP.at(dataType);
+}
+
+inline std::string OpTypeToSerialString(const uint32_t opType)
+{
+    if (OP_TYPE_TO_STRING_MAP.find(opType) == OP_TYPE_TO_STRING_MAP.end()) {
+        return "UNDEFINED";
+    }
+    return OP_TYPE_TO_STRING_MAP.at(opType);
+}
+
+} // namespace Hccl
+
+#endif // HCCLV2_DATA_TYPE_H

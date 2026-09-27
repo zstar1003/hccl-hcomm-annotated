@@ -1,0 +1,45 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#include "adapter_error_manager.h"
+#include "adapter_error_manager_pub.h"
+#include "base/err_msg.h"
+#include "base/err_mgr.h"
+
+void RptInputErr(std::string error_code, std::vector<std::string> key, std::vector<std::string> value)
+{
+    // 将 std::vector<std::string> 转换为 std::vector<const char*>
+    std::vector<const char*> key_cstr;
+    for (const auto& k : key) {
+        key_cstr.push_back(k.c_str());
+    }
+
+    std::vector<const char*> value_cstr;
+    for (const auto& v : value) {
+        value_cstr.push_back(v.c_str());
+    }
+
+    // 调用 REPORT_PREDEFINED_ERR_MSG
+    REPORT_PREDEFINED_ERR_MSG(error_code.c_str(), key_cstr, value_cstr);
+    return;
+}
+
+void RptInnerErrPrt(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    char errorMsgStr[LIMIT_PER_MESSAGE] = {};
+    int ret = vsnprintf_s(errorMsgStr, LIMIT_PER_MESSAGE, LIMIT_PER_MESSAGE - 1U, fmt, args);
+    va_end(args);
+    if (ret == -1) {
+        return;
+    }
+    REPORT_INNER_ERR_MSG(HCCL_RPT_CODE, "%s", errorMsgStr);
+}

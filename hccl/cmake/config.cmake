@@ -1,0 +1,181 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+set(DEFAULT_BUILD_TYPE "Release")
+
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the build type: Release/Debug" FORCE)
+endif()
+
+function(generate_stub_with_output_name STUB STUB_OUTPUT_NAME)
+    if(EXISTS ${DOWNLOAD_LIB_DIR}/lib${STUB_OUTPUT_NAME}.so)
+        add_library(${STUB} SHARED IMPORTED GLOBAL)
+        set_target_properties(${STUB} PROPERTIES
+            IMPORTED_LOCATION "${DOWNLOAD_LIB_DIR}/lib${STUB_OUTPUT_NAME}.so"
+            INTERFACE_LINK_OPTIONS "-Wl,-rpath-link=${DOWNLOAD_LIB_DIR}"
+        )
+        message(STATUS "Imported library lib${STUB_OUTPUT_NAME}.so")
+    else()
+        string(FIND ${STUB_OUTPUT_NAME} "::" temp)
+        if (temp EQUAL "-1")
+            set(target_plain_name ${STUB_OUTPUT_NAME})
+        else()
+            string(REPLACE "::" ";" temp_list ${STUB_OUTPUT_NAME})
+            list(GET temp_list 1 target_plain_name)
+        endif()
+
+
+        if (NOT TARGET ${target_plain_name}_stub_tmp)
+            add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stub/${target_plain_name}.c
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/stub
+                COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/stub/${target_plain_name}.c)
+            add_library(${target_plain_name}_stub_tmp SHARED ${CMAKE_CURRENT_BINARY_DIR}/stub/${target_plain_name}.c)
+            set_target_properties(${target_plain_name}_stub_tmp PROPERTIES
+                WINDOWS_EXPORT_ALL_SYMBOLS TRUE
+                LIBRARY_OUTPUT_NAME ${target_plain_name}
+                RUNTIME_OUTPUT_NAME ${target_plain_name}
+                LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/stub
+                RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/stub)
+        endif()
+
+
+        add_library(${STUB} SHARED IMPORTED GLOBAL)
+        if (UNIX)
+            set_target_properties(${STUB} PROPERTIES
+                IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/stub/lib${target_plain_name}.so")
+        endif()
+        if (WIN32)
+            set_target_properties(${STUB} PROPERTIES
+                IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/stub/${target_plain_name}.dll"
+                IMPORTED_IMPLIB "${CMAKE_CURRENT_BINARY_DIR}/stub/${target_plain_name}.lib")
+        endif()
+        add_dependencies(${STUB} ${target_plain_name}_stub_tmp)
+
+
+        message(STATUS "Stub library lib${STUB_OUTPUT_NAME}.so")
+    endif()
+endfunction()
+
+
+function(generate_stub STUB)
+    if(DEFINED STUB_OUTPUT_NAME_${STUB})
+        set(STUB_OUTPUT_NAME ${STUB_OUTPUT_NAME_${STUB}})
+    else()
+        set(STUB_OUTPUT_NAME ${STUB})
+    endif()
+
+
+    generate_stub_with_output_name(${STUB} ${STUB_OUTPUT_NAME})
+
+
+    if(DEFINED STUB_LINK_LIBRARIES_${STUB})
+        foreach(LIB ${STUB_LINK_LIBRARIES_${STUB}})
+            if(TARGET ${LIB})
+                target_link_libraries(${STUB} INTERFACE ${LIB})
+            endif()
+        endforeach()
+    endif()
+endfunction(generate_stub)
+
+if(ENABLE_BUILD_AARCH)
+    set(STUBS
+        hcomm
+        ccl_kernel
+    )
+    foreach(STUB ${STUBS})
+        if(NOT TARGET ${STUB})
+            generate_stub(${STUB})
+        endif()
+    endforeach()
+elseif(PRODUCT_SIDE STREQUAL "device" AND BUILD_OPEN_PROJECT)
+    # 解析 CANN 安装路径（与下方 ASCEND_CANN_PACKAGE_PATH 解析一致）。
+    # 此处 ASCEND_CANN_PACKAGE_PATH 尚未赋值，需补充 env 兜底，否则无法探测
+    # devlib/device/libccl_kernel.so 是否存在，导致缺该库的版本（如 9.0.0）漏生成桩库。
+    if(CUSTOM_ASCEND_CANN_PACKAGE_PATH)
+        set(_hccl_cann_path ${CUSTOM_ASCEND_CANN_PACKAGE_PATH})
+    elseif(DEFINED ASCEND_CANN_PACKAGE_PATH)
+        set(_hccl_cann_path ${ASCEND_CANN_PACKAGE_PATH})
+    elseif(DEFINED ENV{ASCEND_HOME_PATH})
+        set(_hccl_cann_path $ENV{ASCEND_HOME_PATH})
+    elseif(DEFINED ENV{ASCEND_OPP_PATH})
+        get_filename_component(_hccl_cann_path "$ENV{ASCEND_OPP_PATH}/.." ABSOLUTE)
+    endif()
+    if(DEFINED _hccl_cann_path)
+        set(_hccl_devlib_dir ${_hccl_cann_path}/devlib/device)
+    endif()
+    if(DEFINED _hccl_devlib_dir AND NOT EXISTS ${_hccl_devlib_dir}/libccl_kernel.so)
+        if(NOT TARGET ccl_kernel)
+            generate_stub(ccl_kernel)
+        endif()
+    endif()
+endif()
+
+if(CUSTOM_ASCEND_CANN_PACKAGE_PATH)
+    set(ASCEND_CANN_PACKAGE_PATH  ${CUSTOM_ASCEND_CANN_PACKAGE_PATH})
+elseif(DEFINED ENV{ASCEND_HOME_PATH})
+    set(ASCEND_CANN_PACKAGE_PATH  $ENV{ASCEND_HOME_PATH})
+elseif(DEFINED ENV{ASCEND_OPP_PATH})
+    get_filename_component(ASCEND_CANN_PACKAGE_PATH "$ENV{ASCEND_OPP_PATH}/.." ABSOLUTE)
+else()
+    set(ASCEND_CANN_PACKAGE_PATH  "/usr/local/Ascend/ascend-toolkit/latest")
+endif()
+
+set(ASCEND_MOCKCPP_PACKAGE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+# if (NOT EXISTS "${ASCEND_CANN_PACKAGE_PATH}")
+#     message(FATAL_ERROR "${ASCEND_CANN_PACKAGE_PATH} does not exist, please install the cann package and set environment variables.")
+# endif()
+
+# if (NOT EXISTS "${THIRD_PARTY_NLOHMANN_PATH}")
+#     message(FATAL_ERROR "${THIRD_PARTY_NLOHMANN_PATH} does not exist, please check the setting of THIRD_PARTY_NLOHMANN_PATH.")
+# endif()
+
+#execute_process(COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/cmake/scripts/check_version_compatiable.sh
+#                             ${ASCEND_CANN_PACKAGE_PATH}
+#                             hccl
+#                             ${CMAKE_CURRENT_SOURCE_DIR}/version.info
+#    RESULT_VARIABLE result
+#    OUTPUT_STRIP_TRAILING_WHITESPACE
+#    OUTPUT_VARIABLE CANN_VERSION
+#    )
+
+#if (result)
+#    message(FATAL_ERROR "${CANN_VERSION}")
+#else()
+#     string(TOLOWER ${CANN_VERSION} CANN_VERSION)
+#endif()
+
+if (CMAKE_INSTALL_PREFIX STREQUAL /usr/local)
+    set(CMAKE_INSTALL_PREFIX     "${CMAKE_CURRENT_SOURCE_DIR}/output"  CACHE STRING "path for install()" FORCE)
+endif ()
+
+set(HI_PYTHON                     "python3"                       CACHE   STRING   "python executor")
+
+message(STATUS "config.cmake KERNEL_MODE=${KERNEL_MODE} BUILD_OPEN_PROJECT=${BUILD_OPEN_PROJECT}")
+
+#Device 构建安装目录
+set(HCCL_DEVICE_BUILD_PATH ${CMAKE_BINARY_DIR}/device_build)
+set(HCCL_DEVICE_INSTALL_PATH ${CMAKE_BINARY_DIR}/device_install)
+
+set(INSTALL_LIBRARY_DIR ${CMAKE_SYSTEM_PROCESSOR}-linux/lib64)
+set(INSTALL_INCLUDE_DIR ${CMAKE_SYSTEM_PROCESSOR}-linux/include)
+set(INSTALL_AICPU_KERNEL_JSON_DIR opp/built-in/op_impl/aicpu)
+set(INSTALL_DEVICE_TAR_DIR compat)
+
+set(INSTALL_OPGRAPH_LIBRARY_DIR opp/built-in/op_graph/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
+set(INSTALL_OPGRAPH_INCLUDE_DIR opp/built-in/op_graph/inc)
+set(WHL_INSTALL_DIR ops_hccl)
+
+if (ENABLE_TEST)
+    set(CMAKE_SKIP_RPATH FALSE)
+else ()
+    set(CMAKE_SKIP_RPATH TRUE)
+endif ()
+

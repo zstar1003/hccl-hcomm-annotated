@@ -1,0 +1,495 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+# hcomm 导出符号白名单
+{
+global:
+    CcuAddressAddAddrToAddr;
+    CcuAddressAddAssignVar;
+    CcuAddressAddImmToAddr;
+    CcuAddressAddVarToAddr;
+    CcuAddressAlloc;
+    CcuAddressAssignAddr;
+    CcuAddressAssignImm;
+    CcuAddressAssignVar;
+    CcuBlockBufferAlloc;
+    CcuBlockEventAlloc;
+    CcuBlockVariableAlloc;
+    CcuBufferAlloc;
+    CcuDoWhileBegin;
+    CcuDoWhileEnd;
+    CcuDoWhileEndVar;
+    CcuEventAlloc;
+    CcuEventGetByIndex;
+    CcuEventRecord;
+    CcuEventWait;
+    CcuFlushPendingIfs;
+    CcuFuncBlockBegin;
+    CcuFuncBlockEnd;
+    CcuFuncBlockLookup;
+    CcuFuncCall;
+    CcuFuncDefineInArg;
+    CcuIfBegin;
+    CcuIfBeginVar;
+    CcuIfElse;
+    CcuIfEnd;
+    CcuLoadArg;
+    CcuLoadVar;
+    CcuLoadVarFromVarAddr;
+    CcuLoadAddImm;
+    CcuAddImmStore;
+    CcuLocalAddrAlloc;
+    CcuLocalBufferReduce;
+    CcuLocalCopyBufferToMem;
+    CcuLocalCopyMemToBuffer;
+    CcuLocalCopyMemToMem;
+    CcuLocalMemReduce;
+    CcuLocalNotifyRecord;
+    CcuLocalNotifyWait;
+    CcuCascCntWait;
+    CcuCascCntClear;
+    CcuLoopCreate;
+    CcuLoopGroupAddLoop;
+    CcuLoopGroupAddLoopCfg;
+    CcuLoopGroupAddLoopFromVar;
+    CcuLoopGroupAddLoopFromVarV2;
+    CcuLoopGroupCreate;
+    CcuLoopGroupCreateCfg;
+    CcuLoopGroupCreateFromVar;
+    CcuLoopGroupCreateFromVarV2;
+    CcuNotifyRecord;
+    CcuNotifyWait;
+    CcuChannelIdGet;
+    CcuReadMemToBuffer;
+    CcuReadMemToMem;
+    CcuReadMemToMemReduce;
+    CcuRemoteAddrAlloc;
+    CcuStoreVar;
+    CcuStoreVarToVarAddr;
+    CcuVariableAddImmToVar;
+    CcuVariableAddVarToVar;
+    CcuVariableAlloc;
+    CcuVariableAndVarToVar;
+    CcuVariableAssignImm;
+    CcuVariableAssignVar;
+    CcuVariableCreateByChannel;
+    CcuVariableGetByIndex;
+    CcuVariableMulImmToVar;
+    CcuVariableMulVarToVar;
+    CcuVariableNotVar;
+    CcuVariableOrVarToVar;
+    CcuVariableShlVarToVar;
+    CcuVariableShrVarToVar;
+    CcuVariableSubImmToVar;
+    CcuVariableSubVarToVar;
+    CcuVariableXorVarToVar;
+    CcuWhileBegin;
+    CcuWhileBeginVar;
+    CcuWhileEnd;
+    CcuWriteBufferToMem;
+    CcuWriteMemToMem;
+    CcuWriteMemToMemReduce;
+    CcuWriteVarAtomicAdd;
+    CcuWriteWithCascCntInc;
+    CcuWriteVariableWithNotify;
+    CommGetCCLBufSizeCfg;
+    CommGetKFCWorkSpace;
+    CommGetLocalCCLBuf;
+    CommGetRemoteCCLBuf;
+    GetGroupNameByOpBaseHcom;
+    HcclAicpuKernelLaunch;
+    HcclAllGatherInner;
+    HcclAllGatherVInner;
+    HcclAllReduceInner;
+    HcclAllocComResourceByTiling;
+    HcclAlltoAllInner;
+    HcclAlltoAllVCInner;
+    HcclAlltoAllVInner;
+    HcclBarrier;
+    HcclBatchGet;
+    HcclBatchPut;
+    HcclBatchSendRecvInner;
+    HcclBroadcastInner;
+    HcclChannelAcquire;
+    HcclChannelAcquireWithConfig;
+    HcclChannelConfigCreate;
+    HcclChannelConfigDestroy;
+    HcclChannelConfigSetInt;
+    HcclChannelConfigSetStr;
+    HcclChannelDestroy;
+    HcclChannelGetHcclBuffer;
+    HcclChannelGetRemoteMems;
+    HcclChannelQuery;
+    HcclCommActivateCommMemory;
+    HcclCommAddExchangeInfo;
+    HcclCommAssignCcuIns;
+    HcclCommBindMem;
+    HcclCommDeactivateCommMemory;
+    HcclCommDeregister;
+    HcclCommDestroy;
+    HcclCommExchangeMem;
+    HcclCommGetExchangeInfo;
+    HcclCommGetHandleWithName;
+    HcclCommGetStatus;
+    HcclCommInitAll;
+    HcclCommInitClusterInfo;
+    HcclCommInitClusterInfoConfig;
+    HcclCommInitClusterInfoMemConfig;
+    HcclCommInitRootInfo;
+    HcclCommInitRootInfoConfig;
+    HcclCommInitRootInfoScalable;
+    HcclCommMemReg;
+    HcclCommPrepare;
+    HcclCommQueryAssignedCcuIns;
+    HcclCommQueryCcuIns;
+    HcclCommRegCommStateCallback;
+    HcclCommRegister;
+    HcclCommResPrepare; # symbol for MC2
+    HcclCommResetExchangeInfo;
+    HcclCommResume;
+    HcclCommSetMemoryRange;
+    HcclCommSuspend;
+    HcclCommSymWinDeregister;
+    HcclCommSymWinGet;
+    HcclCommSymWinRegister;
+    HcclCommUnbindMem;
+    HcclCommUnsetMemoryRange;
+    HcclCommWorkingDevNicSet;
+    HcclConfigGetInfo;
+    HcclCreateComResource;
+    HcclCreateOpResCtxInner;
+    HcclCreateSubCommConfig;
+    HcclDedicatedThreadAcquire;
+    HcclDeregisterGlobalMem;
+    HcclDeregisterMem;
+    HcclDevMemAcquire;
+    HcclDfxRegOpInfoByCommId;
+    HcclDisableMemAccess;
+    HcclEnableMemAccess;
+    HcclEngineCtxCopy;
+    HcclEngineCtxCreate;
+    HcclEngineCtxDestroy;
+    HcclEngineCtxGet;
+    HcclExchangeMemDesc;
+    HcclFreeOpArgs; # symbol for MC2
+    HcclGetAicpuOpStreamAndNotify;
+    HcclGetAicpuOpStreamNotify;
+    HcclGetCcuTaskInfo;
+    HcclGetCommAsyncError;
+    HcclGetCommConfigCapability;
+    HcclGetCommName;
+    HcclGetConfig;
+    HcclGetErrorString;
+    HcclGetHcclBuffer;
+    HcclGetHcclBufferCleared;
+    HcclGetHeterogMode;
+    HcclGetNotifyNumInThread;
+    HcclGetOpArgs; # symbol for MC2
+    HcclGetRankId;
+    HcclGetRankSize;
+    HcclGetRemoteIpcHcclBuf;
+    HcclGetRootInfo;
+    HcclGetRootInfoScalable;
+    HcclGetTopoDesc;
+    HcclGroupEnd;
+    HcclGroupStart;
+    HcclGroupStatusGet;
+    HcclProfilingReportOp;
+    HcclRankGraphGetEndpointDesc;
+    HcclRankGraphGetEndpointInfo;
+    HcclRankGraphGetEndpointNum;
+    HcclRankGraphGetInstSizeListByLayer;
+    HcclRankGraphGetLayers;
+    HcclRankGraphGetLinks;
+    HcclRankGraphGetRankSizeByLayer;
+    HcclRankGraphGetRanksByLayer;
+    HcclRankGraphGetRanksByTopoInst;
+    HcclRankGraphGetTopoInstsByLayer;
+    HcclRankGraphGetTopoType;
+    HcclRankGraphGetTopoTypeByLayer;
+    HcclRecvInner;
+    HcclReduceInner;
+    HcclReduceScatterInner;
+    HcclReduceScatterVInner;
+    HcclRegisterGlobalMem;
+    HcclRegisterMem;
+    HcclRemapRegistedMemory;
+    HcclReportAicpuKernel;
+    HcclReportAivKernel;
+    HcclScatterInner;
+    HcclSendInner;
+    HcclSetConfig;
+    HcclSetOpCommEngine; # symbol for MC2
+    HcclTaskRegister;
+    HcclTaskUnRegister;
+    HcclTeamCreate;
+    HcclTeamDestroy;
+    HcclTeamGetLsaTeam;
+    HcclTeamMemberToRank;
+    HcclTeamRankToMember;
+    HcclThreadAcquire;
+    HcclThreadAcquireWithConfig;
+    HcclThreadAcquireWithStream;
+    HcclThreadExportToCommEngine;
+    HcclThreadResGetInfo;
+    HcomAllGather;
+    HcomAllGatherV;
+    HcomAllReduce;
+    HcomAllToAll;
+    HcomAlltoAllV;
+    HcomAlltoAllVC;
+    HcomBroadcast;
+    HcomCalcAivCoreNum;
+    HcomCalcOpOnline;
+    HcomCalcOpResOffline;
+    HcomClearAivSyncBuf;
+    HcomCreateComResourceByComm;
+    HcomCreateCommCCLbuffer;
+    HcomCreateGroup;
+    HcomDestroy;
+    HcomDestroyGroup;
+    HcomFindGroup;
+    HcomGenerateCclOpTag;
+    HcomGetAicpuOpStreamNotify;
+    HcomGetAlgExecParam;
+    HcomGetAlltoAllStagedWorkSpaceMemSize;
+    HcomGetAlgorithm;
+    HcomGetandClearOverFlowTasks;
+    HcomGetBandWidthPerNPU;
+    HcomGetCommCCLBufferSize;
+    HcomGetCommHandleByGroup;
+    HcomGetDeviceType;
+    HcomGetGroupNameByOpBase;
+    HcomGetGroupRankFromWorldRank;
+    HcomGetInCCLbuffer;
+    HcomGetInitStatus;
+    HcomGetL0TopoTypeEx;
+    HcomGetLocalRankId;
+    HcomGetLocalRankSize;
+    HcomGetMemType;
+    HcomGetOutCCLbuffer;
+    HcomGetRankId;
+    HcomGetRankSize;
+    HcomGetRankSizeEx;
+    HcomGetSecAddrCopyFlag;
+    HcomGetServerNumAndDeviceNumPerServer;
+    HcomGetSplitStrategy;
+    HcomGetWorkflowMode;
+    HcomGetWorldRankFromGroupRank;
+    HcomGetWorkspaceMemSize;
+    HcomGetWorkspaceSubStreamNum;
+    HcomInitByFile;
+    HcomInitByMasterInfo;
+    HcomInitByRankTable;
+    HcomInitByString;
+    HcomMc2AiCpuStreamAllocAndGet;
+    HcomReceive;
+    HcomReduce;
+    HcomReduceScatter;
+    HcomReduceScatterV;
+    HcomReleaseSubComms;
+    HcomSelectAlg;
+    HcomSend;
+    HcomSetAivCoreLimit;
+    HcomSetAlgorithm;
+    HcomSetAttachedStream;
+    HcomSetAutoTuneMode;
+    HcomSetDumpDebugMode;
+    HcomSetGlobalWorkSpace;
+    HcomSetGradFusionByIndex;
+    HcomSetGradFusionBySize;
+    HcomSetLaunchKernelMode;
+    HcomSetProfilingMode;
+    HcomSetWorkflowMode;
+    HcomSetWorkspaceResource;
+    HcomSupportDeterministicOptim;
+    HcomTbeMemClean;
+    HcomTopoInfoRegCallback;
+    HcomUnloadTask;
+    HcommAclrtNotifyRecordOnThread;
+    HcommAclrtNotifyWaitOnThread;
+    HcommAcquireComm;
+    HcommAicpuTsTaskCacheClear;
+    HcommAicpuTsTaskCacheEnd;
+    HcommAicpuTsTaskCacheExecute;
+    HcommAicpuTsTaskCacheLookup;
+    HcommAicpuTsTaskCacheStart;
+    HcommBatchModeEnd;
+    HcommBatchModeStart;
+    HcommBatchTransferOnThread;
+    HcommCcuEventAlloc;
+    HcommCcuEventGetAddr;
+    HcommCcuGetMemToken;
+    HcommCcuCascCntAlloc;
+    HcommCcuCascCntGetMem;
+    HcommCcuGetRmtMemToken;
+    HcommCcuGetTaskArgsNum;
+    HcommCcuInsCreate;
+    HcommCcuInsCreateDefault;
+    HcommCcuInsDestroy;
+    HcommCcuInsQueryResDesc;
+    HcommCcuInsResDescCreate;
+    HcommCcuInsResDescDestroy;
+    HcommCcuInsResDescQueryDieId;
+    HcommCcuInsResDescQueryNum;
+    HcommCcuInsResDescSetNum;
+    HcommCcuKernelLaunch;
+    HcommCcuKernelQueryResReq;
+    HcommCcuKernelRegister;
+    HcommCcuKernelRegisterEnd;
+    HcommCcuKernelRegisterStart;
+    HcommCcuQueryRemainResDesc;
+    HcommCcuVariableAlloc;
+    HcommCcuVariableGetAddr;
+    HcommChannelConfigCreate;
+    HcommChannelConfigDestroy;
+    HcommChannelConfigSetInt;
+    HcommChannelCreate;
+    HcommChannelCreateWithConfig;
+    HcommChannelDestroy;
+    HcommChannelDrainOnThread;
+    HcommChannelFence;
+    HcommChannelFenceOnThread;
+    HcommChannelGetStatus;
+    HcommChannelNotifyRecord;
+    HcommChannelNotifyRecordOnThread;
+    HcommChannelNotifyWait;
+    HcommChannelNotifyWaitOnThread;
+    HcommChannelNotifyWaitOnThreadWithDefaultTimeout;
+    HcommEndpointCheckFeature;
+    HcommEndpointCreate;
+    HcommEndpointDestroy;
+    HcommEndpointGetDescNum;
+    HcommEndpointGetDescs;
+    HcommEndpointGetListenPort;
+    HcommFenceOnThread;
+    HcommFlush;
+    HcommGetProfilingSysCycleTime;
+    HcommLocalCopyOnThread;
+    HcommLocalReduceOnThread;
+    HcommMemAlloc;
+    HcommMemExport;
+    HcommMemFree;
+    HcommMemImport;
+    HcommMemReg;
+    HcommMemUnimport;
+    HcommMemUnreg;
+    HcommProfilingRegThread;
+    HcommProfilingReportKernel;
+    HcommProfilingReportOp;
+    HcommProfilingUnRegThread;
+    HcommReadNbi;
+    HcommReadNbiOnThread;
+    HcommReadOnThread;
+    HcommReadReduceOnThread;
+    HcommRegOpTaskException;
+    HcommReleaseComm;
+    HcommSetNotifyWaitTimeOut;
+    HcommThreadAlloc;
+    HcommThreadFree;
+    HcommThreadNotifyRecordOnThread;
+    HcommThreadNotifyWaitOnThread;
+    HcommThreadNotifyWaitOnThreadWithDefaultTimeout;
+    HcommThreadResAcquireTimeOut;
+    HcommThreadResGetInfo;
+    HcommWriteNbi;
+    HcommWriteNbiOnThread;
+    HcommWriteOnThread;
+    HcommWriteReduceOnThread;
+    HcommWriteReduceWithNotifyOnThread;
+    HcommWriteWithNotifyNbi;
+    HcommWriteWithNotifyNbiOnThread;
+    HcommWriteWithNotifyOnThread;
+    _CcuDoWhileStackPopForWhile;
+    _CcuDoWhileStackPush;
+    _CcuIfStackMarkBodyDone;
+    _CcuIfStackPopForElse;
+    _CcuIfStackPush;
+    _CcuLoopBodyEnter;
+    _CcuLoopBodyExit;
+    extern "C++" {
+        "GetExternalInconsistentCheckSwitch()";  # _Z34GetExternalInconsistentCheckSwitchv
+        "Hccl::ChangedRankInfo::Deserialize(ascend_nlohmann::json_abi_v3_11_3::basic_json<std::map, std::vector, std::string, bool, long, unsigned long, double, std::allocator, ascend_nlohmann::json_abi_v3_11_3::adl_serializer, std::vector<unsigned char, std::allocator<unsigned char> >, void> const&, Hccl::RankTableSource)";  # _ZN4Hccl15ChangedRankInfo11DeserializeERKN15ascend_nlohmann16json_abi_v3_11_310basic_jsonISt3mapSt6vectorSsblmdSaNS2_14adl_serializerES5_IhSaIhEEvEENS_15RankTableSourceE
+        "Hccl::GetCommAddr(CommAddr&, Hccl::IpAddress const&)";  # _ZN4Hccl11GetCommAddrER8CommAddrRKNS_9IpAddressE
+        "Hccl::LinkProtocolToCommProtocol(Hccl::LinkProtocol const&)";  # _ZN4Hccl26LinkProtocolToCommProtocolERKNS_12LinkProtocolE
+        "Hccl::NetInstance::ConnInterface::Describe() const";  # _ZNK4Hccl11NetInstance13ConnInterface8DescribeEv
+        "Hccl::NetInstance::ConnInterface::GetAddr() const";  # _ZNK4Hccl11NetInstance13ConnInterface7GetAddrEv
+        "Hccl::NetInstance::ConnInterface::GetLinkProtocols() const";  # _ZNK4Hccl11NetInstance13ConnInterface16GetLinkProtocolsEv
+        "Hccl::NetInstance::ConnInterface::GetLocalDieId() const";  # _ZNK4Hccl11NetInstance13ConnInterface13GetLocalDieIdEv
+        "Hccl::NetInstance::ConnInterface::GetPorts() const";  # _ZNK4Hccl11NetInstance13ConnInterface8GetPortsEv
+        "Hccl::NetInstance::ConnInterface::GetPos() const";  # _ZNK4Hccl11NetInstance13ConnInterface6GetPosEv
+        "Hccl::NetInstance::ConnInterface::SetLocalDieId(unsigned int)";  # _ZN4Hccl11NetInstance13ConnInterface13SetLocalDieIdEj
+        "Hccl::NetInstance::GetFabrics() const";  # _ZNK4Hccl11NetInstance10GetFabricsEv
+        "Hccl::NetInstance::GetGraph()";  # _ZN4Hccl11NetInstance8GetGraphEv
+        "Hccl::NetInstance::GetRankIds() const";  # _ZNK4Hccl11NetInstance10GetRankIdsEv
+        "Hccl::NetInstance::GetRankSize() const";  # _ZNK4Hccl11NetInstance11GetRankSizeEv
+        "Hccl::NetInstance::Link::GetHop() const";  # _ZNK4Hccl11NetInstance4Link6GetHopEv
+        "Hccl::NetInstance::Link::GetLinkProtocols() const";  # _ZNK4Hccl11NetInstance4Link16GetLinkProtocolsEv
+        "Hccl::NetInstance::Link::GetSourceIface() const";  # _ZNK4Hccl11NetInstance4Link14GetSourceIfaceEv
+        "Hccl::NetInstance::Link::GetSourceNode() const";  # _ZNK4Hccl11NetInstance4Link13GetSourceNodeEv
+        "Hccl::NetInstance::Link::GetTargetIface() const";  # _ZNK4Hccl11NetInstance4Link14GetTargetIfaceEv
+        "Hccl::NetInstance::Link::GetTargetNode() const";  # _ZNK4Hccl11NetInstance4Link13GetTargetNodeEv
+        "Hccl::NetInstance::Node::GetIfaces() const";  # _ZNK4Hccl11NetInstance4Node9GetIfacesEv
+        "Hccl::NetInstance::Node::GetInterfacesMap() const";  # _ZNK4Hccl11NetInstance4Node16GetInterfacesMapEv
+        "Hccl::NetInstance::Node::GetNodeId() const";  # _ZNK4Hccl11NetInstance4Node9GetNodeIdEv
+        "Hccl::NetInstance::Peer::GetDeviceId() const";  # _ZNK4Hccl11NetInstance4Peer11GetDeviceIdEv
+        "Hccl::NetInstance::Peer::GetDevicePort() const";  # _ZNK4Hccl11NetInstance4Peer13GetDevicePortEv
+        "Hccl::NetInstance::Peer::GetHostPort() const";  # _ZNK4Hccl11NetInstance4Peer11GetHostPortEv
+        "Hccl::NetInstance::Peer::GetRankId() const";  # _ZNK4Hccl11NetInstance4Peer9GetRankIdEv
+        "Hccl::PhyTopo::ConnInterface::GetPorts() const";  # _ZNK4Hccl7PhyTopo13ConnInterface8GetPortsEv
+        "Hccl::PhyTopo::ConnInterface::GetPos() const";  # _ZNK4Hccl7PhyTopo13ConnInterface6GetPosEv
+        "Hccl::PhyTopo::GetInstance()";  # _ZN4Hccl7PhyTopo11GetInstanceEv
+        "Hccl::PhyTopo::GetTopoGraph(unsigned int) const";  # _ZNK4Hccl7PhyTopo12GetTopoGraphEj
+        "Hccl::PhyTopo::Link::Describe() const";  # _ZNK4Hccl7PhyTopo4Link8DescribeEv
+        "Hccl::PhyTopo::Link::GetLinkProtocols() const";  # _ZNK4Hccl7PhyTopo4Link16GetLinkProtocolsEv
+        "Hccl::PhyTopo::Link::GetSourceIFace()";  # _ZN4Hccl7PhyTopo4Link14GetSourceIFaceEv
+        "Hccl::PhyTopoBuilder::Build(std::string const&)";  # _ZN4Hccl14PhyTopoBuilder5BuildERKSs
+        "Hccl::PhyTopoBuilder::GetInstance()";  # _ZN4Hccl14PhyTopoBuilder11GetInstanceEv
+        "Hccl::RankGraph::CreateSubRankGraph(std::vector<unsigned int, std::allocator<unsigned int> > const&) const";  # _ZNK4Hccl9RankGraph18CreateSubRankGraphERKSt6vectorIjSaIjEE
+        "Hccl::RankGraph::Dump() const";  # _ZNK4Hccl9RankGraph4DumpEv
+        "Hccl::RankGraph::GetEndpointDesc(unsigned int, unsigned int, unsigned int*, EndpointDesc*) const";  # _ZNK4Hccl9RankGraph15GetEndpointDescEjjPjP12EndpointDesc
+        "Hccl::RankGraph::GetEndpointInfo(unsigned int, EndpointDesc const*, EndpointAttr, unsigned int, void*) const";  # _ZNK4Hccl9RankGraph15GetEndpointInfoEjPK12EndpointDesc12EndpointAttrjPv
+        "Hccl::RankGraph::GetEndpointNum(unsigned int, unsigned int, unsigned int*) const";  # _ZNK4Hccl9RankGraph14GetEndpointNumEjjPj
+        "Hccl::RankGraph::GetInnerRankSize() const";  # _ZNK4Hccl9RankGraph16GetInnerRankSizeEv
+        "Hccl::RankGraph::GetLevelNum() const";  # _ZNK4Hccl9RankGraph11GetLevelNumEv
+        "Hccl::RankGraph::GetLevels(int) const";  # _ZNK4Hccl9RankGraph9GetLevelsEi
+        "Hccl::RankGraph::GetLocalId(int) const";  # _ZNK4Hccl9RankGraph10GetLocalIdEi
+        "Hccl::RankGraph::GetLocalInstRanks(unsigned int, std::vector<unsigned int, std::allocator<unsigned int> >&, unsigned int&) const";  # _ZNK4Hccl9RankGraph17GetLocalInstRanksEjRSt6vectorIjSaIjEERj
+        "Hccl::RankGraph::GetLocalInstSize(unsigned int) const";  # _ZNK4Hccl9RankGraph16GetLocalInstSizeEj
+        "Hccl::RankGraph::GetMyRank() const";  # _ZNK4Hccl9RankGraph9GetMyRankEv
+        "Hccl::RankGraph::GetNetInstanceByRankId(unsigned int, int)";  # _ZN4Hccl9RankGraph22GetNetInstanceByRankIdEji
+        "Hccl::RankGraph::GetNetInstanceByRankId(unsigned int, int) const";  # _ZNK4Hccl9RankGraph22GetNetInstanceByRankIdEji
+        "Hccl::RankGraph::GetNetInstanceList(unsigned int, std::vector<unsigned int, std::allocator<unsigned int> >&, unsigned int&) const";  # _ZNK4Hccl9RankGraph18GetNetInstanceListEjRSt6vectorIjSaIjEERj
+        "Hccl::RankGraph::GetNetType(unsigned int) const";  # _ZNK4Hccl9RankGraph10GetNetTypeEj
+        "Hccl::RankGraph::GetPackedData(std::vector<std::pair<unsigned int, int>, std::allocator<std::pair<unsigned int, int> > > const&) const";  # _ZNK4Hccl9RankGraph13GetPackedDataERKSt6vectorISt4pairIjiESaIS3_EE
+        "Hccl::RankGraph::GetPaths(unsigned int, int, int) const";  # _ZNK4Hccl9RankGraph8GetPathsEjii
+        "Hccl::RankGraph::GetPeer(int) const";  # _ZNK4Hccl9RankGraph7GetPeerEi
+        "Hccl::RankGraph::GetRankSize() const";  # _ZNK4Hccl9RankGraph11GetRankSizeEv
+        "Hccl::RankGraph::GetRanksByTopoInst(unsigned int, unsigned int, std::vector<unsigned int, std::allocator<unsigned int> >&, unsigned int&) const";  # _ZNK4Hccl9RankGraph18GetRanksByTopoInstEjjRSt6vectorIjSaIjEERj
+        "Hccl::RankGraph::GetReplacedLocalId(int) const";  # _ZNK4Hccl9RankGraph18GetReplacedLocalIdEi
+        "Hccl::RankGraph::GetTopoInstsByLayer(unsigned int, std::vector<unsigned int, std::allocator<unsigned int> >&, unsigned int&) const";  # _ZNK4Hccl9RankGraph19GetTopoInstsByLayerEjRSt6vectorIjSaIjEERj
+        "Hccl::RankGraph::GetTopoType(unsigned int, unsigned int, Hccl::TopoType&) const";  # _ZNK4Hccl9RankGraph11GetTopoTypeEjjRNS_8TopoTypeE
+        "Hccl::RankTableInfo::Check()";  # _ZN4Hccl13RankTableInfo5CheckEv
+        "Hccl::RankTableInfo::Describe() const";  # _ZNK4Hccl13RankTableInfo8DescribeEv
+        "Hccl::RankTableInfo::Dump() const";  # _ZNK4Hccl13RankTableInfo4DumpEv
+        "Hccl::RankTableInfo::GetBinStream(bool, Hccl::BinaryStream&) const";  # _ZNK4Hccl13RankTableInfo12GetBinStreamEbRNS_12BinaryStreamE
+        "Hccl::RankTableInfo::GetRankDeviceListenPortMap()";  # _ZN4Hccl13RankTableInfo26GetRankDeviceListenPortMapEv
+        "Hccl::RankTableInfo::GetUniqueId(bool) const";  # _ZNK4Hccl13RankTableInfo11GetUniqueIdEb
+        "Hccl::RankTableInfo::RankTableInfo(Hccl::BinaryStream&)";  # _ZN4Hccl13RankTableInfoC1ERNS_12BinaryStreamE
+        "Hccl::TopoInfo::Describe() const";  # _ZNK4Hccl8TopoInfo8DescribeEv
+        "Hccl::TopoInfo::GetBinStream(Hccl::BinaryStream&) const";  # _ZNK4Hccl8TopoInfo12GetBinStreamERNS_12BinaryStreamE
+        "Hccl::TopoInfo::TopoInfo(Hccl::BinaryStream&)";  # _ZN4Hccl8TopoInfoC1ERNS_12BinaryStreamE
+        "HcclResult hccl::HcclCommunicator::GenIbvAiRMAInfo<HcclAiRMAInfo>(unsigned int, std::shared_ptr<hccl::Transport> const&, std::string const&, HcclAiRMAInfo*)";  # _ZN4hccl16HcclCommunicator15GenIbvAiRMAInfoI13HcclAiRMAInfoEE10HcclResultjRKSt10shared_ptrINS_9TransportEERKSsPT_
+        "hcomm::CcuRep::GetTokenInfo(unsigned long, unsigned long)";  # _ZN5hcomm6CcuRep12GetTokenInfoEmm
+        "typeinfo for Hccl::NetInstance::Peer";  # _ZTIN4Hccl11NetInstance4PeerE
+    };
+local:
+    *;
+};

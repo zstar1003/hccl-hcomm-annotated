@@ -1,0 +1,27 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+# ccl_dpu 导出符号白名单
+{
+global:
+    RunDpuRpcSrvLaunch;
+    g_serMapMutex;
+    g_taskExpMemMap;
+    g_taskServiceMap;
+    extern "C++" {
+        "Hccl::DlProfFunction::GetInstance()";  # _ZN4Hccl14DlProfFunction11GetInstanceEv
+        "Hccl::TaskService::TaskProfRegister(std::function<HcclResult (Hccl::TaskParam const&, unsigned long)>)";  # _ZN4Hccl11TaskService16TaskProfRegisterESt8functionIF10HcclResultRKNS_9TaskParamEmEE
+        "Hccl::TaskService::TaskRegister(std::string, std::function<int (unsigned long, int)>)";  # _ZN4Hccl11TaskService12TaskRegisterESsSt8functionIFimiEE
+        "Hccl::TaskService::TaskReportRegister(std::function<HcclResult ()>)";  # _ZN4Hccl11TaskService18TaskReportRegisterESt8functionIF10HcclResultvEE
+        "Hccl::TaskService::TaskUnRegister(std::string)";  # _ZN4Hccl11TaskService14TaskUnRegisterESs
+    };
+local:
+    *;
+};

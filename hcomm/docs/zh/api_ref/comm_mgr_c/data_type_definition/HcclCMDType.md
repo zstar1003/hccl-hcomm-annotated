@@ -1,0 +1,41 @@
+# HcclCMDType
+
+## 功能说明
+
+用于标识HCCL通信命令类型，区分不同的集合通信与点对点通信操作。该枚举在[HcclOpP2pDesc](./HcclOpP2pDesc.md)中作为`cmdType`字段，指定点对点通信任务的命令类型。
+
+> [!NOTE]说明
+> 在[HcclOpP2pDesc](./HcclOpP2pDesc.md)中使用时，`cmdType`应设置为`HCCL_CMD_SEND`或`HCCL_CMD_RECEIVE`。
+
+## 定义原型
+
+```c
+typedef enum {
+    HCCL_CMD_INVALID = 0,
+    HCCL_CMD_BROADCAST = 1,
+    HCCL_CMD_ALLREDUCE,
+    HCCL_CMD_REDUCE,
+    HCCL_CMD_SEND,
+    HCCL_CMD_RECEIVE,
+    HCCL_CMD_ALLGATHER,
+    HCCL_CMD_REDUCE_SCATTER,
+    HCCL_CMD_ALLTOALLV,
+    HCCL_CMD_ALLTOALLVC,
+    HCCL_CMD_ALLTOALL,
+    HCCL_CMD_GATHER,
+    HCCL_CMD_SCATTER,
+    HCCL_CMD_BATCH_SEND_RECV,
+    HCCL_CMD_BATCH_PUT,
+    HCCL_CMD_BATCH_GET,
+    HCCL_CMD_ALLGATHER_V,
+    HCCL_CMD_REDUCE_SCATTER_V,
+    HCCL_CMD_BATCH_WRITE,
+    HCCL_CMD_HALF_ALLTOALLV = 20,
+    HCCL_CMD_ALL,
+    HCCL_CMD_FINALIZE = 100,
+    HCCL_CMD_INTER_GROUP_SYNC,
+    HCCL_CMD_INIT,
+    HCCL_CMD_BARRIER,
+    HCCL_CMD_MAX
+} HcclCMDType;
+```

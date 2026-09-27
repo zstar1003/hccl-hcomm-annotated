@@ -1,0 +1,239 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#ifndef OPS_HCCL_OP_COMMON
+#define OPS_HCCL_OP_COMMON
+
+#include <string>
+#include <memory>
+#include "hccl.h"
+
+#include "alg_param.h"
+#include "executor_v2_base.h"
+#include "alg_type.h"
+#include "execute_selector.h"
+#include "acl/acl_rt.h"
+#include "ccu_primitives_dl.hpp"
+#include "ccu_log.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+namespace ops_hccl {
+// 回退结果ctx缓存的数据布局：HcclExecOp回退缓存与CCU参数协商缓存共用
+struct FallbackCtxData {
+    char algName[ALG_MAX_LENGTH];
+    OpExecuteConfig opExecuteConfig;
+};
+
+HcclResult HcclExecOp(
+    HcclComm comm, OpParam& param, std::unique_ptr<TopoInfoWithNetLayerDetails>& topoInfo, std::string& algName,
+    const ResPackGraphMode& resPack = ResPackGraphMode());
+
+bool IsStreamInCaptureMode(aclrtStream stream);
+
+bool IsAivCacheSupported(const OpParam& param);
+
+HcclResult ExecuteAivCacheLogic(
+    HcclComm comm, OpParam& param, const std::string& algName, std::unique_ptr<InsCollAlgBase>& executor,
+    AlgResourceCtxSerializable& resCtxHost);
+
+HcclResult HcclCalcTopoInfo(HcclComm comm, OpParam& param, std::unique_ptr<TopoInfoWithNetLayerDetails>& topoInfo);
+
+HcclResult HcclGetAlgRes(
+    HcclComm comm, OpParam& param, std::unique_ptr<InsCollAlgBase>& executor, TopoInfoWithNetLayerDetails* topoInfo,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, void** resCtxSequence, bool& isResourceReused,
+    const ResPackGraphMode& resPack);
+
+HcclResult FillOpExchangeInfo(HcclComm comm, const OpParam& param, OpExchangeInfo& exchangeInfo);
+
+HcclResult FillOpExchangeInfoWithDataDes(const OpParam& param, OpExchangeInfo& exchangeInfo);
+
+HcclResult AddExchangeInfo(HcclComm comm, const OpParam& param);
+
+HcclResult GetAlgResWithEngine(
+    HcclComm comm, OpParam& param, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, TopoInfoWithNetLayerDetails* topoInfo,
+    AlgHierarchyInfoForAllLevel& algHierarchyInfo, void** resCtxSequence, uint64_t& size, bool increCreateChannelFlag,
+    const ResPackGraphMode& resPack);
+
+HcclResult GetAlgResAICPU(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, TopoInfoWithNetLayerDetails* topoInfo,
+    AlgHierarchyInfoForAllLevel& algHierarchyInfo, void** resCtxSequence, uint64_t& ctxSize,
+    bool increCreateChannelFlag, const ResPackGraphMode& resPack);
+
+HcclResult HcclAllocAlgResourceAICPU(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, const ResPackGraphMode& resPack);
+
+HcclResult HcclGetThread(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, const ResPackGraphMode& resPack);
+
+HcclResult GeGetThread(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, const ResPackGraphMode& resPack, u32 maxNotifyNum);
+
+HcclResult GeReuseResource(
+    HcclComm comm, OpParam& param, std::unique_ptr<InsCollAlgBase>& executor,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, TopoInfoWithNetLayerDetails* topoInfo,
+    const ResPackGraphMode& resPack);
+
+HcclResult HcclGetChannel(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest, AlgResourceCtxSerializable* resCtxHost);
+HcclResult HcclGetChannelImpl(
+    const u32 level, HcclComm comm, const OpParam& param, std::vector<HcclChannelDesc>& channelRequest,
+    const CommEngine commEngine, AlgResourceCtxSerializable* resCtxHost, MemRegInfo& memRegInfo);
+HcclResult RegGraphModeBuffers(
+    HcclComm comm, const OpParam& param, char* inputBuffTag, char* outputBuffTag,
+    std::vector<HcclMemHandle>& memHandles);
+HcclResult GetGraphModeBuffers(
+    HcclComm comm, ChannelHandle channelHandle, const char* inputBuffTag, const char* outputBuffTag,
+    ChannelInfo& channel);
+// opExpansionMode 为通信域原始展开模式，影响默认资源阈值（如 CCU_MS 模式 LOOP/CCU_BUF 默认值更大）
+HcclResult HcclGetCcuKernel(
+    HcclComm comm, HcclOpExpansionMode opExpansionMode, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost);
+
+HcclResult HcclGetChannelForCcu(HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest);
+
+HcclResult HcclAllocAlgResourceCcu(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, const ResPackGraphMode& resPack);
+HcclResult GetAlgResCcu(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, TopoInfoWithNetLayerDetails* topoInfo,
+    AlgHierarchyInfoForAllLevel& algHierarchyInfo, void** resCtxSequence, uint64_t& ctxSize,
+    const ResPackGraphMode& resPack);
+
+HcclResult AppendFastLaunchTag(
+    OpParam& param, const char* dataTypeStr, const char* reduceOpStr, const char* countStr, const char* rootStr);
+HcclResult SetOpParamFastLaunchTag(OpParam& param);
+
+bool ShouldGoCcuFastLaunch(HcclComm comm, OpParam& param, CcuFastLaunchCtx** ccuFastLaunchCtx);
+
+HcclResult HcclExecOpCcuFastLaunch(HcclComm comm, OpParam& param, const CcuFastLaunchCtx* ccuFastLaunchCtx);
+
+HcclResult HcclAivCacheCheckAndReplay(HcclComm comm, OpParam& param, bool& cacheHit);
+
+HcclResult GetAlgResAiv(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest, TopoInfoWithNetLayerDetails* topoInfo,
+    AlgHierarchyInfoForAllLevel& algHierarchyInfo, void** resCtxSequence);
+
+HcclResult HcclAllocAlgResourceAiv(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest, AlgResourceCtxSerializable* resCtxHost);
+
+HcclResult GetAlgResDPU(
+    HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest,
+    std::unique_ptr<AlgResourceCtxSerializable>& resCtxHost, TopoInfoWithNetLayerDetails* topoInfo,
+    AlgHierarchyInfoForAllLevel& algHierarchyInfo, void** resCtxSequence, uint64_t& ctxSize,
+    bool increCreateChannelFlag, const ResPackGraphMode& resPack);
+
+HcclResult CheckCount(const u64 count);
+
+HcclResult CheckDataType(const HcclDataType dataType, bool needReduce);
+
+std::string GetSupportDataType(bool needReduce);
+
+HcclResult CheckReduceOp(const HcclDataType dataType, const HcclReduceOp op);
+
+std::string GetReduceProdSupportDataType();
+
+HcclResult SetCommEngine(OpParam& param);
+
+void CompReqChannelWithExistChannel(
+    const std::vector<std::vector<ChannelInfo>>& existChannels, AlgResourceRequest& resRequest);
+
+HcclResult HcclMemcpyCtxHostToDevice(
+    HcclComm comm, const OpParam& param, const std::vector<char>& seq, void** resCtxSequence, uint64_t& ctxSize);
+
+HcclResult SingleRankProc(HcclComm comm, OpParam& param);
+
+HcclResult HcclCheckTag(const char* tag);
+
+HcclResult SetOpParamAlgTag(OpParam& param, const std::string& algName);
+
+HcclResult SetOpParamFallbackTag(OpParam& param, const std::string& algName);
+
+HcclResult SaveMainThreadInfo(HcclComm comm, const OpParam& param, ThreadHandle thread, u32 notifyNum);
+
+HcclResult GetMainThreadInfo(HcclComm comm, const OpParam& param, ThreadHandle& thread, u32& notifyNum);
+
+HcclResult
+Selector(HcclComm comm, OpParam& param, std::unique_ptr<TopoInfoWithNetLayerDetails>& topoInfo, std::string& algName);
+
+HcclResult ReSelector(
+    HcclComm comm, OpParam& param, std::unique_ptr<TopoInfoWithNetLayerDetails>& topoInfo, std::string& algName,
+    OpExecuteConfig executeConfig);
+
+HcclResult FallbackOp(
+    HcclComm comm, OpParam& param, std::unique_ptr<TopoInfoWithNetLayerDetails>& topoInfo, std::string& algName,
+    const ResPackGraphMode& resPack);
+
+HcclResult HcclAicpuKernelEntranceLaunch(
+    HcclComm comm, OpParam& param, ThreadHandle cpuTsThread, ThreadHandle exportedCpuTsThread,
+    u32 notifyNumOnMainThread, void* resCtxSequence, std::string& algName, ThreadHandle unfoldThread);
+
+HcclResult AicpuKernelLaunch(HcclComm comm, OpParam& param, ThreadHandle unfoldThread);
+
+HcclResult HcclAivKernelEntranceLaunch(
+    HcclComm comm, OpParam& param, const std::unique_ptr<TopoInfoWithNetLayerDetails>& topoInfo,
+    AlgResourceCtxSerializable& resCtxHost);
+
+HcclResult HcclGetHcclAlgo(HcclComm comm, std::string& hcclAlgo);
+
+HcclResult HcclGetOpExpansionMode(HcclComm comm, OpParam& param);
+
+HcclResult DecideHcclOpExpansionMode(HcclComm comm, HcclOpExpansionMode& finalMode);
+
+HcclResult GetUbMultiChannelNum(HcclComm comm, u32& multiChannelNum);
+
+HcclResult ApplyOpExpansionMode(OpParam& param, HcclOpExpansionMode finalMode);
+
+HcclResult
+CaptureSlaveStreams(HcclComm comm, aclrtStream mainStream, const std::vector<ThreadHandle>& threads, bool& isCapture);
+
+HcclResult SaveUnfoldThreadInfo(HcclComm comm, const OpParam& param, ThreadHandle unfoldThread);
+
+HcclResult GetUnfoldThreadInfo(HcclComm comm, const OpParam& param, ThreadHandle& unfoldThread);
+
+HcclResult
+HcclRegstryBuff(HcclComm comm, const char* memTag, void* bufferPtr, uint64_t bufferSize, HcclMemHandle* memHandle);
+
+HcclResult
+HcclGetRemoteBuff(HcclComm comm, ChannelHandle channel, const char* memTag, void** bufferPtr, uint64_t* bufferSize);
+
+HcclResult LogHcclExit(const std::string& opName, const char* tag, HcclUs startut, bool forceLog = false);
+
+HcclResult GetAivParamStorage(const char* group, AivParamStorage** aivParam);
+
+HcclResult GetAivParamStorageByComm(HcclComm comm, AivParamStorage** aivParam, bool ifCreate);
+
+HcclResult SetMultipleDimensionSplitRatio(HcclComm comm, OpParam& param);
+
+HcclResult GetCommMultipleDimensionSplitRatio(HcclComm comm, double& ratio, bool& isConfigured);
+
+HcclResult CheckHostDPUOnly(const HcclComm comm, const TopoInfoWithNetLayerDetails* topoInfo, bool& hostDPUOnly);
+
+HcclResult SetExecTimeout(OpParam& param);
+bool IsHostDpu(HcclComm comm);
+
+bool IsBarrierHostDpu(HcclComm comm);
+
+void CheckAndSetSymmetricMemory(OpParam& param);
+} // namespace ops_hccl
+
+#endif

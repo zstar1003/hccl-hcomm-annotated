@@ -1,0 +1,402 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+cmake_minimum_required(VERSION 3.16.0)
+project(hccl)
+
+# [HCCL-ALGO-Plugin] 插件机制总开关，默认OFF：不显式打开时，
+# 本文件中所有 ENABLE_HCCL_ALGO_PLUGIN 分支都不会被编译，HCCL_ALGO_PLUGIN_ENABLE 宏也不会被定义，
+# 对主线代码路径（src/ops/op_common/op_common.cc 等）零影响。
+option(ENABLE_HCCL_ALGO_PLUGIN "Enable HCCL Algo Plugin mechanism (custom algorithm plugin/broker)" OFF)
+
+set(HCCL_CANN_VERSION_NUM 0)
+
+if(BUILD_OPEN_PROJECT)
+    message(STATUS "open TOP_DIR = ${TOP_DIR}")
+    set(OPS_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
+
+    # 开源仓编译：从 CANN 包的 version 头解析 CANN_VERSION_NUM
+    set(_hccl_cann_version_header "${ASCEND_CANN_PACKAGE_PATH}/include/version/cann_version.h")
+    message(STATUS "Checking HCCL scoped CANN version header: ${_hccl_cann_version_header}")
+    if(EXISTS "${_hccl_cann_version_header}")
+        file(STRINGS "${_hccl_cann_version_header}" _hccl_cann_ver_line
+            REGEX "^#define[ \t]+CANN_VERSION_NUM[ \t]+")
+        if(_hccl_cann_ver_line)
+            string(REGEX REPLACE "^#define[ \t]+CANN_VERSION_NUM[ \t]+(.+)$" "\\1"
+                CANN_EXPR "${_hccl_cann_ver_line}")
+            math(EXPR HCCL_CANN_VERSION_NUM "${CANN_EXPR}" OUTPUT_FORMAT DECIMAL)
+        endif()
+    endif()
+else()
+    message(STATUS "close TOP_DIR = ${TOP_DIR}")
+    set(OPS_BASE_DIR ${TOP_DIR}/hccl/)
+    set(INSTALL_AICPU_KERNEL_JSON_DIR ${INSTALL_LIBRARY_DIR})
+
+    # 大工程编译：CANN 包路径不确定，改为从 hccl 自身的 version.cmake
+    # (set_cann_package(hccl VERSION "X.Y.Z")) 解析 CANN_VERSION_NUM
+    set(_hccl_version_cmake "${OPS_BASE_DIR}/version.cmake")
+    message(STATUS "Checking HCCL version.cmake: ${_hccl_version_cmake}")
+    if(EXISTS "${_hccl_version_cmake}")
+        file(STRINGS "${_hccl_version_cmake}" _hccl_ver_pkg_line
+            REGEX "set_cann_package[ \t]*\\([ \t]*hccl[ \t]+VERSION[ \t]+\"[0-9]+\\.[0-9]+\\.[0-9]+\"")
+        if(_hccl_ver_pkg_line)
+            string(REGEX MATCH "\"([0-9]+)\\.([0-9]+)\\.([0-9]+)\"" _ "${_hccl_ver_pkg_line}")
+            if(NOT CMAKE_MATCH_1 STREQUAL "" AND NOT CMAKE_MATCH_2 STREQUAL "" AND NOT CMAKE_MATCH_3 STREQUAL "")
+                math(EXPR HCCL_CANN_VERSION_NUM
+                    "${CMAKE_MATCH_1} * 10000000 + ${CMAKE_MATCH_2} * 100000 + ${CMAKE_MATCH_3} * 1000")
+            endif()
+        endif()
+    endif()
+endif()
+
+if(HCCL_CANN_VERSION_NUM EQUAL 0)
+    message(WARNING "HCCL failed to resolve CANN_VERSION_NUM (got 0). "
+        "Compatibility branches (e.g. HCCL_CANN_COMPAT_850) will fall back to the 9.0.0+ path.")
+endif()
+
+set(HCCL_CANN_COMPAT_850 OFF)
+if(HCCL_CANN_VERSION_NUM GREATER 0 AND HCCL_CANN_VERSION_NUM LESS 90000000)
+    set(HCCL_CANN_COMPAT_850 ON)
+endif()
+
+message(STATUS "HCCL scoped CANN_VERSION_NUM = ${HCCL_CANN_VERSION_NUM}")
+message(STATUS "HCCL_CANN_COMPAT_850 = ${HCCL_CANN_COMPAT_850}")
+
+function(hccl_apply_cann_compat target_name)
+    if(NOT TARGET ${target_name})
+        return()
+    endif()
+    target_compile_definitions(${target_name} PRIVATE CANN_VERSION_NUM=${HCCL_CANN_VERSION_NUM})
+endfunction()
+
+set(INCLUDE_LIST
+    ${OPS_BASE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/hcomm_dlsym
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/hcomm_dlsym/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/op_graph
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/tuner
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/inc
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/executor/channel
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/executor/registry
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/selector/inc
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template/registry
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template/aicpu/task_cache
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template/wrapper
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template/aiv
+    # ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template/hostdpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template/dpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/template/ccu
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/topo_info
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/op_common/algorithm/topo_match
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/interface_graph_mode
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter/algorithm/template/aiv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/broadcast
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/broadcast/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/broadcast/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/broadcast/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/broadcast/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/broadcast/algorithm/template/aiv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/broadcast/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/broadcast/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter_v
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter_v/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter_v/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter_v/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter_v/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter_v/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce_scatter_v/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter/algorithm
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter/algorithm/template/aiv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/scatter/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather/algorithm/template/aiv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/barrier
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/barrier/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/barrier/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/barrier/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/barrier/algorithm/template/aicpu
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather_v
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather_v/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather_v/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather_v/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather_v/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather_v/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_gather_v/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_to_all_v
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_to_all_v/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_to_all_v/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_to_all_v/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_to_all_v/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_to_all_v/algorithm/template/aiv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_to_all_v/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_to_all_v/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_reduce
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_reduce/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_reduce/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_reduce/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_reduce/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_reduce/algorithm/template/aiv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_reduce/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/all_reduce/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/send
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/send/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/send/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/send/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/send/algorithm/template/host_nic
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/recv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/recv/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/recv/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/recv/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/recv/algorithm/template/host_nic
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce/algorithm/template
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce/algorithm/template/aicpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce/algorithm/template/aiv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce/algorithm/template/ccu
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/reduce/algorithm/template/ccu/kernel
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/batch_send_recv
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/batch_send_recv/algorithm/executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/batch_send_recv/selector
+    ${CMAKE_CURRENT_SOURCE_DIR}/ops/batch_send_recv/algorithm/template
+)
+
+# [HCCL-ALGO-Plugin] 仅当显式开启插件开关时，才把 algo_plugin 目录加入包含路径，
+# 默认（OFF）状态下 INCLUDE_LIST 与插件引入前完全一致。
+if(ENABLE_HCCL_ALGO_PLUGIN)
+    list(APPEND INCLUDE_LIST
+        ${CMAKE_CURRENT_SOURCE_DIR}/algo_plugin
+        ${CMAKE_CURRENT_SOURCE_DIR}/algo_plugin/inc
+    )
+endif()
+
+if(NOT BUILD_OPEN_PROJECT)
+    list(APPEND INCLUDE_LIST
+        ${TOP_DIR}/inc
+        ${TOP_DIR}/inc/aicpu/tsd
+        ${TOP_DIR}/inc/driver
+        ${TOP_DIR}/inc/external
+        ${TOP_DIR}/inc/external/acl
+        ${TOP_DIR}/inc/aicpu/
+        ${TOP_DIR}/inc/aicpu/aicpu_schedule/aicpu_sharder
+        ${TOP_DIR}/abl/qos/qosmng
+        ${TOP_DIR}/abl/atrace/inc/utrace
+        ${TOP_DIR}/abl/msprof/inc
+        ${TOP_DIR}/abl/libc_sec/include
+        ${TOP_DIR}/inc/aicpu/common
+        ${TOP_DIR}/ace/csruntime/inc/tsch
+        ${TOP_DIR}/asl/hss/inc
+        ${TOP_DIR}/asl/hss/inc/pub
+        ${TOP_DIR}/asl/hss/common/hash_table
+        ${TOP_DIR}/metadef
+        ${TOP_DIR}/metadef/pkg_inc
+        ${TOP_DIR}/metadef/inc
+        ${TOP_DIR}/metadef/inc/common
+        ${TOP_DIR}/metadef/inc/external
+        ${TOP_DIR}/runtime/include/external
+        ${TOP_DIR}/runtime/include/external/acl
+        ${TOP_DIR}/runtime/include/dfx
+        ${TOP_DIR}/runtime/pkg_inc
+        ${TOP_DIR}/runtime/pkg_inc/base
+
+        ${TOP_DIR}/open_source/json/include
+
+        ${TOP_DIR}/hcomm/inc
+        ${TOP_DIR}/hcomm/inc/hccl
+        ${TOP_DIR}/hcomm/pkg_inc
+        ${TOP_DIR}/hcomm/pkg_inc/hccl
+        ${TOP_DIR}/hcomm/pkg_inc/legacy
+        ${TOP_DIR}/hcomm/pkg_inc/legacy/hccl
+        ${TOP_DIR}/hcomm/pkg_inc/hcomm/ccu
+        ${TOP_DIR}/hcomm/include
+        ${TOP_DIR}/hcomm/include/hccl
+        ${TOP_DIR}/hcomm/include/ccu
+    )
+endif()
+
+add_definitions(-DORION_MODE)
+
+if(PRODUCT_SIDE STREQUAL "host")
+    include(hccl.cmake)
+else()
+    include(scatter_aicpu_kernel.cmake)
+endif()
+
+add_subdirectory(common)
+if(PRODUCT_SIDE STREQUAL "host")
+    add_subdirectory(ops)
+endif()
+
+# [HCCL-ALGO-Plugin] 插件机制整体挂在 ENABLE_HCCL_ALGO_PLUGIN 开关下：
+# 1) 关闭时不进入 algo_plugin 子目录，HcclAlgoPluginMgr 相关源码根本不参与编译；
+# 2) 打开时才给 hccl 目标定义 HCCL_ALGO_PLUGIN_ENABLE，
+#    src/ops/op_common/op_common.cc 里的 #ifdef HCCL_ALGO_PLUGIN_ENABLE 分支据此生效。
+if(ENABLE_HCCL_ALGO_PLUGIN)
+    add_subdirectory(algo_plugin)
+    if(TARGET hccl)
+        target_compile_definitions(hccl PRIVATE HCCL_ALGO_PLUGIN_ENABLE)
+    endif()
+endif()
+
+# 定义AIV算子聚合目标
+set(AIV_TARGETS
+    hccl_aiv_all_gather_op_910_95
+    hccl_aiv_all_reduce_op_910_95
+    hccl_aiv_all_to_all_v_op_910_95
+    hccl_aiv_all_to_all_op_910_95
+    hccl_aiv_broadcast_op_910_95
+    hccl_aiv_reduce_op_910_95
+    hccl_aiv_reduce_scatter_op_910_95
+    hccl_aiv_scatter_op_910_95
+    hccl_aiv_send_op_910_95
+    hccl_aiv_recv_op_910_95
+    hccl_ar_superkernel_mesh_1d_oneshot_int8_v2
+    hccl_ar_superkernel_mesh_1d_oneshot_int16_v2
+    hccl_ar_superkernel_mesh_1d_oneshot_int32_v2
+    hccl_ar_superkernel_mesh_1d_oneshot_float16_v2
+    hccl_ar_superkernel_mesh_1d_oneshot_float32_v2
+    hccl_ar_superkernel_mesh_1d_oneshot_bfloat16_v2
+    hccl_ar_superkernel_mesh_1d_twoshot_int8_v2
+    hccl_ar_superkernel_mesh_1d_twoshot_int16_v2
+    hccl_ar_superkernel_mesh_1d_twoshot_int32_v2
+    hccl_ar_superkernel_mesh_1d_twoshot_float16_v2
+    hccl_ar_superkernel_mesh_1d_twoshot_float32_v2
+    hccl_ar_superkernel_mesh_1d_twoshot_bfloat16_v2
+    hccl_rs_superkernel_mesh_1d_int8_v2
+    hccl_rs_superkernel_mesh_1d_int16_v2
+    hccl_rs_superkernel_mesh_1d_int32_v2
+    hccl_rs_superkernel_mesh_1d_float16_v2
+    hccl_rs_superkernel_mesh_1d_float32_v2
+    hccl_rs_superkernel_mesh_1d_bfloat16_v2
+    hccl_ag_superkernel_mesh_1d_int8_v2
+    hccl_ag_superkernel_mesh_1d_int16_v2
+    hccl_ag_superkernel_mesh_1d_int32_v2
+    hccl_ag_superkernel_mesh_1d_float16_v2
+    hccl_ag_superkernel_mesh_1d_float32_v2
+    hccl_ag_superkernel_mesh_1d_bfloat16_v2
+    hccl_ag_superkernel_mesh_1d_uint8_v2
+    hccl_ag_superkernel_mesh_1d_uint16_v2
+    hccl_ag_superkernel_mesh_1d_uint32_v2
+    hccl_ag_superkernel_mesh_1d_int64_v2
+    hccl_ag_superkernel_mesh_1d_uint64_v2
+    hccl_a2a_superkernel_mesh_1d_int8_v2
+    hccl_a2a_superkernel_mesh_1d_int16_v2
+    hccl_a2a_superkernel_mesh_1d_int32_v2
+    hccl_a2a_superkernel_mesh_1d_float16_v2
+    hccl_a2a_superkernel_mesh_1d_float32_v2
+    hccl_a2a_superkernel_mesh_1d_bfloat16_v2
+    hccl_a2a_superkernel_mesh_1d_uint8_v2
+    hccl_a2a_superkernel_mesh_1d_uint16_v2
+    hccl_a2a_superkernel_mesh_1d_uint32_v2
+    hccl_a2a_superkernel_mesh_1d_int64_v2
+    hccl_a2a_superkernel_mesh_1d_uint64_v2
+    hccl_aiv_all_gather_op_960
+    hccl_aiv_all_reduce_op_960
+    hccl_aiv_all_to_all_v_op_960
+    hccl_aiv_all_to_all_op_960
+    hccl_aiv_broadcast_op_960
+    hccl_aiv_reduce_op_960
+    hccl_aiv_reduce_scatter_op_960
+    hccl_aiv_scatter_op_960
+    hccl_aiv_send_op_960
+    hccl_aiv_recv_op_960
+    hccl_ar_superkernel_mesh_1d_oneshot_int8_v2_960
+    hccl_ar_superkernel_mesh_1d_oneshot_int16_v2_960
+    hccl_ar_superkernel_mesh_1d_oneshot_int32_v2_960
+    hccl_ar_superkernel_mesh_1d_oneshot_float16_v2_960
+    hccl_ar_superkernel_mesh_1d_oneshot_float32_v2_960
+    hccl_ar_superkernel_mesh_1d_oneshot_bfloat16_v2_960
+    hccl_ar_superkernel_mesh_1d_twoshot_int8_v2_960
+    hccl_ar_superkernel_mesh_1d_twoshot_int16_v2_960
+    hccl_ar_superkernel_mesh_1d_twoshot_int32_v2_960
+    hccl_ar_superkernel_mesh_1d_twoshot_float16_v2_960
+    hccl_ar_superkernel_mesh_1d_twoshot_float32_v2_960
+    hccl_ar_superkernel_mesh_1d_twoshot_bfloat16_v2_960
+    hccl_rs_superkernel_mesh_1d_int8_v2_960
+    hccl_rs_superkernel_mesh_1d_int16_v2_960
+    hccl_rs_superkernel_mesh_1d_int32_v2_960
+    hccl_rs_superkernel_mesh_1d_float16_v2_960
+    hccl_rs_superkernel_mesh_1d_float32_v2_960
+    hccl_rs_superkernel_mesh_1d_bfloat16_v2_960
+    hccl_ag_superkernel_mesh_1d_int8_v2_960
+    hccl_ag_superkernel_mesh_1d_int16_v2_960
+    hccl_ag_superkernel_mesh_1d_int32_v2_960
+    hccl_ag_superkernel_mesh_1d_float16_v2_960
+    hccl_ag_superkernel_mesh_1d_float32_v2_960
+    hccl_ag_superkernel_mesh_1d_bfloat16_v2_960
+    hccl_ag_superkernel_mesh_1d_uint8_v2_960
+    hccl_ag_superkernel_mesh_1d_uint16_v2_960
+    hccl_ag_superkernel_mesh_1d_uint32_v2_960
+    hccl_ag_superkernel_mesh_1d_int64_v2_960
+    hccl_ag_superkernel_mesh_1d_uint64_v2_960
+    hccl_a2a_superkernel_mesh_1d_int8_v2_960
+    hccl_a2a_superkernel_mesh_1d_int16_v2_960
+    hccl_a2a_superkernel_mesh_1d_int32_v2_960
+    hccl_a2a_superkernel_mesh_1d_float16_v2_960
+    hccl_a2a_superkernel_mesh_1d_float32_v2_960
+    hccl_a2a_superkernel_mesh_1d_bfloat16_v2_960
+    hccl_a2a_superkernel_mesh_1d_uint8_v2_960
+    hccl_a2a_superkernel_mesh_1d_uint16_v2_960
+    hccl_a2a_superkernel_mesh_1d_uint32_v2_960
+    hccl_a2a_superkernel_mesh_1d_int64_v2_960
+    hccl_a2a_superkernel_mesh_1d_uint64_v2_960
+)
+
+add_custom_target(aiv_all_targets)
+foreach(target ${AIV_TARGETS})
+    if(TARGET ${target})
+        add_dependencies(aiv_all_targets ${target})
+    endif()
+endforeach()

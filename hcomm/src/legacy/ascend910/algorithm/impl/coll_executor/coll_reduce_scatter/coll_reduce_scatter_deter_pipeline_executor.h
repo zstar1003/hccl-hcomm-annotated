@@ -1,0 +1,51 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#ifndef COLL_REDUCESCATTER_DETER_PIPELINE_EXECUTOR_H
+#define COLL_REDUCESCATTER_DETER_PIPELINE_EXECUTOR_H
+#include "coll_reduce_scatter_executor.h"
+
+namespace hccl {
+class CollReduceScatterDeterPipelineExecutor : public CollReduceScatterExecutor {
+public:
+    explicit CollReduceScatterDeterPipelineExecutor(
+        const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher);
+    ~CollReduceScatterDeterPipelineExecutor() override = default;
+
+private:
+    void ParseParam(const OpParam& param) override;
+    /* *************** 资源计算 *************** */
+    HcclResult CalcScratchMemSize(u64& scratchMemSize) override;
+    HcclResult CalcStreamNum(u32& streamNum) override;
+    HcclResult CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport) override;
+    HcclResult CalcLevel0CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
+        std::vector<LevelNSubCommTransport>& opTransport) override;
+    HcclResult CalcLevel1CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
+        std::vector<LevelNSubCommTransport>& opTransport) override;
+    HcclResult CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType) const;
+
+    /* *************** 算法编排 *************** */
+    u64 CalcLoopMaxCount(const u32 unitSize) override;
+    HcclResult RunLoop(OpParam& param, AlgResourceResponse& algRes) override;
+    HcclResult KernelRun(const OpParam& param, ExecMem& execMem) override;
+
+    /* **************** 数据准备*************** */
+    HcclResult PrepareDataSlice(
+        const OpParam& param, const ExecMem& execMem, const SubCommInfo& level0CommInfo,
+        const SubCommInfo& level1CommInfo, std::vector<Slice>& bufferSlices) const;
+
+    u64 curOffset_ = 0;
+};
+
+} // namespace hccl
+
+#endif
