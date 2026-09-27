@@ -6,10 +6,11 @@
 
 ## 从哪里开始
 
-1. [阅读路线与跨仓调用说明](docs/READING_GUIDE.zh-CN.md)：从算子下发，读到资源申请、建链、设备编排和数据原语。
-2. [精确覆盖清单](docs/ANNOTATION_COVERAGE.md)：哪些文件补过、哪些内容尚未覆盖。
-3. [验证说明](docs/VERIFICATION.md)：如何确认去除新增注释后恢复原始代码文本。
-4. [HCCL原始文档](hccl/README.md) / [HCOMM原始文档](hcomm/README.md)：构建、接口和平台要求以各仓文档为准。
+1. [最终版PPT → 源码逐页对照](docs/PPT_FINAL_SOURCE_MAP.zh-CN.md)：按最终版23页列出每一步的函数、作用、调用/实现位置和固定提交行号；含Engine接口表的逐项源码依据。
+2. [阅读路线与跨仓调用说明](docs/READING_GUIDE.zh-CN.md)：从算子下发，读到资源申请、建链、设备编排和数据原语。
+3. [精确覆盖清单](docs/ANNOTATION_COVERAGE.md)：哪些文件补过、哪些内容尚未覆盖。
+4. [验证说明](docs/VERIFICATION.md)：如何确认去除新增注释后恢复原始代码文本。
+5. [HCCL原始文档](hccl/README.md) / [HCOMM原始文档](hcomm/README.md)：构建、接口和平台要求以各仓文档为准。
 
 ```bash
 git lfs install
