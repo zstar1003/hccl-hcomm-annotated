@@ -21,6 +21,12 @@ rg -n '\[中文导读\]' hccl/src hcomm/src
 
 上游文档中的PNG/GIF保留Git LFS管理，克隆完整文档图片需要Git LFS。该仓不包含私人PPT、截图或参考照片。
 
+## AICPU 任务下发与硬件搬运
+
+![AICPU任务下发与硬件搬运](docs/images/aicpu-task-dispatch-and-dma.png)
+
+[查看原尺寸图片](docs/images/aicpu-task-dispatch-and-dma.png)。左侧展示Host、Device OS与AICPU，右侧展示RTSQ、STARS及SDMA和网络DMA路径。此图为非官方机制示意，核与进程布局不代表所有型号；具体实现随芯片及软件版本而异。
+
 ## 来源与版本
 
 用户提供的官方项目入口在GitCode。源码实际从GitHub第三方镜像克隆；选取的提交及Git树哈希已与此前取得的GitCode官方源码副本核对一致。**镜像不标为官方，固定快照不宣称是最新版本。**
