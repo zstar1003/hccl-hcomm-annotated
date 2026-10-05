@@ -2,13 +2,13 @@
 
 面向昇腾/CANN通信软件开发的**非官方中文注释副本**。保留HCCL、HCOMM两个完整上游快照，在实际源码中补充可检索的`// [中文导读]`注释，解释调用职责、参数单位、资源生命周期、条件分支与同步关系。
 
-**当前为核心链路的功能小段注释，不是全仓每个函数均已注释。** 共导入10,048个上游文件；新增注释覆盖17个核心源码文件、504个注释块、606行。重点是Ascend 950、新流程、AICPU_TS单算子路径，以及公共调度中的CCU/AIV资源分支。AllGather、AllReduce已补充入口、参数准备、缓存/单Rank分流和算法调度说明，未逐个注释其全部算法。
+**当前提供AllReduce具体主链的逐行导读，以及此前核心路径的功能小段注释。** 累计覆盖48个源码文件、8241个注释块、8605行。其中AllReduce本轮新增7999条逐行说明，覆盖305个选定函数/注册范围，配有完整调用树、分支详表、精确行号和4Rank示例。主例为Ascend950、AICPU_TS、单层Mesh1D OneShot；这不是全仓或全部AllReduce算法均已逐行注释。
 
 ## 从哪里开始
 
 1. [HCCL目录与文件导读](docs/HCCL_DIRECTORY_GUIDE.zh-CN.md) / [HCOMM目录与文件导读](docs/HCOMM_DIRECTORY_GUIDE.zh-CN.md)：两份详细分层文档，附完整目录树、逐文件摘要及可搜索的离线页面，覆盖全部10,048个文件。
 2. [最终版PPT → 源码逐页对照](docs/PPT_FINAL_SOURCE_MAP.zh-CN.md)：按最终版23页列出每一步的函数、作用、调用/实现位置和固定提交行号；含Engine接口表的逐项源码依据。
-3. [阅读路线与跨仓调用说明](docs/READING_GUIDE.zh-CN.md)：从算子下发，读到资源申请、建链、设备编排和数据原语。
+3. [AllReduce精确调用与逐行阅读指南](docs/READING_GUIDE.zh-CN.md)：公开入口→选择→HCOMM资源→AICPU编排→UB/RTSQ提交，附每个选定函数的代码行对照页。
 4. [精确覆盖清单](docs/ANNOTATION_COVERAGE.md)：哪些文件补过、哪些内容尚未覆盖。
 5. [验证说明](docs/VERIFICATION.md)：如何确认去除新增注释后恢复原始代码文本。
 6. [HCCL原始文档](hccl/README.md) / [HCOMM原始文档](hcomm/README.md)：构建、接口和平台要求以各仓文档为准。
@@ -52,6 +52,8 @@ rg -n '\[中文导读\]' hccl/src hcomm/src
 ```bash
 node --test scripts/verify-annotations.test.mjs
 node scripts/verify-annotations.mjs
+python3 scripts/test_allreduce_guide.py
+python3 scripts/build-allreduce-guide.py --check
 python3 scripts/build-directory-guides.py --check
 git diff efbe1cd23c64f4c62525c81d39812834113f4aa9 -- hccl hcomm
 ```

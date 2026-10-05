@@ -1,7 +1,7 @@
 {
   "format": 1,
   "base": "f8af6a36831195a8440de6ec6183856bb72af907",
-  "sourceRevision": "WORKTREE",
+  "sourceRevision": "824a8a80731bd66ef6eb78891b9aec0acfca281c",
   "aliases": {
     "entry": "hccl/src/ops/all_reduce/all_reduce.cc",
     "env": "hccl/src/common/alg_env_config.cc",

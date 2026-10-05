@@ -237,7 +237,14 @@ def render(data, maps):
             if fn.get('branches'):
                 parts += ['功能与分支：\n']
                 for branch in fn['branches']:
-                    parts += [f'- {branch}\n']
+                    if isinstance(branch, dict):
+                        location = link(data, maps, fn['path'], branch['line'],
+                                        label=f'S{branch["line"]} / L{maps[fn["path"]][branch["line"]]}')
+                        explanation = branch.get('meaning') or '；'.join(
+                            str(branch[key]) for key in ('condition', 'callee', 'result', 'example') if key in branch)
+                        parts += [f'- {location}：{explanation}\n']
+                    else:
+                        parts += [f'- {branch}\n']
                 parts += ['\n']
             table = ['| 源码定位 | 原代码 | 这一行的功能 |', '|---|---|---|']
             for number in range(fn['start'], fn['end'] + 1):
@@ -352,6 +359,7 @@ def render(data, maps):
         '机器清单见[line-notes.json](line-notes.json)。生成器逐条核对快照行内容、所选范围代码行覆盖、'
         '插入注释和固定提交字节；主仓校验器另证去掉全部中文导读后恢复上游基线。\n'
     )
+    outputs = {path: content.rstrip() + '\n' for path, content in outputs.items()}
     return outputs, total_rows
 
 

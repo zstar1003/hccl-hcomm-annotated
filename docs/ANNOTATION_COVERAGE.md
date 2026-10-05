@@ -1,45 +1,72 @@
-# 功能小段注释覆盖清单
+# 注释覆盖清单
 
-范围：固定版本的核心跨仓路径。全量上游文件10,048个，其中HCCL 1,828个、HCOMM 8,220个；这些数量含源码、测试和文档，不能解释为全部是函数或源码文件。
+保留固定版本HCCL/HCOMM的全部10,048个上游文件。累计新增中文导读覆盖48个源码文件、8241个连续注释块、8605行。“注释块”不是函数数；未列明函数仍保留上游原注释。
 
-新增注释覆盖17个`.cc`文件、504个连续注释块、606行。**“注释块”不是“已完整注释的函数数”。** 一个函数内部可以有多个功能段说明；各文件覆盖深度不同，未补充的函数仍保留上游原注释。机器可校验的文件列表见[annotations.json](../annotations.json)。
+本轮以AllReduce为例，新增7999条逐物理行说明，覆盖44个文件、305个选定完整函数/注册范围。主线为Ascend950、OPBASE、规则选择器、AICPU_TS、单层Mesh1D、FP32 SUM、普通内存、UB_CTP OneShot；选中函数内的其他条件分支也有逐行说明。空行及已有注释不重复标注。
 
-| 文件 | 本批新增说明 | 块 / 行 |
-|---|---|---|
-| [all_to_all_v.cc](../hccl/src/ops/all_to_all_v/all_to_all_v.cc) | 入口、参数跨度/变长描述、调度分支、参数生命周期 | 37 / 47 |
-| [all_gather.cc](../hccl/src/ops/all_gather/all_gather.cc) | 入口、图资源、字节容量、缓存/单Rank与算法调度 | 24 / 26 |
-| [all_reduce.cc](../hccl/src/ops/all_reduce/all_reduce.cc) | 入口、类型/运算校验、参数与对称内存条件、算法调度 | 25 / 27 |
-| [op_common.cc](../hccl/src/ops/op_common/op_common.cc) | 执行枢纽、拓扑缓存、资源复用、AICPU/CCU/AIV资源、Host下发 | 96 / 123 |
-| [kernel_launch.cc](../hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.cc) | AICPU新流程入口、描述恢复、task缓存、编排与通知 | 37 / 41 |
-| [ins_temp_all_to_all_v_mesh_1D.cc](../hccl/src/ops/all_to_all_v/algorithm/template/aicpu/ins_temp_all_to_all_v_mesh_1D.cc) | Mesh1D资源需求、Peer轮次、Read/Write、切片与中转 | 54 / 65 |
-| [alg_data_trans_wrapper.cc](../hccl/src/ops/op_common/algorithm/template/wrapper/alg_data_trans_wrapper.cc) | 单向/双向收发协议、本地复制/归约、主从Thread同步 | 50 / 56 |
-| [coll_comm_res_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_res_c_adpt.cc) | 通道申请、V2/兼容分支、MyRank调用边界 | 14 / 18 |
-| [exchange_info_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/exchange_info_c_adpt.cc) | 算子元信息登记、精确长度读取及消费、重置 | 8 / 11 |
-| [channel_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/resource/channel_c_adpt.cc) | 通道通知数、远端CCL、远端注册内存查询 | 12 / 15 |
-| [comm_mem_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/resource/comm_mem_c_adpt.cc) | 本地CCL获取、单Rank空返回、所有权 | 10 / 12 |
-| [thread_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/resource/thread_c_adpt.cc) | WithConfig/兼容申请、TS枚举转换、用户流包装 | 16 / 19 |
-| [my_rank.cc](../hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/my_rank.cc) | 建链阶段、Endpoint与内存选择、资源复用和返回属性 | 31 / 38 |
-| [endpoint_mgr.cc](../hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints/endpoint_mgr.cc) | Endpoint缓存、注册版本、按tag选句柄、释放先后 | 16 / 21 |
-| [endpoint_pair.cc](../hcomm/src/base_comm/resources/endpoint_pairs/endpoint_pair.cc) | 按Engine/槽位新建或复用通道、更新附加内存 | 11 / 13 |
-| [hcomm_channel_c_adpt.cc](../hcomm/src/base_comm/primitives/api_c_adpt/hcomm_channel_c_adpt.cc) | Collective与公开Create入口差异、内存描述更新 | 15 / 17 |
-| [aicpu_ts_primitives_c_adpt.cc](../hcomm/src/base_comm/primitives/api_c_adpt/aicpu_ts_primitives_c_adpt.cc) | 复制/读写/归约、Thread/Channel通知、提交模式、域占用保护 | 48 / 57 |
+- [AllReduce阅读指南](READING_GUIDE.zh-CN.md)：主调用树、分支条件、4Rank数据与通知示例。
+- [精确函数与行范围](allreduce/COVERAGE.zh-CN.md)：固定提交源码行链接及停止展开的边界。
+- [分阶段调用详表](allreduce/CALL_RELATIONS.zh-CN.md)：caller调用点、callee定义与分支。
+- [机器逐行清单](allreduce/line-notes.json)：每行快照原文、功能说明、范围和固定源码提交。
+- [原AllToAll阅读路线](ALLTOALL_READING_GUIDE.zh-CN.md)：此前功能小段导读。
 
-## 尚未逐函数补充的范围
+新增说明统一为`// [中文导读]`独立注释，AllReduce逐行标记另带`[AllReduce逐行 S<快照行号>]`。长语句按物理行解释；遇宏续行或字符串等无法安全插入的位置，说明放在相应完整语句之前，不把注释塞入原语句。
 
-- 通信域创建/销毁、完整RankGraph拓扑实现与底层驱动封装。
-- AllGather/AllReduce的各算法executor/template，以及其他集合通信与点对点算子的完整路径。
-- AllToAll的其他算法、所有外层分块executor、完整对称内存和图模式分支。
-- CCU C++指令与Kernel生成、AIV核内数据面、全部Socket/Transport/协议状态机。
-- legacy、experimental、全部异常恢复路径、UT/ST以及其他已有文档。
+| 文件 | 说明主题 | 累计块 / 行 | 本轮AllReduce逐行数 |
+|---|---|---|---|
+| [hccl/src/common/alg_env_config.cc](../hccl/src/common/alg_env_config.cc) | AllReduce主链相关函数与内部条件分支 | 21 / 21 | 21 |
+| [hccl/src/common/hcomm_dlsym/hcomm_primitives_dl.cc](../hccl/src/common/hcomm_dlsym/hcomm_primitives_dl.cc) | AllReduce主链相关函数与内部条件分支 | 52 / 52 | 52 |
+| [hccl/src/common/inconsistent_check.cc](../hccl/src/common/inconsistent_check.cc) | AllReduce主链相关函数与内部条件分支 | 149 / 149 | 149 |
+| [hccl/src/ops/all_gather/all_gather.cc](../hccl/src/ops/all_gather/all_gather.cc) | AllGather入口、图资源、参数容量、快速路径与算法调度 | 24 / 26 | 0 |
+| [hccl/src/ops/all_reduce/algorithm/executor/ins_v2_all_reduce_sole_executor.cc](../hccl/src/ops/all_reduce/algorithm/executor/ins_v2_all_reduce_sole_executor.cc) | AllReduce主链相关函数与内部条件分支 | 241 / 241 | 241 |
+| [hccl/src/ops/all_reduce/algorithm/template/aicpu/ins_temp_all_reduce_mesh_1D_one_shot.cc](../hccl/src/ops/all_reduce/algorithm/template/aicpu/ins_temp_all_reduce_mesh_1D_one_shot.cc) | AllReduce主链相关函数与内部条件分支 | 233 / 233 | 233 |
+| [hccl/src/ops/all_reduce/all_reduce.cc](../hccl/src/ops/all_reduce/all_reduce.cc) | AllReduce入口、类型/运算校验、参数与对称内存条件、算法调度 | 224 / 251 | 224 |
+| [hccl/src/ops/all_reduce/selector/all_reduce_auto_selector.cc](../hccl/src/ops/all_reduce/selector/all_reduce_auto_selector.cc) | AllReduce主链相关函数与内部条件分支 | 612 / 612 | 612 |
+| [hccl/src/ops/all_to_all_v/algorithm/template/aicpu/ins_temp_all_to_all_v_mesh_1D.cc](../hccl/src/ops/all_to_all_v/algorithm/template/aicpu/ins_temp_all_to_all_v_mesh_1D.cc) | Mesh1D模板资源需求、分片、Peer轮次及Read/Write路径 | 54 / 65 | 0 |
+| [hccl/src/ops/all_to_all_v/all_to_all_v.cc](../hccl/src/ops/all_to_all_v/all_to_all_v.cc) | AllToAll/V入口、参数布局、公共调度 | 37 / 47 | 0 |
+| [hccl/src/ops/op_common/algorithm/executor/channel/channel.cc](../hccl/src/ops/op_common/algorithm/executor/channel/channel.cc) | AllReduce主链相关函数与内部条件分支 | 146 / 146 | 146 |
+| [hccl/src/ops/op_common/algorithm/executor/registry/coll_alg_v2_exec_registry.cc](../hccl/src/ops/op_common/algorithm/executor/registry/coll_alg_v2_exec_registry.cc) | AllReduce主链相关函数与内部条件分支 | 25 / 25 | 25 |
+| [hccl/src/ops/op_common/algorithm/executor/registry/coll_alg_v2_exec_registry.h](../hccl/src/ops/op_common/algorithm/executor/registry/coll_alg_v2_exec_registry.h) | AllReduce主链相关函数与内部条件分支 | 7 / 7 | 7 |
+| [hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.cc](../hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.cc) | 设备入口、上下文恢复、任务缓存与编排 | 486 / 523 | 482 |
+| [hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.h](../hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.h) | AllReduce主链相关函数与内部条件分支 | 4 / 4 | 4 |
+| [hccl/src/ops/op_common/algorithm/template/wrapper/alg_data_trans_wrapper.cc](../hccl/src/ops/op_common/algorithm/template/wrapper/alg_data_trans_wrapper.cc) | 收发协议、LocalCopy/Reduce、主从同步 | 550 / 581 | 525 |
+| [hccl/src/ops/op_common/algorithm/topo_match/topo_match_one_level.cc](../hccl/src/ops/op_common/algorithm/topo_match/topo_match_one_level.cc) | AllReduce主链相关函数与内部条件分支 | 48 / 48 | 48 |
+| [hccl/src/ops/op_common/op_common.cc](../hccl/src/ops/op_common/op_common.cc) | 公共调度、资源复用、AICPU/CCU/AIV分支 | 1318 / 1417 | 1294 |
+| [hccl/src/ops/op_common/order_launch.cc](../hccl/src/ops/op_common/order_launch.cc) | AllReduce主链相关函数与内部条件分支 | 188 / 188 | 188 |
+| [hccl/src/ops/op_common/selector/auto_selector_base.cc](../hccl/src/ops/op_common/selector/auto_selector_base.cc) | AllReduce主链相关函数与内部条件分支 | 337 / 337 | 337 |
+| [hccl/src/ops/op_common/selector/execute_selector.cc](../hccl/src/ops/op_common/selector/execute_selector.cc) | AllReduce主链相关函数与内部条件分支 | 36 / 36 | 36 |
+| [hccl/src/ops/op_common/selector/selector_engine.cc](../hccl/src/ops/op_common/selector/selector_engine.cc) | AllReduce主链相关函数与内部条件分支 | 258 / 258 | 258 |
+| [hcomm/src/base_comm/primitives/api_c_adpt/aicpu_ts_primitives_c_adpt.cc](../hcomm/src/base_comm/primitives/api_c_adpt/aicpu_ts_primitives_c_adpt.cc) | 本地/远端数据原语、通知、批提交与域使用保护 | 445 / 487 | 430 |
+| [hcomm/src/base_comm/primitives/api_c_adpt/hcomm_channel_c_adpt.cc](../hcomm/src/base_comm/primitives/api_c_adpt/hcomm_channel_c_adpt.cc) | 集合通信创建入口与公开创建入口的区别 | 76 / 82 | 65 |
+| [hcomm/src/base_comm/primitives/launch_context.cc](../hcomm/src/base_comm/primitives/launch_context.cc) | AllReduce主链相关函数与内部条件分支 | 69 / 69 | 69 |
+| [hcomm/src/base_comm/primitives/launch_context.h](../hcomm/src/base_comm/primitives/launch_context.h) | AllReduce主链相关函数与内部条件分支 | 17 / 17 | 17 |
+| [hcomm/src/base_comm/resources/comm_engine_res/threads/aicpu_ts_thread.cc](../hcomm/src/base_comm/resources/comm_engine_res/threads/aicpu_ts_thread.cc) | AllReduce主链相关函数与内部条件分支 | 87 / 87 | 87 |
+| [hcomm/src/base_comm/resources/endpoint_pairs/channels/aicpu/aicpu_ts_urma_channel.cc](../hcomm/src/base_comm/resources/endpoint_pairs/channels/aicpu/aicpu_ts_urma_channel.cc) | AllReduce主链相关函数与内部条件分支 | 48 / 48 | 48 |
+| [hcomm/src/base_comm/resources/endpoint_pairs/channels/aicpu/device/aicpu_channel_process.cc](../hcomm/src/base_comm/resources/endpoint_pairs/channels/aicpu/device/aicpu_channel_process.cc) | AllReduce主链相关函数与内部条件分支 | 29 / 29 | 29 |
+| [hcomm/src/base_comm/resources/endpoint_pairs/channels/channel.cc](../hcomm/src/base_comm/resources/endpoint_pairs/channels/channel.cc) | AllReduce主链相关函数与内部条件分支 | 97 / 97 | 97 |
+| [hcomm/src/base_comm/resources/endpoint_pairs/channels/channel_process.cc](../hcomm/src/base_comm/resources/endpoint_pairs/channels/channel_process.cc) | AllReduce主链相关函数与内部条件分支 | 43 / 43 | 43 |
+| [hcomm/src/base_comm/resources/endpoint_pairs/endpoint_pair.cc](../hcomm/src/base_comm/resources/endpoint_pairs/endpoint_pair.cc) | 按Engine及复用槽位创建或更新通道 | 35 / 40 | 27 |
+| [hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_rank_graph_a_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_rank_graph_a_adpt.cc) | AllReduce主链相关函数与内部条件分支 | 34 / 34 | 34 |
+| [hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_res_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_res_c_adpt.cc) | HcclChannelAcquire申请边界 | 205 / 221 | 203 |
+| [hcomm/src/coll_communicator_mgr/api_c_adpt/exchange_info_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/exchange_info_c_adpt.cc) | 一致性元信息登记、读取和清理 | 8 / 11 | 0 |
+| [hcomm/src/coll_communicator_mgr/api_c_adpt/resource/channel_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/resource/channel_c_adpt.cc) | 通道通知数、远端CCL/注册内存查询 | 73 / 82 | 67 |
+| [hcomm/src/coll_communicator_mgr/api_c_adpt/resource/comm_mem_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/resource/comm_mem_c_adpt.cc) | 本地CCL缓冲区获取及生命周期 | 71 / 77 | 65 |
+| [hcomm/src/coll_communicator_mgr/api_c_adpt/resource/thread_c_adpt.cc](../hcomm/src/coll_communicator_mgr/api_c_adpt/resource/thread_c_adpt.cc) | Thread申请、TS枚举转换、用户流包装 | 238 / 251 | 232 |
+| [hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints/endpoint_mgr.cc](../hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints/endpoint_mgr.cc) | Endpoint缓存、内存注册、句柄选择与释放顺序 | 81 / 97 | 76 |
+| [hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/my_rank.cc](../hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/my_rank.cc) | Socket、Endpoint、Channel创建/复用与一致性交换 | 543 / 574 | 536 |
+| [hcomm/src/legacy/ascend950/interface/aicpu_ts_thread_interface.cc](../hcomm/src/legacy/ascend950/interface/aicpu_ts_thread_interface.cc) | AllReduce主链相关函数与内部条件分支 | 64 / 64 | 64 |
+| [hcomm/src/legacy/ascend950/unified_platform/resource/connection/aicpu/ub_conn_lite.cc](../hcomm/src/legacy/ascend950/unified_platform/resource/connection/aicpu/ub_conn_lite.cc) | AllReduce主链相关函数与内部条件分支 | 200 / 200 | 200 |
+| [hcomm/src/legacy/ascend950/unified_platform/resource/connection/aicpu/ub_conn_lite.h](../hcomm/src/legacy/ascend950/unified_platform/resource/connection/aicpu/ub_conn_lite.h) | AllReduce主链相关函数与内部条件分支 | 5 / 5 | 5 |
+| [hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/rtsq_a5.cc](../hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/rtsq_a5.cc) | AllReduce主链相关函数与内部条件分支 | 193 / 193 | 193 |
+| [hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/rtsq_base.cc](../hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/rtsq_base.cc) | AllReduce主链相关函数与内部条件分支 | 40 / 40 | 40 |
+| [hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/sqe_build_a5.h](../hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/sqe_build_a5.h) | AllReduce主链相关函数与内部条件分支 | 71 / 71 | 71 |
+| [hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/stream_lite.cc](../hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/stream_lite.cc) | AllReduce主链相关函数与内部条件分支 | 1 / 1 | 1 |
+| [hcomm/src/legacy/ascend950/unified_platform/resource/transport/aicpu/ub_transport_lite_impl.cc](../hcomm/src/legacy/ascend950/unified_platform/resource/transport/aicpu/ub_transport_lite_impl.cc) | AllReduce主链相关函数与内部条件分支 | 418 / 418 | 418 |
 
-这些内容仍保留全量上游代码及原注释，但不能计入本次新增注释覆盖。已有的中文注释不会被改写成“本次新增”。
+## 覆盖边界
 
-## 后续补注释的标准
+精确范围以AllReduce机器清单为准，不宣称全仓、全部AllReduce算法或所有递归依赖已逐行注释。其他executor/template、CCU/AIV设备算法、其他协议、通信域初始化、完整拓扑/内存/Socket状态机、通用配置/序列化/日志/cache工具和外部runtime/driver实现均有未展开范围，详见[AllReduce覆盖清单](allreduce/COVERAGE.zh-CN.md)。
 
-先读完整函数和关键依赖，再写职责、参数单位、条件路径与资源归属。只在代码证据支持时写调用关系；没有运行验证就不写成实测结论。每批保持原始文本，更新机器清单、本文统计及验证记录，不把同义复述当作有效覆盖。
+本例的新HCOMM数据面确实调用legacy/ascend950中的UB轻量传输、连接和RTSQ；已列出的函数做了逐行说明。legacy目录名不等于一次算子调用进入了旧入口回退。
 
-## 本轮细化方式
-
-在原有函数级总览之外，新增按功能小段的独立说明：参数单位与布局、版本/设备分流、缓存命中/未命中、Thread与Channel准备、Endpoint注册版本、Read/Write握手、CCL前后复制、通知索引、批提交和释放边界。先说明小段的目的，再说明数据或资源怎样进入下一段；不按每条赋值堆叠注释。
-
-[HCCL目录导读](HCCL_DIRECTORY_GUIDE.zh-CN.md)与[HCOMM目录导读](HCOMM_DIRECTORY_GUIDE.zh-CN.md)及其完整索引覆盖全部文件；目录导航覆盖与源码新增注释覆盖是两个不同范围。
+[HCCL目录导读](HCCL_DIRECTORY_GUIDE.zh-CN.md)与[HCOMM目录导读](HCOMM_DIRECTORY_GUIDE.zh-CN.md)及完整索引覆盖全部文件；目录导航与源码新增注释是不同的覆盖范围。这里没有改动原始代码、原注释或构建逻辑，也未在CANN设备环境编译运行。

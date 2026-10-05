@@ -6,11 +6,13 @@
 |---|---|
 | 固定来源 | GitHub镜像的指定提交及树哈希，与本地已有的官方GitCode源码副本一致 |
 | 基线完整性 | 初始提交中hccl/hcomm子树与sources.lock.json锁定树一致；共10,048文件 |
-| 注释增量 | 只在清单中的17个源码文件增加标记注释；去除这些行后恢复基线原始字节 |
+| 注释增量 | 只在清单中的48个源码文件增加标记注释；去除这些行后恢复基线原始字节 |
 | 插入位置 | 校验完整独立注释行，拒绝字符串/块注释内插入及续行附近插入；保留文件模式 |
 | 校验器自身 | 8项Node测试覆盖正例、代码/原注释修改、删除、错误标记、续行、字面量及换行格式 |
 | 人工/源码复核 | HCCL主链复核；HCOMM控制面、基础资源与数据面分组复核，修正分支和接口语义措辞 |
-| 功能小段细化 | 17文件共504个连续注释块、606行；解释局部参数、缓存、建链、搬运、同步与释放目的 |
+| 中文导读总计 | 48文件共8241个连续注释块、8605行；原有功能小段＋本轮AllReduce逐行说明 |
+| AllReduce逐行核对 | 7999代码物理行、305函数/注册范围；固定快照原文逐条比对、覆盖无遗漏、范围无重叠、插入位置安全、发布源码固定行号 |
+| 逐行导读生成器 | 6项Python测试：块注释尾仍有代码、宏/字符串续行、数字分隔符、遗漏/错文、幂等插入及错误函数/重叠范围 |
 | 完整目录索引 | HCCL 1,828文件/333目录、HCOMM 8,220文件/1,279目录（目录数含项目根及所有祖先目录）；文件清单与Git跟踪路径逐项核对 |
 | 原生构建、UT/ST、上板 | 未执行；当前为macOS编辑环境，不具备该工程所需Ascend/CANN构建与设备验证环境 |
 
@@ -23,6 +25,8 @@
 ```bash
 node --test scripts/verify-annotations.test.mjs
 node scripts/verify-annotations.mjs
+python3 scripts/test_allreduce_guide.py
+python3 scripts/build-allreduce-guide.py --check
 python3 scripts/build-directory-guides.py --check
 git diff --check efbe1cd23c64f4c62525c81d39812834113f4aa9
 git diff --stat efbe1cd23c64f4c62525c81d39812834113f4aa9 -- hccl hcomm
@@ -41,3 +45,7 @@ git diff --stat efbe1cd23c64f4c62525c81d39812834113f4aa9 -- hccl hcomm
 - `scripts/verify-annotations.mjs`：新增注释必须可被精确剥离，恢复基线字节。
 - 原有许可证、版权、构建文件、头文件和测试未做行为修改。
 - 发布内容仅含公开上游快照、新增注释、导读及校验工具，不包含本地克隆缓存、凭据或私人参考材料。
+
+## AllReduce行号绑定
+
+`docs/allreduce/line-notes.json`保存不可变审读快照、原代码行与说明，sourceRevision固定到含本次注释的源码提交。生成器在`--check`模式只读，逐条核对范围覆盖、源码插入和固定提交字节，并复现主指南、调用关系、四阶段导航及按完整函数拆分的小页。后续若改动这些源码，需重新审读/生成并更新固定源码提交，不能仅手改Markdown行号。

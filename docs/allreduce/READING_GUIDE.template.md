@@ -301,7 +301,7 @@ Host随后加入第二阶段保序和用户流对设备完成的Wait。多数Rec
 
 1. 主Thread先把本端输入`[10,20]`复制到本端输出。
 2. 从Thread按`nextRank=(myRank_+queIdx)%templateRankSize_`找Peer，再从`subCommRanks_[0]`映射到通道Map键。本例Rank连续且顺序一致，依次是Rank2、3、0；真实映射不能省略。
-3. 给每个Peer发送本端整块输入，目标是**对端CCL中的Rank1槽**：`remoteCcl.addr + sliceInfoVec[myRank_][0].offset_ + hcclBuffBaseOff`，本例为对端CCL＋8。
+3. 给每个Peer发送本端整块输入，目标是**对端CCL中的Rank1槽**：`remoteCcl.addr + sliceInfoVec[myRank_][0].offset + hcclBuffBaseOff`，本例为对端CCL＋8。
 4. 各Peer也把自己的输入写入本端CCL的对应源Rank槽；本端输出此时只含自己的贡献。
 5. PostSync把所有Peer从Thread汇合到主Thread；{{src|shot|232|267|PostLocalReduce}}遍历源Rank，跳过自身Rank，从本端CCL的其他槽逐个LocalReduce到本端output。
 
