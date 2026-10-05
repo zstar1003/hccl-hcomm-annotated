@@ -29,6 +29,7 @@ HcclResult HcclChannelGetNotifyNum(HcclComm comm, ChannelHandle channel, uint32_
 
     hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     HcclResult ret = HCCL_SUCCESS;
+    // [中文导读] 按通信域实现选择通知容量查询：V2 进入基础通道接口，兼容域进入 IndependentOp 管理器。
     if (hcclComm->IsCommunicatorV2()) {
         ret = static_cast<HcclResult>(HcommChannelGetNotifyNum(channel, notifyNum));
     } else {
@@ -51,12 +52,14 @@ HcclResult HcclChannelGetNotifyNum(HcclComm comm, ChannelHandle channel, uint32_
 
 HcclResult CommChannelDestroy(HcclComm comm, ChannelHandle* channelList, uint32_t channelNum)
 {
+    // [中文导读] 销毁按 channelList 数组逐项处理，channelNum 是通道条数，零条请求在适配层拒绝。
     CHK_PTR_NULL(comm);
     CHK_PTR_NULL(channelList);
     CHK_PRT_RET(
         channelNum == 0, HCCL_ERROR("[%s]Invalid channelNum, channelNum[%u]", __func__, channelNum), HCCL_E_PARA);
     hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     HcclResult ret = HCCL_SUCCESS;
+    // [中文导读] 资源仍由创建它的域管理器销毁；V2 和兼容域分别取得各自 ChannelManager。
     if (hcclComm->IsCommunicatorV2()) {
         CollComm* collComm = hcclComm->GetCollComm();
         CHK_PTR_NULL(collComm);
@@ -89,6 +92,7 @@ HcclResult HcclChannelGetHcclBuffer(HcclComm comm, ChannelHandle channel, void**
     CHK_PTR_NULL(buffer);
     CHK_PTR_NULL(size);
 #if (!defined(HCCD)) && (!defined(CCL_KERNEL_AICPU))
+    // [中文导读] Host 编译的新流程直接从 MyRank 查询远端缓冲区；宏分支成功后按其定义结束当前接口。
     HCCLV2_FUNC_RUN([&]() -> HcclResult {
         hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
         CollComm* collComm = hcclComm->GetCollComm();
@@ -105,6 +109,7 @@ HcclResult HcclChannelGetHcclBuffer(HcclComm comm, ChannelHandle channel, void**
     if (collComm != nullptr) {
         myRank = collComm->GetMyRank();
     }
+    // [中文导读] 兼容域若开启连接模式且存在 MyRank，也沿新资源查询路径返回远端 CCL 描述。
     if (collComm != nullptr && hcclComm->GetConnectMode() != 0 && myRank != nullptr) {
         CHK_RET(myRank->ChannelGetHcclBuffer(channel, buffer, size));
         return HCCL_SUCCESS;
@@ -119,6 +124,7 @@ HcclResult HcclChannelGetHcclBuffer(HcclComm comm, ChannelHandle channel, void**
             hcclComm->GetIdentifier().c_str(), static_cast<unsigned long long>(channel), ret);
         return ret;
     }
+    // [中文导读] 兼容查询成功后才拆出远端地址和字节容量，调用者据此构造访问范围。
     *buffer = commBuffer.addr;
     *size = commBuffer.size;
 
@@ -162,15 +168,18 @@ HcclChannelGetRemoteMems(HcclComm comm, ChannelHandle channel, uint32_t* memNum,
     CHK_PRT_RET(
         ret != HCCL_SUCCESS,
         HCCL_ERROR("[HcclChannelGetRemoteMems]legacy failed. channel[%llu], ret[%d]", channel, ret), ret);
+    // [中文导读] 兼容实现把已有 HcclMem 描述视为 CommMem 列表返回；这里只转换描述表示，没有搬运内存内容。
     *remoteMems = reinterpret_cast<CommMem*>(remoteMem);
     if (*memNum > 0) {
         // A2/A3 tag为非真实tag，无法获取到，统一使用固定字符串。
         static const char* HCCL_BUFFER_TAG = "HcclBuffer";
+        // [中文导读] 标签指针数组按调用线程保存；其内容会被同线程后续查询复用，调用者需及时读取。
         static thread_local std::array<char*, MAX_REMOTE_MEM_NUM> tagPtrs;
         CHK_PRT_RET(
             *memNum > MAX_REMOTE_MEM_NUM,
             HCCL_ERROR("[HcclChannelGetRemoteMems] memNum[%u] exceeds max[%u]", *memNum, MAX_REMOTE_MEM_NUM),
             HCCL_E_PARA);
+        // [中文导读] 先保证远端内存条数不超过标签数组容量，再为每项填入兼容路径的固定标签。
         for (uint32_t i = 0; i < *memNum; ++i) {
             tagPtrs[i] = const_cast<char*>(HCCL_BUFFER_TAG);
         }

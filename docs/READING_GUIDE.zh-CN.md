@@ -57,11 +57,11 @@ Thread是通信任务执行资源抽象，不能简单理解成新建一个Linux
 
 在[kernel_launch.cc](../hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.cc)的`HcclLaunchAicpuKernel`中：
 
-1. `HcommAcquireComm`取得已有设备通信域的使用引用，检查通信域状态。
+1. `HcommAcquireComm`取得已有设备通信域的占用保护，检查通信域状态。
 2. 从缓存取出或反序列化算法资源上下文，恢复AllToAll变长参数。
 3. `HcommBatchModeStart`进入批量任务模式，并进行DFX/Profiling处理。
 4. 未走task缓存回放时，`OpOrchestrate`排入输入等待、取得executor并调用`Orchestrate`；缓存命中时可更新地址并直接回放任务。
-5. 编排后排入完成Record，结束批量模式；正常路径最后`HcommReleaseComm`归还使用引用。错误路径有提前返回，不能把正常路径末尾当成覆盖所有失败路径的清理保证。
+5. 编排后排入完成Record，结束批量模式；正常路径最后`HcommReleaseComm`清除占用标记。错误路径有提前返回，不能把正常路径末尾当成覆盖所有失败路径的清理保证。
 
 资源上下文缓存、AICPU task缓存是两件事。观测到“没有进入算法模板”可能是任务回放，不应直接判断算子没有执行。
 
@@ -101,7 +101,7 @@ Thread是通信任务执行资源抽象，不能简单理解成新建一个Linux
 | 同步控制 | `HcommThreadNotifyRecordOnThread` / `WaitOnThread` | 本地Thread的通知槽；Record目标Thread和执行Thread可不同 |
 | 同步控制 | `HcommChannelNotifyRecordOnThread` / `WaitOnThread` | 跨Rank通知；发送remoteNotifyIdx与接收localNotifyIdx配对 |
 | 执行控制 | `HcommBatchModeStart` / `End` | 设置任务提交模式，不等于全设备完成同步 |
-| 通信域使用生命周期 | `HcommAcquireComm` / `ReleaseComm` | 取得/归还已有域的使用引用，不是创建/销毁整个域 |
+| 通信域使用生命周期 | `HcommAcquireComm` / `ReleaseComm` | 取得/释放已有域的使用保护（950/960使用isUsed标记），不是创建/销毁整个域 |
 
 A5数据分支把Channel解释为`BaseTransportLiteImpl`并配合`StreamLite`生成传输任务；其他设备有旧适配路径。HCCL经[src/common/hcomm_dlsym](../hccl/src/common/hcomm_dlsym)动态加载HCOMM接口；本文直接跳到HCOMM实现便于阅读，不意味着新增了跨仓私有头文件依赖。Wait包装还可能选择`WithDefaultTimeout`接口。
 

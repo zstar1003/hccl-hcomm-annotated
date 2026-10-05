@@ -35,6 +35,7 @@ HcclResult HcclCommMemReg(HcclComm comm, const char* memTag, const CommMem* mem,
     CHK_PRT_RET(
         strlen(memTag) == 0 || strlen(memTag) > HCCL_RES_TAG_MAX_LEN,
         HCCL_ERROR("[HcclCommMemReg]memTag length is %zu", strlen(memTag)), HCCL_E_PARA);
+    // [中文导读] 保留的对称内存和 Team 同步内存前缀属于内部协议，拒绝用户标签占用这些命名空间。
     std::string memTagStr(memTag);
     CHK_PRT_RET(
         memTagStr.compare(0, strlen(HCCL_SYMMETRIC_MEMORY_TAG_PREFIX), HCCL_SYMMETRIC_MEMORY_TAG_PREFIX) == 0,
@@ -47,6 +48,7 @@ HcclResult HcclCommMemReg(HcclComm comm, const char* memTag, const CommMem* mem,
         HCCL_ERROR(
             "[HcclCommMemReg]memTag[%s] uses reserved team syncmem prefix[%s]", memTag, HCCL_TEAM_SYNCMEM_TAG_PREFIX),
         HCCL_E_PARA);
+    // [中文导读] 检查内存描述和句柄出参，再限定内存类型、非空地址与非零字节容量。
     CHK_PRT_RET(mem == nullptr, HCCL_ERROR("[HcclCommMemReg]mem is null"), HCCL_E_PTR);
     CHK_PRT_RET(memHandle == nullptr, HCCL_ERROR("[HcclCommMemReg]memHandle is null"), HCCL_E_PTR);
     CHK_PRT_RET(
@@ -66,6 +68,7 @@ HcclResult HcclCommMemReg(HcclComm comm, const char* memTag, const CommMem* mem,
         CHK_PTR_NULL(collComm);
         auto myRank = collComm->GetMyRank();
         CHK_PTR_NULL(myRank);
+        // [中文导读] V2 把标签和原内存描述登记到域的 CommMems，返回域级注册句柄供后续 Channel 选择内存。
         CommMems* commMem = myRank->GetCommMems();
         HcclResult ret = HCCL_SUCCESS;
         ret = commMem->CommRegMem(memTagStr, *mem, memHandle);
@@ -77,6 +80,7 @@ HcclResult HcclCommMemReg(HcclComm comm, const char* memTag, const CommMem* mem,
 #endif
     auto* hcclComm = static_cast<hccl::hcclComm*>(comm);
     CHK_PTR_NULL(hcclComm);
+    // [中文导读] 兼容路径转换描述类型并清零注册属性；HOST 保留，其他允许类型映射到 DEVICE。
     HcclMem hcclMem;
     hcclMem.addr = mem->addr;
     hcclMem.size = mem->size;
@@ -115,6 +119,7 @@ HcclResult HcclCommDeregMem(HcclComm comm, const char* memTag, const void* memHa
         ret = commMemMgr.CommUnregMem(std::string(memTag), memHandle);
     }
 
+    // [中文导读] 当前域没有绑定该句柄时按成功处理，重复解绑可结束而不必让调用方恢复不存在的绑定。
     CHK_PRT_RET(
         ret == HCCL_E_NOT_FOUND, HCCL_WARNING("[HcclCommDeregMem]handle not bound in this domain. raw[%p]", memHandle),
         HCCL_SUCCESS);
@@ -130,6 +135,7 @@ HcclResult GetHcclBufferWithClearFlag(HcclComm comm, void** buffer, uint64_t* si
     const std::string& commId = hcclComm->GetIdentifier();
     hccl::CollComm* collComm = hcclComm->GetCollComm();
     CHK_PTR_NULL(collComm);
+    // [中文导读] 单 Rank 不需要跨 Rank 中转区，因此明确返回空地址和零容量，并保持成功状态。
     if (collComm->GetRankSize() == 1) {
         HCCL_RUN_WARNING("[%s] comm[%s] is single rank, return nullptr", __func__, commId.c_str());
         *buffer = nullptr;
@@ -140,6 +146,7 @@ HcclResult GetHcclBufferWithClearFlag(HcclComm comm, void** buffer, uint64_t* si
     CHK_PTR_NULL(myRank);
     CommMems* commMem = myRank->GetCommMems();
     CHK_PTR_NULL(commMem);
+    // [中文导读] 先取得域内缓冲区，再把 clearFlag 交给清零管理逻辑；同一帮助函数承接普通获取和清零获取。
     CHK_RET(commMem->GetHcclBuffer(*buffer, *size));
     CHK_RET(commMem->HcclBufferMemset(*buffer, *size, clearFlag));
 
@@ -173,6 +180,7 @@ HcclResult HcclGetHcclBuffer(HcclComm comm, void** buffer, uint64_t* size)
             *size = 0;
             return HCCL_SUCCESS;
         }
+        // [中文导读] 连接模式的兼容域可通过 MyRank 获取 CCL 区；此分支没有调用带 clearFlag 的清零逻辑。
         if (hcclComm->GetConnectMode() != 0 && myRank != nullptr) {
             CommMems* commMem = myRank->GetCommMems();
             CHK_PTR_NULL(commMem);
@@ -206,6 +214,7 @@ HcclResult HcclGetHcclBufferCleared(HcclComm comm, void** buffer, uint64_t* size
     CHK_PRT_RET(size == nullptr, HCCL_ERROR("[%s] size is null", __func__), HCCL_E_PTR);
 
 #if (!defined(HCCD)) && (!defined(CCL_KERNEL_AICPU))
+    // [中文导读] 清零获取只在此 Host 新流程分支实现；不支持的编译/兼容路径返回 NOT_SUPPORT。
     HCCLV2_FUNC_RUN([&]() -> HcclResult {
         return GetHcclBufferWithClearFlag(comm, buffer, size, true);
     }());

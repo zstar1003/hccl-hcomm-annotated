@@ -37,6 +37,7 @@ HcclResult EndpointPair::Init()
     std::lock_guard<std::mutex> lock(channelMtx_);
     EXCEPTION_CATCH(socketMgr_ = std::make_unique<SocketMgr>(), return HCCL_E_PTR);
     channelHandles_.clear();
+    // [中文导读] 读取当前逻辑设备并转换为物理设备编号，供后续 Socket 链路描述使用。
     s32 devLogicId;
     CHK_RET(hrtGetDevice(&devLogicId));
     CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<u32>(devLogicId), devicePhyId_));
@@ -51,6 +52,7 @@ HcclResult EndpointPair::GetHostSocketWithRank(
     uint32_t connectMode = 0;
     Hccl::LinkData linkData = BuildDefaultLinkData();
     CHK_RET(EndpointDescPairToLinkData(localEndpointDesc_, remoteEndpointDesc_, linkData, reuseIdx));
+    // [中文导读] 复用下标非零时加入 Socket 标签，区分同一端点对上并行申请的不同连接槽位。
     std::string linkTag = socketTag;
     if (linkData.GetReuseIdx() != "0") {
         linkTag += ("_" + linkData.GetReuseIdx());
@@ -81,6 +83,7 @@ HcclResult EndpointPair::EnsureSocketMgrCompat(const uint32_t myRank, const std:
     int32_t devLogicId = HcclGetThreadDeviceId();
     uint32_t devPhyId{0};
     CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<uint32_t>(devLogicId), devPhyId));
+    // [中文导读] 先在锁外准备兼容 SocketManager 并注入 Rank 监听端口表，再持锁确认是否已有并发创建结果。
     std::unique_ptr<Hccl::SocketManager> newMgr = nullptr;
     EXCEPTION_CATCH(
         newMgr = std::make_unique<Hccl::SocketManager>(myRank, devPhyId, devLogicId, socketTag), return HCCL_E_PTR);
@@ -114,6 +117,7 @@ HcclResult EndpointPair::HandleHostSocketOrBuildLinkData(
 {
     if (localEndpointDesc_.loc.locType == EndpointLocType::ENDPOINT_LOC_TYPE_HOST) {
         std::string socketTagPrefix = socketTag;
+        // [中文导读] Host 连接标签按两端 Rank 的升序组合，让双方使用相同键匹配 Socket。
         if (myRank <= rmtRank) {
             socketTagPrefix += "_" + std::to_string(myRank) + "_" + std::to_string(rmtRank);
         } else {
@@ -138,11 +142,13 @@ HcclResult EndpointPair::GetSocketInternal(
     bool isHost = false;
     CHK_RET(HandleHostSocketOrBuildLinkData(
         myRank, rmtRank, socketTag, reuseIdx, listenPort, socket, devicePhyId, remoteDevicePhyId, linkData, isHost));
+    // [中文导读] Host 分支已取得 Socket，可直接返回；设备分支继续使用兼容 SocketManager 完成建链。
     if (isHost) {
         return HCCL_SUCCESS;
     }
     EXCEPTION_HANDLE_BEGIN
     Hccl::SocketConfig socketConfig = BuildSocketConfig(linkData, socketTag);
+    // [中文导读] connectMode 选择连接已准备的 Socket 还是批量创建；取得结果后必须确认连接对象非空。
     if (connectMode) {
         CHK_PTR_NULL(socketMgrCompat_);
         socketMgrCompat_->ConnectSockets(socketConfig);
@@ -204,6 +210,7 @@ HcclResult EndpointPair::CreateChannel(
     ChannelHandle* channels)
 {
     std::lock_guard<std::mutex> lock(channelMtx_);
+    // [中文导读] 引擎尚无缓存或请求下标超出当前向量时创建新 Channel；输出句柄随后加入可复用槽位表。
     if (channelHandles_.find(engine) == channelHandles_.end() || channelHandles_[engine].size() <= reuseIdx) {
         CHK_RET_UNAVAIL(
             static_cast<HcclResult>(HcommCollectiveChannelCreate(endpointHandle, engine, channelDescs, 1, channels)));
@@ -217,6 +224,7 @@ HcclResult EndpointPair::CreateChannel(
         return HCCL_SUCCESS;
     }
 
+    // [中文导读] 缓存命中时返回槽位原句柄；额外内存从第 1 项开始更新，第 0 项按既有通道约定保留。
     channels[0] = channelHandles_[engine][reuseIdx];
     if (channelDescs->memHandleNum > 1) {
         CHK_RET(static_cast<HcclResult>(
@@ -233,6 +241,7 @@ HcclResult EndpointPair::CreateChannel(
 HcclResult EndpointPair::DestroyChannel(CommEngine engine, u32 reuseIdx)
 {
     std::lock_guard<std::mutex> lock(channelMtx_);
+    // [中文导读] 找不到待销毁槽位时按成功跳过，避免重复清理已经移除的缓存条目。
     if (channelHandles_.find(engine) == channelHandles_.end() || channelHandles_[engine].size() <= reuseIdx) {
         HCCL_WARNING(
             "EndpointPair::DestroyChannel: engine[%s] reuseIdx[%u], channelHandle size[%u],"
@@ -291,6 +300,7 @@ std::unordered_map<CommEngine, std::vector<ChannelHandle>> EndpointPair::GetChan
 bool EndpointPair::GetChannelHandle(CommEngine engine, u32 reuseIdx, ChannelHandle& handle) const
 {
     std::lock_guard<std::mutex> lock(channelMtx_);
+    // [中文导读] 持锁验证引擎和下标，只把存在的槽位句柄写入出参，查询失败时由调用方处理未命中。
     auto it = channelHandles_.find(engine);
     if (it == channelHandles_.end() || reuseIdx >= it->second.size()) {
         return false;

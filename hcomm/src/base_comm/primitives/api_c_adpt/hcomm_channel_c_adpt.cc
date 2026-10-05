@@ -143,6 +143,7 @@ void RollbackPluginChannels(ChannelHandle* channels, uint32_t count)
 HcommResult CreateOnePluginChannel(
     const NicPluginEntry* entry, void* epCtx, HcommChannelDesc* channelDesc, ChannelHandle* outChannel)
 {
+    // [中文导读] 先把出参置为无效句柄，再让网卡插件创建上下文与操作表；失败时调用方不会得到半成品句柄。
     *outChannel = 0;
 
     void* pluginCtx = nullptr;
@@ -151,6 +152,7 @@ HcommResult CreateOnePluginChannel(
     CHK_PRT_RET(
         (ret != HCCL_SUCCESS), HCCL_ERROR("[NicPlugin][%s] createChannel failed, ret[%d].", __func__, ret), ret);
 
+    // [中文导读] 校验插件必须实现的操作，随后填默认操作；任一步失败都尝试销毁刚获得的插件上下文。
     if (!ValidateChannelOps(pluginOps)) {
         HCCL_ERROR("[NicPlugin][%s] invalid channel ops.", __func__);
         DestroyPluginCtx(pluginOps, pluginCtx);
@@ -165,6 +167,7 @@ HcommResult CreateOnePluginChannel(
         return ret;
     }
 
+    // [中文导读] 初始化失败需销毁上下文并释放补齐后的操作表，成功才把资源移交持有者。
     ret = static_cast<HcommResult>(filledOps->init(pluginCtx));
     if (ret != HCCL_SUCCESS) {
         int32_t destroyRet = filledOps->destroy(pluginCtx);
@@ -176,6 +179,7 @@ HcommResult CreateOnePluginChannel(
         return ret;
     }
 
+    // [中文导读] 用 PluginChannelHolder 管理上下文和操作表，注册到全局通道映射后输出带插件标记的句柄。
     auto holder = std::make_shared<hcomm::PluginChannelHolder>(entry);
     holder->SetNicChannelCtx(filledOps, pluginCtx);
     ChannelHandle handle = ReinterpretAs<ChannelHandle>(holder.get());
@@ -326,6 +330,7 @@ HcommResult ProcessHcommChannelDescs(const HcommChannelDesc& channelDesc, HcommC
         return HCCL_E_PARA;
     }
 
+    // [中文导读] 仅复制双方 ABI 都覆盖的有效载荷，保留由当前版本初始化的头部和新增字段默认值。
     const uint32_t copySize = (channelDescFinal.header.size < channelDesc.header.size ? channelDescFinal.header.size :
                                                                                         channelDesc.header.size)
                               - sizeof(CommAbiHeader);
@@ -395,6 +400,7 @@ HcommResult NormalizeHcommChannelDescs(
     channelDescFinals.clear();
     channelDescFinals.reserve(channelNum);
     EndpointLocType localLocType = ENDPOINT_LOC_TYPE_DEVICE;
+    // [中文导读] 先取得本地 Endpoint 的位置类型，后续 RoCE 属性校验据此区分 Host 与 Device 要求。
     CHK_RET(static_cast<HcclResult>(GetEndPointLocType(endpointHandle, localLocType)));
     for (uint32_t idx = 0; idx < channelNum; ++idx) {
         HcommChannelDesc channelDescFinal{};
@@ -407,6 +413,7 @@ HcommResult NormalizeHcommChannelDescs(
             HCCL_ERROR("[%s] failed to normalize channelDesc[%u], ret[%d].", __func__, idx, ret);
             return ret;
         }
+        // [中文导读] 描述规范化后按 QoS、UB、UB_MEM、RoCE 分项检查，任一失败都不进入通道创建。
         ret = CheckChannelDescQos(channelDescFinal);
         if (ret != HCOMM_SUCCESS) {
             HCCL_ERROR("[%s] CheckChannelDescQos failed, ret[%d].", __func__, ret);
@@ -452,6 +459,7 @@ HcommResult HcommCollectiveChannelCreate(
     HCCL_INFO(
         "[%s] START. endpointHandle[0x%llx], engine[%s], channelNum[%u].", __func__, endpointHandle,
         GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), channelNum);
+    // [中文导读] 集合通信入口直接创建规范化后的通道对象，并原样返回创建状态；用户句柄准备属于另一入口路径。
     HcommResult ret
         = ChannelProcess::CreateChannelsLoop(endpointHandle, engine, channelDescFinals.data(), channelNum, channels);
     HCCL_INFO(
@@ -480,6 +488,7 @@ HcommResult CreatePluginChannels(
 
     for (uint32_t idx = 0; idx < channelNum; ++idx) {
         HcommResult ret = CreateOnePluginChannel(entry, epCtx, &channelDescs[idx], &channels[idx]);
+        // [中文导读] 本批插件创建任一项失败便回滚此前成功项，并清零它们的句柄后返回本次创建错误。
         if (ret != HCCL_SUCCESS) {
             (void)RollbackPluginChannels(channels, idx);
             return ret;
@@ -508,6 +517,7 @@ HcommResult HcommChannelCreate(
     HCCL_INFO(
         "[%s] START. endpointHandle[0x%llx], engine[%s], channelNum[%u].", __func__, endpointHandle,
         GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), channelNum);
+    // [中文导读] 插件端点委托插件操作表建立通道；普通端点继续走内建 ChannelProcess 及用户句柄准备。
     if (endpoint != nullptr && dynamic_cast<hcomm::PluginEndpointHolder*>(endpoint) != nullptr) {
         CHK_RET(
             static_cast<HcclResult>(CreatePluginChannels(endpoint, channelDescFinals.data(), channelNum, channels)));
@@ -607,6 +617,7 @@ static HcclResult DestroyBuiltinChannels(std::vector<ChannelHandle>& builtinChan
         HCCL_WARNING(
             "[%s] ChannelDestroy failed, ret[%d], force unregister shared jetty channels.", __func__, builtinRet);
     }
+    // [中文导读] 内建销毁返回后仍注销共享 jetty 的通道记录，避免已经不可用的通道继续阻碍 Endpoint 清理。
     (void)hcomm::SharedJettyMgr::GetInstance().UnregisterChannels(builtinChannels.data(), builtinChannels.size());
     return builtinRet;
 }
@@ -616,6 +627,7 @@ HcommResult HcommChannelDestroy(const ChannelHandle* channels, uint32_t channelN
     CHK_PTR_NULL(channels);
     CHK_PRT_RET(
         (channelNum == 0), HCCL_ERROR("[%s] Invalid channelNum, channelNum[%u]", __func__, channelNum), HCCL_E_PARA);
+    // [中文导读] 本实现按首个句柄判断整批插件路径；插件通道通过全局映射移除触发持有者的资源释放。
     if (IS_PLUGIN_HANDLE(channels[0])) {
         for (uint32_t idx = 0; idx < channelNum; ++idx) {
             auto* ch = CHANNEL_FROM_HANDLE(channels[idx]);

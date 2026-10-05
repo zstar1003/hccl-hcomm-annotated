@@ -81,6 +81,7 @@ HcclResult HcclThreadAcquireWithConfigDfx(
     CHK_PTR_NULL(threads);
     HcclCommDfx* hcclCommDfx = collComm->GetHcclCommDfx();
     CHK_PTR_NULL(hcclCommDfx);
+    // [中文导读] AICPU 记录实际流 ID、域与 Rank 信息并上报初始化 Kernel，其他引擎逐 Thread 绑定 DFX 回调。
     if (engine == CommEngine::COMM_ENGINE_AICPU) {
         Mc2CommInfo mc2CommInfo;
         mc2CommInfo.FreeStreamId = 0;
@@ -122,6 +123,7 @@ ValidateThreadAcquireParams(CommEngine engine, ThreadType type, const ThreadConf
         HCCL_ERROR("[%s] commEngine[%d] is invalid", __func__, static_cast<int32_t>(engine)), HCCL_E_PARA);
     CHK_PRT_RET(threadNum == 0, HCCL_ERROR("[%s] threadNum[%u] is invalid", __func__, threadNum), HCCL_E_PARA);
     CHK_PRT_RET(config == nullptr, HCCL_ERROR("[%s] config is null", __func__), HCCL_E_PTR);
+    // [中文导读] 逐项检查 ThreadConfig 的 ABI 魔数，要求调用方先初始化配置数组，避免把未初始化字段当成配置。
     for (uint32_t i = 0; i < threadNum; ++i) {
         CHK_PRT_RET(
             config[i].header.magicWord != HCOMM_THREAD_CONFIG_MAGIC_WORD,
@@ -130,6 +132,7 @@ ValidateThreadAcquireParams(CommEngine engine, ThreadType type, const ThreadConf
                 config[i].header.magicWord, HCOMM_THREAD_CONFIG_MAGIC_WORD),
             HCCL_E_PARA);
     }
+    // [中文导读] 配置接口要求用 CPU/AICPU 加 ThreadType 表示执行方式，旧 TS 引擎枚举在这里被明确拒绝。
     CHK_PRT_RET(
         engine == CommEngine::COMM_ENGINE_AICPU_TS || engine == CommEngine::COMM_ENGINE_CPU_TS,
         HCCL_ERROR(
@@ -154,6 +157,7 @@ HcclResult HcclThreadAcquireWithConfig(
 {
     CHK_PRT_RET(comm == nullptr, HCCL_ERROR("[%s] comm is null", __func__), HCCL_E_PTR);
     CHK_PRT_RET(threads == nullptr, HCCL_ERROR("[%s] threads is null", __func__), HCCL_E_PTR);
+    // [中文导读] 在调用资源管理器前完成整批请求校验；threadNum 同时决定配置项数和出参句柄数量。
     CHK_RET(ValidateThreadAcquireParams(engine, type, config, threadNum));
 
     u64 beginTime = Hccl::DfxDlProfFunction::GetInstance().dlMsprofSysCycleTime();
@@ -170,6 +174,7 @@ HcclResult HcclThreadAcquireWithConfig(
         CHK_PTR_NULL(collComm);
         CommEngineResMgr* engineResMgr = collComm->GetCommEngineResMgr();
         CHK_PTR_NULL(engineResMgr);
+        // [中文导读] V2 管理器返回执行句柄及用于观测的 threadId；资源申请成功后再注册 DFX。
         ret = engineResMgr->HcclThreadAcquireV2(engine, threadNum, type, config, threads, threadId);
         if (ret != HCCL_SUCCESS) {
             HCCL_ERROR(
@@ -232,6 +237,7 @@ HcclResult HcclThreadAcquire(
         "Entry-%s:comm[%s] engine[%u] ThreadNum[%u] notifyNumPerThread[%u]", __func__, commId.c_str(), engine,
         threadNum, notifyNumPerThread);
 
+    // [中文导读] 把旧 TS 引擎转换为 CPU/AICPU，并为每条执行 Thread 建立 ABI 已初始化的 TS 配置。
     CommEngine newEngine = ConvertEngineToTsType(engine);
     ThreadType type = THREAD_TYPE_TS;
     std::unique_ptr<ThreadConfig[]> config = std::make_unique<ThreadConfig[]>(threadNum);
@@ -239,6 +245,7 @@ HcclResult HcclThreadAcquire(
     CHK_PRT_RET(
         ThreadConfigInit(config.get(), threadNum) != 0, HCCL_ERROR("[%s] ThreadConfigInit failed", __func__),
         HCCL_E_INTERNAL);
+    // [中文导读] 在窄化为 uint16_t 前限制通知槽位数量；各配置项随后采用同一 notifyNumPerThread。
     CHK_PRT_RET(
         notifyNumPerThread >= HCCL_THREAD_NOTIFY_MAX_NUM,
         HCCL_ERROR("[%s] notifyNumPerThread[%u] exceeds HCCL_THREAD_NOTIFY_MAX_NUM", __func__, notifyNumPerThread),
@@ -254,6 +261,7 @@ HcclResult HcclThreadAcquire(
         CHK_PTR_NULL(collComm);
         CommEngineResMgr* engineResMgr = collComm->GetCommEngineResMgr();
         CHK_PTR_NULL(engineResMgr);
+        // [中文导读] V2 使用转换后的引擎和 TS 类型申请，原始枚举仅用于入口诊断。
         ret = engineResMgr->HcclThreadAcquireV2(newEngine, threadNum, type, config.get(), threads, threadId);
         if (ret != HCCL_SUCCESS) {
             HCCL_ERROR(
@@ -298,6 +306,7 @@ HcclResult HcclThreadAcquireWithStreamDfx(
     if (engine == CommEngine::COMM_ENGINE_AICPU) {
         Thread* threadPtr = reinterpret_cast<Thread*>(thread);
         CHK_PTR_NULL(threadPtr);
+        // [中文导读] AICPU 路径从包装后的 Thread 读取其 SQ ID，用实际执行流建立域的观测信息。
         Stream* threadStream = threadPtr->GetStream();
         CHK_PTR_NULL(threadStream);
         Mc2CommInfo mc2CommInfo;
@@ -325,6 +334,7 @@ HcclResult HcclThreadAcquireWithStream(
         !IsValidCommEngine(engine),
         HCCL_ERROR("[%s] commEngine[%d] is invalid", __func__, static_cast<int32_t>(engine)), HCCL_E_PARA);
 
+    // [中文导读] 先统一兼容枚举，再把用户提供的 stream 交给对应域的资源管理器包装成通信 Thread。
     CommEngine newEngine = ConvertEngineToTsType(engine);
 
     auto* hcclComm = static_cast<hccl::hcclComm*>(comm);
@@ -372,6 +382,7 @@ HcclResult HcclDedicatedThreadAcquire(
     hccl::CollComm* collComm = hcclComm->GetCollComm();
     CHK_PTR_NULL(collComm);
     /* 保序场景：委托给 OrderLaunchThreadMgr（进程粒度） */
+    // [中文导读] 保序专用 Thread 由当前设备的进程级 OrderLaunchThreadMgr 分配，其他专用类型继续走域资源管理器。
     if (ORDER_LAUNCH_TYPES.find(useType) != ORDER_LAUNCH_TYPES.end()) {
         s32 deviceLogicId = Hccl::HrtGetDevice();
         auto& resMgr = hccl::CollCommMgr::GetInstance().GetOrderLaunchThreadMgr(deviceLogicId);
@@ -508,6 +519,7 @@ HcclResult HcclThreadExportToCommEngine(
             "[%s] commEngine[%s] is invalid", __func__,
             GetEnumToString(GetCommEngineStatusStrMap(), dstCommEngine).c_str()),
         HCCL_E_PARA);
+    // [中文导读] 一次导出接受 1 至 40 个 Thread；目标引擎合法后才进入域管理器的转换逻辑。
     if (threadNum == 0 || threadNum > MAX_EXPORT_THREAD_NUM) {
         HCCL_ERROR("[%s] threadNum[%u] is 0 or greater than %u", __func__, threadNum, MAX_EXPORT_THREAD_NUM);
         return HCCL_E_PARA;
@@ -525,6 +537,7 @@ HcclResult HcclThreadExportToCommEngine(
         CHK_PTR_NULL(collComm);
         CommEngineResMgr* engineResMgr = collComm->GetCommEngineResMgr();
         CHK_PTR_NULL(engineResMgr);
+        // [中文导读] 由资源管理器产生目标引擎句柄；导出表示转换资源访问形态，适配层没有创建 OS 线程。
         ret = engineResMgr->HcclThreadExportToCommEngine(threadNum, threads, dstCommEngine, exportedThreads);
     } else {
         auto& engineResMgr = hcclComm->GetIndependentOp().GetCommEngineResMgr();

@@ -650,6 +650,7 @@ static HcclResult PrepareV2ChannelAcquire(hccl::hcclComm* hcclComm, HcclComm com
 
     s32 deviceLogicId = 0;
     (void)hrtGetDeviceRefresh(&deviceLogicId);
+    // [中文导读] 消费当前设备暂存的 RankTable CRC，非零时登记到 Rank 一致性检查器，为后续跨 Rank 比较准备输入。
     u32 rankTableCrc = RankTableCrcBridge::GetInstance().ConsumeRankTableJsonCrc(deviceLogicId);
     if (rankTableCrc != 0) {
         CHK_RET(RankConsistencyCheckerV2::GetInstance(deviceLogicId).RecordRankTableCrcV2(rankTableCrc));
@@ -659,6 +660,7 @@ static HcclResult PrepareV2ChannelAcquire(hccl::hcclComm* hcclComm, HcclComm com
     std::array<char, sizeof(HCOMM_PKG_NAME)> hcommPkgName = {};
     std::copy(std::begin(HCOMM_PKG_NAME), std::end(HCOMM_PKG_NAME), hcommPkgName.begin());
     std::array<char, CANN_VERSION_MAX_LEN + 1> hcommVersionStr = {0};
+    // [中文导读] 获取本地 hcomm 包版本并登记到一致性检查器；获取失败在建链前转成 INTERNAL 返回。
     aclError aclRet = aclsysGetVersionStr(hcommPkgName.data(), hcommVersionStr.data());
     CHK_PRT_RET(
         aclRet != ACL_SUCCESS, HCCL_ERROR("[%s] aclsysGetVersionStr failed, aclRet[%d].", __func__, aclRet),
@@ -666,6 +668,7 @@ static HcclResult PrepareV2ChannelAcquire(hccl::hcclComm* hcclComm, HcclComm com
     std::string curVersion(hcommVersionStr.data());
     CHK_RET(RankConsistencyCheckerV2::GetInstance(deviceLogicId).RecordCannVersionV2(curVersion));
 
+    // [中文导读] 用域的算子展开模式约束引擎选择，尤其防止 CCU 请求进入不支持的展开模式。
     const uint32_t opExpansionMode = myRank->GetOpExpansionMode();
     if (!CheckCommEngine(engine, opExpansionMode)) {
         HCCL_ERROR(
@@ -678,6 +681,7 @@ static HcclResult PrepareV2ChannelAcquire(hccl::hcclComm* hcclComm, HcclComm com
         InitDebugConfigByEnv();
     }
 
+    // [中文导读] 非 CPU 引擎还要把通信域注册到集群监控；注册失败向上传递，停止本次申请。
     if (engine != CommEngine::COMM_ENGINE_CPU) {
         HcclResult monRet = RegisterToClusterMonitor(comm);
         CHK_PRT_RET(
@@ -700,6 +704,7 @@ static HcclResult FinalizeV2ChannelAcquire(
     hccl::CollComm* collComm = hcclComm->GetCollComm();
     CHK_PTR_NULL(collComm);
 
+    // [中文导读] 仅当本批某条通道追加了对称内存句柄，才回填对应远端内存描述。
     if (std::any_of(channelSymMemAppended.begin(), channelSymMemAppended.end(), [](bool appended) {
             return appended;
         })) {
@@ -709,6 +714,7 @@ static HcclResult FinalizeV2ChannelAcquire(
             collComm, myRank, channelDescFinals, channels, channelNum, channelSymMemAppended));
     }
 
+    // [中文导读] CPU 通道逐条绑定 DPU 观测回调；此后置步骤失败也会使整个 Acquire 返回错误。
     if (engine == COMM_ENGINE_CPU) {
         HcclCommDfx* hcclCommDfx = collComm->GetHcclCommDfx();
         CHK_PTR_NULL(hcclCommDfx);
@@ -770,6 +776,7 @@ HcclResult HcclChannelAcquire(
     HCCL_RUN_INFO(
         "Entry-%s channelNum[%u], engine[%s] group[%s]", __func__, channelNum,
         GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), hcclComm->GetIdentifier().c_str());
+    // [中文导读] 逐条初始化并规范化上层描述，保留顺序后组成最终请求数组；任一描述非法便停止申请。
     std::vector<HcclChannelDesc> channelDescFinals;
     std::vector<std::vector<HcclMemHandle>> mergedMemHandles;
     for (uint32_t idx = 0; idx < channelNum; idx++) {
@@ -795,6 +802,7 @@ HcclResult HcclChannelAcquire(
 
         hccl::MyRank* myRank = collComm->GetMyRank();
         CHK_PTR_NULL(myRank);
+        // [中文导读] AICPU/AIV 按需合并对称内存句柄，并记录哪些通道追加过内存，供成功后的远端信息回填。
         std::vector<bool> channelSymMemAppended;
         if (IsAicpuEngine(engine) || engine == COMM_ENGINE_AIV) {
             CHK_RET(PrepareChannelSymMemHandles(
@@ -825,6 +833,7 @@ HcclResult HcclChannelAcquire(
                 GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), ret),
             ret);
 
+        // [中文导读] 主建链成功后补齐对称内存和 DFX；这一步仍可能返回错误，不能只看 CreateChannels 的状态。
         CHK_RET(FinalizeV2ChannelAcquire(
             hcclComm, engine, channelDescFinals, channels, channelNum, channelSymMemAppended, beginTime));
     } else {
@@ -854,6 +863,7 @@ HcclResult HcclChannelAcquire(
             ret),
         ret);
 
+    // [中文导读] AIV 出参需要转换为设备可用的指针表示；因此用户句柄不一定等于 Host 缓存对象地址。
     CHK_RET(ConvertAivChannelHandlesToDevicePtrs(engine, channelDescFinals.data(), channelNum, channels));
 
     HCCL_RUN_INFO(
@@ -920,6 +930,7 @@ HcclResult HcclChannelQuery(
     std::vector<HcclChannelDesc> channelDescFinals;
     CHK_RET(PackChannelDescs(channelDescs, channelNum, hcclComm, engine, channelDescFinals));
 
+    // [中文导读] 查询规范化描述对应的已有槽位；是否命中由输出句柄体现，不会走 Acquire 的创建主链。
     HcclResult ret = myRank->QueryChannels(engine, channelDescFinals.data(), channelNum, channels);
     CHK_PRT_RET(
         ret != HCCL_SUCCESS,
@@ -964,6 +975,7 @@ HcclResult HcclChannelDestroy(HcclComm comm, const ChannelHandle* channels, uint
     hccl::MyRank* myRank = collComm->GetMyRank();
     CHK_PTR_NULL(myRank);
 
+    // [中文导读] V2 把句柄数组交给 MyRank 批量销毁；具体支持的引擎还受 MyRank 的销毁策略约束。
     HcclResult ret = myRank->DestroyChannels(channels, channelNum);
     CHK_PRT_RET(
         ret != HCCL_SUCCESS,

@@ -18,9 +18,11 @@ using namespace hccl;
 // [中文导读] length是描述字节数，不是张量元素数；描述在后续建链时交换，由上层读取后比较算子参数。
 HcclResult HcclCommAddExchangeInfo(HcclComm comm, const void* data, uint32_t length)
 {
+    // [中文导读] 先检查通信域、描述地址与非零字节长度，避免向一致性管理器登记不可读取的描述。
     CHK_PTR_NULL(comm);
     CHK_PTR_NULL(data);
     CHK_PRT_RET(length == 0, HCCL_ERROR("[HcclCommAddExchangeInfo] length is 0."), HCCL_E_PARA);
+    // [中文导读] 从公开域句柄逐级取得 CollComm 和本 Rank；描述归属于本 Rank 的一致性管理器。
     hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     hccl::CollComm* collComm = hcclComm->GetCollComm();
     CHK_PTR_NULL(collComm);
@@ -36,6 +38,7 @@ HcclResult HcclCommAddExchangeInfo(HcclComm comm, const void* data, uint32_t len
 HcclResult
 HcclCommGetExchangeInfo(HcclComm comm, uint32_t remoteRank, uint32_t length, void* data, uint32_t* actualLength)
 {
+    // [中文导读] data 与 actualLength 都是必需出参；这里先检查指针，远端 Rank 与长度匹配由管理器处理。
     CHK_PTR_NULL(comm);
     CHK_PTR_NULL(data);
     CHK_PTR_NULL(actualLength);
@@ -45,6 +48,7 @@ HcclCommGetExchangeInfo(HcclComm comm, uint32_t remoteRank, uint32_t length, voi
     hccl::MyRank* myRank = collComm->GetMyRank();
     CHK_PTR_NULL(myRank);
     CollCommConfigConsistency& collCommConfigConsistency = myRank->GetCollCommConfigConsistency();
+    // [中文导读] 交给管理器查找 remoteRank 的已交换记录；接口本身没有发起新的跨 Rank 传输。
     return collCommConfigConsistency.GetExchangeInfo(remoteRank, length, data, actualLength);
 }
 
@@ -58,5 +62,6 @@ HcclResult HcclCommResetExchangeInfo(HcclComm comm)
     hccl::MyRank* myRank = collComm->GetMyRank();
     CHK_PTR_NULL(myRank);
     CollCommConfigConsistency& collCommConfigConsistency = myRank->GetCollCommConfigConsistency();
+    // [中文导读] 清除本 Rank 管理器中的交换状态，使下一轮描述登记从重置后的状态开始。
     return collCommConfigConsistency.ResetExchangeInfo();
 }

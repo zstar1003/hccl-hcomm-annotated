@@ -1,25 +1,76 @@
 {
   "format": 1,
   "baseline": "efbe1cd23c64f4c62525c81d39812834113f4aa9",
-  "scope": "首批：Ascend 950、新流程、AICPU_TS单算子主链及CCU/AIV公共资源分支；非全仓注释",
+  "scope": "细化版：Ascend 950、新流程、AICPU_TS单算子主链及CCU/AIV公共资源分支，按功能小段解释；非全仓注释",
   "marker": "// [中文导读] ",
   "files": [
-    {"path":"hccl/src/ops/all_to_all_v/all_to_all_v.cc","topic":"AllToAll/V入口、参数布局、公共调度"},
-    {"path":"hccl/src/ops/all_gather/all_gather.cc","topic":"AllGather入口语义"},
-    {"path":"hccl/src/ops/all_reduce/all_reduce.cc","topic":"AllReduce入口语义"},
-    {"path":"hccl/src/ops/op_common/op_common.cc","topic":"公共调度、资源复用、AICPU/CCU/AIV分支"},
-    {"path":"hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.cc","topic":"设备入口、上下文恢复、任务缓存与编排"},
-    {"path":"hccl/src/ops/all_to_all_v/algorithm/template/aicpu/ins_temp_all_to_all_v_mesh_1D.cc","topic":"Mesh1D模板资源需求、分片、Peer轮次及Read/Write路径"},
-    {"path":"hccl/src/ops/op_common/algorithm/template/wrapper/alg_data_trans_wrapper.cc","topic":"收发协议、LocalCopy/Reduce、主从同步"},
-    {"path":"hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_res_c_adpt.cc","topic":"HcclChannelAcquire申请边界"},
-    {"path":"hcomm/src/coll_communicator_mgr/api_c_adpt/exchange_info_c_adpt.cc","topic":"一致性元信息登记、读取和清理"},
-    {"path":"hcomm/src/coll_communicator_mgr/api_c_adpt/resource/channel_c_adpt.cc","topic":"通道通知数、远端CCL/注册内存查询"},
-    {"path":"hcomm/src/coll_communicator_mgr/api_c_adpt/resource/comm_mem_c_adpt.cc","topic":"本地CCL缓冲区获取及生命周期"},
-    {"path":"hcomm/src/coll_communicator_mgr/api_c_adpt/resource/thread_c_adpt.cc","topic":"Thread申请、TS枚举转换、用户流包装"},
-    {"path":"hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/my_rank.cc","topic":"Socket、Endpoint、Channel创建/复用与一致性交换"},
-    {"path":"hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints/endpoint_mgr.cc","topic":"Endpoint缓存、内存注册、句柄选择与释放顺序"},
-    {"path":"hcomm/src/base_comm/resources/endpoint_pairs/endpoint_pair.cc","topic":"按Engine及复用槽位创建或更新通道"},
-    {"path":"hcomm/src/base_comm/primitives/api_c_adpt/hcomm_channel_c_adpt.cc","topic":"集合通信创建入口与公开创建入口的区别"},
-    {"path":"hcomm/src/base_comm/primitives/api_c_adpt/aicpu_ts_primitives_c_adpt.cc","topic":"本地/远端数据原语、通知、批提交与域使用引用"}
+    {
+      "path": "hccl/src/ops/all_to_all_v/all_to_all_v.cc",
+      "topic": "AllToAll/V入口、参数布局、公共调度"
+    },
+    {
+      "path": "hccl/src/ops/all_gather/all_gather.cc",
+      "topic": "AllGather入口、图资源、参数容量、快速路径与算法调度"
+    },
+    {
+      "path": "hccl/src/ops/all_reduce/all_reduce.cc",
+      "topic": "AllReduce入口、类型/运算校验、参数与对称内存条件、算法调度"
+    },
+    {
+      "path": "hccl/src/ops/op_common/op_common.cc",
+      "topic": "公共调度、资源复用、AICPU/CCU/AIV分支"
+    },
+    {
+      "path": "hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.cc",
+      "topic": "设备入口、上下文恢复、任务缓存与编排"
+    },
+    {
+      "path": "hccl/src/ops/all_to_all_v/algorithm/template/aicpu/ins_temp_all_to_all_v_mesh_1D.cc",
+      "topic": "Mesh1D模板资源需求、分片、Peer轮次及Read/Write路径"
+    },
+    {
+      "path": "hccl/src/ops/op_common/algorithm/template/wrapper/alg_data_trans_wrapper.cc",
+      "topic": "收发协议、LocalCopy/Reduce、主从同步"
+    },
+    {
+      "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_res_c_adpt.cc",
+      "topic": "HcclChannelAcquire申请边界"
+    },
+    {
+      "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/exchange_info_c_adpt.cc",
+      "topic": "一致性元信息登记、读取和清理"
+    },
+    {
+      "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/resource/channel_c_adpt.cc",
+      "topic": "通道通知数、远端CCL/注册内存查询"
+    },
+    {
+      "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/resource/comm_mem_c_adpt.cc",
+      "topic": "本地CCL缓冲区获取及生命周期"
+    },
+    {
+      "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/resource/thread_c_adpt.cc",
+      "topic": "Thread申请、TS枚举转换、用户流包装"
+    },
+    {
+      "path": "hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/my_rank.cc",
+      "topic": "Socket、Endpoint、Channel创建/复用与一致性交换"
+    },
+    {
+      "path": "hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints/endpoint_mgr.cc",
+      "topic": "Endpoint缓存、内存注册、句柄选择与释放顺序"
+    },
+    {
+      "path": "hcomm/src/base_comm/resources/endpoint_pairs/endpoint_pair.cc",
+      "topic": "按Engine及复用槽位创建或更新通道"
+    },
+    {
+      "path": "hcomm/src/base_comm/primitives/api_c_adpt/hcomm_channel_c_adpt.cc",
+      "topic": "集合通信创建入口与公开创建入口的区别"
+    },
+    {
+      "path": "hcomm/src/base_comm/primitives/api_c_adpt/aicpu_ts_primitives_c_adpt.cc",
+      "topic": "本地/远端数据原语、通知、批提交与域使用保护"
+    }
   ]
 }

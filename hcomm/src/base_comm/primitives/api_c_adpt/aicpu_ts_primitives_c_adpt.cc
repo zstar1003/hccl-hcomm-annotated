@@ -35,6 +35,7 @@
 using Hccl::PLF_DATA_OP;
 
 using namespace hccl;
+// [中文导读] 每个调用线程各有提交上下文，记录参与批提交的通信 Thread 和等待配置，避免不同调用线程混用状态。
 thread_local LaunchContext g_threadLaunchCtx;
 
 bool IsBatchLaunchMode() { return g_threadLaunchCtx.IsBatchLaunchMode(); }
@@ -133,6 +134,7 @@ int32_t HcommLocalCopyOnThread(ThreadHandle thread, void* dst, const void* src, 
 
     CHK_PTR_NULL(dst);
     CHK_PTR_NULL(src);
+    // [中文导读] 批量模式下登记本次执行 Thread，EAGER 下登记函数直接返回；后续批提交汇总已登记的执行序列。
     AddThread(thread);
 
     Thread* const threadPtr = ReinterpretAs<Thread*>(thread);
@@ -142,6 +144,7 @@ int32_t HcommLocalCopyOnThread(ThreadHandle thread, void* dst, const void* src, 
     if (threadPtr->IsDeviceA5()) {
         EXCEPTION_CATCH(ret = threadPtr->LocalCopy(dst, src, len), ret = HCCL_E_INTERNAL);
     } else {
+        // [中文导读] 兼容实现用 len 字节构造源/目标描述并取得对应 Stream，把本地拷贝交给旧原语适配层。
         HcclBuf srcBuf{const_cast<void*>(src), len, nullptr};
         HcclBuf dstBuf{dst, len, nullptr};
         Stream* stream = GetStream(thread);
@@ -171,12 +174,14 @@ int32_t HcommLocalReduceOnThread(
     Thread* const threadPtr = ReinterpretAs<Thread*>(thread);
     CHK_PTR_NULL(threadPtr);
 
+    // [中文导读] 按元素类型大小把 count 换算为字节范围，底层本地归约接收该范围与类型/操作。
     uint64_t len = count * SIZE_TABLE[dataType];
 
     HcclResult ret = HCCL_SUCCESS;
     if (threadPtr->IsDeviceA5()) {
         EXCEPTION_CATCH(ret = threadPtr->LocalReduce(dst, src, len, dataType, reduceOp), ret = HCCL_E_INTERNAL);
     } else {
+        // [中文导读] 旧设备分支限制其实际支持的类型和归约操作，再转换为 HcclReduceInfo 调用兼容原语。
         CHK_PRT_RET(
             (IsSupportReduce(dataType, reduceOp) == false),
             HCCL_ERROR(
@@ -218,6 +223,7 @@ int32_t HcommThreadNotifyRecordOnThread(ThreadHandle thread, ThreadHandle dstThr
 
     HcclResult ret = HCCL_SUCCESS;
     if (threadPtr->IsDeviceA5()) {
+        // [中文导读] 通知资源属于目标 dstThread；读取它的槽位 ID，信号任务却排入发送者 thread 的执行序列。
         LocalNotify* const notifyPtr = dstThreadPtr->GetNotify(dstNotifyIdx);
         CHK_PTR_NULL(notifyPtr);
         const uint32_t notifyId = notifyPtr->notifyId_;
@@ -252,6 +258,7 @@ int32_t HcommThreadNotifyWaitOnThread(ThreadHandle thread, uint32_t notifyIdx, u
 
     HcclResult ret = HCCL_SUCCESS;
     if (threadPtr->IsDeviceA5()) {
+        // [中文导读] 等待资源来自当前 Thread 自己的槽位，将它转换为硬件通知 ID 后按 timeOut 秒建立等待。
         LocalNotify* const notifyPtr = threadPtr->GetNotify(notifyIdx);
         CHK_PTR_NULL(notifyPtr);
         const uint32_t notifyId = notifyPtr->notifyId_;
@@ -275,6 +282,7 @@ int32_t HcommAclrtNotifyRecordOnThread(ThreadHandle thread, uint64_t dstNotifyId
 {
     PLF_CONFIG_INFO(PLF_DATA_OP, "[%s] thread[0x%llx], dstNotifyId[%llu].", __func__, thread, dstNotifyId);
 
+    // [中文导读] 这个接口直接接收运行时 notifyId；不像 ThreadNotifyRecord 那样先从目标 Thread 的索引查槽位。
     AddThread(thread);
 
     Thread* const threadPtr = ReinterpretAs<Thread*>(thread);
@@ -323,6 +331,7 @@ int32_t HcommAclrtNotifyWaitOnThread(ThreadHandle thread, uint64_t notifyId, uin
 
 HcclResult CommTaskPrepare(char* key, uint32_t keyLen) // host ffts+使用
 {
+    // [中文导读] 有效 key 按 keyLen 字节构造缓存标识；未提供有效 key 时使用临时标识进入任务准备。
     std::string keyStr = "temp_key";
     if (key != nullptr && keyLen != 0) {
         keyStr = std::string(key, keyLen);
@@ -344,6 +353,7 @@ HcclResult CommTaskLaunch(ThreadHandle* threads, uint32_t threadNum) // host fft
 
     if (threadPtr->IsDeviceA5()) {
         HCCL_INFO("[%s] Running on A5.", __func__);
+        // [中文导读] A5 逐执行 Thread 调用 LaunchTask，任一异常转成 INTERNAL；成功表示任务提交接口完成。
         for (uint32_t i = 0; i < threadNum; i++) {
             Thread* threadPtrLoop = ReinterpretAs<Thread*>(threads[i]);
             CHK_PTR_NULL(threadPtrLoop);
@@ -353,6 +363,7 @@ HcclResult CommTaskLaunch(ThreadHandle* threads, uint32_t threadNum) // host fft
         return HCCL_SUCCESS;
     }
 
+    // [中文导读] 兼容实现把 Thread 列表转换为 Stream 数组，再以相同 threadNum 交给统一任务发射接口。
     std::vector<hccl::Stream> streams;
     for (uint32_t i = 0; i < threadNum; i++) {
         hccl::Stream* stream = GetStream(threads[i]);
@@ -376,6 +387,7 @@ HcclResult DispatchAllStreams(const ThreadHandle* threads, uint32_t threadNum)
         return HCCL_E_NOT_SUPPORT;
     }
 
+    // [中文导读] 仅 A5 接受此批发射接口，逐 Thread 尝试提交已组织的任务，不在这里等待全部任务执行结束。
     for (uint32_t i = 0; i < threadNum; i++) {
         Thread* threadPtrLoop = ReinterpretAs<Thread*>(threads[i]);
         CHK_PTR_NULL(threadPtrLoop);
@@ -439,6 +451,7 @@ int32_t HcommSetNotifyWaitTimeOut(float timeOut)
         HCCL_ERROR("[%s] in aicpu_ts timeOut[%f s] is invalid.", __func__, timeOut);
         return HCCL_E_PARA;
     }
+    // [中文导读] 浮点秒数校验后转换为整数秒，小数部分被截去；新默认值存入当前调用线程的提交上下文。
     uint32_t timeOutInt = static_cast<uint32_t>(timeOut);
     HCCL_INFO("[%s] START in aicpu_ts. timeOut[%u s].", __func__, timeOutInt);
     return g_threadLaunchCtx.SetNotifyWaitTimeOut(timeOutInt);
@@ -452,6 +465,7 @@ int32_t HcommThreadResAcquireTimeOut(float timeOut)
     }
     uint32_t timeOutInt = static_cast<uint32_t>(timeOut);
     HCCL_INFO("[%s] START in aicpu_ts. timeOut[%u s].", __func__, timeOutInt);
+    // [中文导读] 这里设置 SQ 满时资源获取的等待期限，与 NotifyWait 的默认超时使用不同上下文字段。
     return g_threadLaunchCtx.SetSqFullTimeOut(timeOutInt);
 }
 
@@ -510,6 +524,7 @@ int32_t HcommWriteOnThread(ThreadHandle thread, ChannelHandle channel, void* dst
 
     CHK_PTR_NULL(dst);
     CHK_PTR_NULL(src);
+    // [中文导读] 先解包用户通道句柄，再按 Thread 所属设备选择底层传输对象，避免直接把包装句柄当对象地址。
     CHK_RET(UnwrapChannelHandle(channel));
     AddThread(thread);
 
@@ -524,6 +539,7 @@ int32_t HcommWriteOnThread(ThreadHandle thread, ChannelHandle channel, void* dst
         CHK_PTR_NULL(streamLitePtr);
 
         Hccl::RmaBufferLite locRmaBuf;
+        // [中文导读] 为本地源范围构造 RMA 描述；构造失败立即返回，不提交后面的远端写任务。
         ret = transportLitePtr->BuildLocRmaBufferLite(ReinterpretAs<uintptr_t>(src), len, locRmaBuf);
         CHK_PRT_RET(
             ret != HCCL_SUCCESS,
@@ -532,6 +548,7 @@ int32_t HcommWriteOnThread(ThreadHandle thread, ChannelHandle channel, void* dst
                 "len[%llu].",
                 __func__, thread, channel, dst, src, len),
             ret);
+        // [中文导读] 远端目标只用地址和字节长度描述，和本地已解析的 RMA 源一起交给当前 StreamLite。
         const Hccl::Buffer rmtBuf{ReinterpretAs<uintptr_t>(dst), len};
 
         EXCEPTION_CATCH(transportLitePtr->Write(locRmaBuf, rmtBuf, *streamLitePtr), ret = HCCL_E_INTERNAL);
@@ -573,6 +590,7 @@ int32_t HcommWriteReduceOnThread(
 
     HcclResult ret = HCCL_SUCCESS;
     if (threadPtr->IsDeviceA5()) {
+        // [中文导读] A5 检查类型/操作映射，兼容分支检查旧归约能力；验证通过后才能计算范围并构造归约参数。
         ret = CheckDataTypeAndReduceOp(dataType, reduceOp);
         CHK_PRT_RET(
             ret != HCCL_SUCCESS,
@@ -609,6 +627,7 @@ int32_t HcommWriteReduceOnThread(
             ret);
         const Hccl::Buffer rmtBuf{ReinterpretAs<uintptr_t>(dst), len};
 
+        // [中文导读] 把公开枚举转换为 A5 底层枚举，描述向远端目标执行的归约操作。
         Hccl::ReduceIn reduceIn{mapHcommDataTypeToA5.at(dataType), mapHcommReduceOpToA5.at(reduceOp)};
 
         EXCEPTION_CATCH(
@@ -694,6 +713,7 @@ int32_t HcommWriteWithNotifyOnThread(
             ret);
         const Hccl::Buffer rmtBuf{ReinterpretAs<uintptr_t>(dst), len};
 
+        // [中文导读] remoteNotifyIdx 选择远端普通通知槽，把写入与通知描述交给同一个 WriteWithNotify 操作。
         Hccl::WithNotifyIn withNotify{Hccl::TransportNotifyType::NORMAL, remoteNotifyIdx};
 
         EXCEPTION_CATCH(
@@ -767,6 +787,7 @@ int32_t HcommWriteReduceWithNotifyOnThread(
             ret);
         Hccl::ReduceIn reduceIn{mapHcommDataTypeToA5.at(dataType), mapHcommReduceOpToA5.at(reduceOp)};
 
+        // [中文导读] 向底层一次传入数据范围、归约方式和远端通知槽；非 A5 分支明确返回 NOT_SUPPORT。
         Hccl::WithNotifyIn withNotify{Hccl::TransportNotifyType::NORMAL, remoteNotifyIdx};
 
         EXCEPTION_CATCH(
@@ -811,6 +832,7 @@ int32_t HcommReadOnThread(ThreadHandle thread, ChannelHandle channel, void* dst,
         CHK_PTR_NULL(streamLitePtr);
 
         Hccl::RmaBufferLite locRmaBuf;
+        // [中文导读] 读操作注册描述取本地目标 dst；远端源 src 只提供地址/长度，与 Write 的本地源角色不同。
         ret = transportLitePtr->BuildLocRmaBufferLite(ReinterpretAs<uintptr_t>(dst), len, locRmaBuf);
         CHK_PRT_RET(
             ret != HCCL_SUCCESS,
@@ -887,6 +909,7 @@ int32_t HcommReadReduceOnThread(
                 "count[%llu], dataType[%d], reduceOp[%d].",
                 __func__, thread, channel, dst, src, count, dataType, reduceOp),
             ret);
+        // [中文导读] 将远端读取数据归约到本地 dst，归约类型和操作转为 A5 底层描述后排入当前执行流。
         Hccl::ReduceIn reduceIn{mapHcommDataTypeToA5.at(dataType), mapHcommReduceOpToA5.at(reduceOp)};
 
         EXCEPTION_CATCH(
@@ -929,6 +952,7 @@ int32_t HcommBatchTransferOnThread(
         PLF_DATA_OP, "[%s] thread[0x%llx], channel[0x%llx], transferDescNum[%u].", __func__, thread, channel,
         transferDescNum);
 
+    // [中文导读] transferDescNum 是批传输描述条数；这里拒绝空批，再取得执行 Thread 并登记提交上下文。
     CHK_PRT_RET(transferDescNum == 0, HCCL_ERROR("[%s] transferDescNum is 0.", __func__), HCCL_E_PARA);
 
     Thread* const threadPtr = ReinterpretAs<Thread*>(thread);
@@ -940,6 +964,7 @@ int32_t HcommBatchTransferOnThread(
         CHK_PTR_NULL(ubTransportLitePtr);
         auto* const streamLitePtr = static_cast<Hccl::StreamLite*>(threadPtr->GetStreamLitePtr());
         CHK_PTR_NULL(streamLitePtr);
+        // [中文导读] A5 批传输使用 UB 传输对象执行描述数组；兼容路径交 Transport::BatchTransferAsync 并保留不支持状态。
         ret = ubTransportLitePtr->ExecuteBatchTransfer(streamLitePtr, transferDescs, transferDescNum);
     } else {
         Stream* stream = GetStream(thread);
@@ -964,6 +989,7 @@ int32_t HcommWriteNbiOnThread(ThreadHandle thread, ChannelHandle channel, void* 
         src, len);
     CHK_PTR_NULL(src);
     CHK_PTR_NULL(dst);
+    // [中文导读] 此文件的 NBI 写接口尚未实现；非空地址校验通过也只返回 NOT_SUPPORT，不会发出传输任务。
     return HCCL_E_NOT_SUPPORT;
 }
 
@@ -1039,6 +1065,7 @@ int32_t HcommChannelNotifyRecordOnThread(ThreadHandle thread, ChannelHandle chan
         CHK_PTR_NULL(streamLitePtr);
         HCCL_INFO("channel streamlite ptr %p.", streamLitePtr);
 
+        // [中文导读] 在当前执行流向对端槽位发通知；是否表示 ACK 或数据完成由上层的槽位分配协议决定。
         EXCEPTION_CATCH(transportLitePtr->Post(remoteNotifyIdx, *streamLitePtr), ret = HCCL_E_INTERNAL);
     } else {
         Stream* stream = GetStream(thread);
@@ -1086,6 +1113,7 @@ HcommChannelNotifyWaitOnThread(ThreadHandle thread, ChannelHandle channel, uint3
         auto* const streamLitePtr = static_cast<Hccl::StreamLite*>(threadPtr->GetStreamLitePtr());
         CHK_PTR_NULL(streamLitePtr);
 
+        // [中文导读] 在当前执行流等待通道本地槽位通知，超时由底层 WaitWithTimeout 处理，异常统一转换为 INTERNAL。
         EXCEPTION_CATCH(
             transportLitePtr->WaitWithTimeout(localNotifyIdx, *streamLitePtr, timeOut), ret = HCCL_E_INTERNAL);
     } else {
@@ -1124,6 +1152,7 @@ HcclResult CommFence(ThreadHandle thread, ChannelHandle channel) // 控制前后
 int32_t HcommSetLaunchMode(const char* launchTag, HcommLaunchMode mode)
 {
     HCCL_DEBUG("HcommSetLaunchMode launchTag[%s]", launchTag);
+    // [中文导读] 把标签和提交模式交给线程私有上下文，批量起止接口都通过这里改变同一提交状态。
     return g_threadLaunchCtx.SetLaunchMode(launchTag, mode);
 }
 
@@ -1144,8 +1173,10 @@ int32_t HcommAcquireComm(const char* commId)
     if (deviceType != DevType::DEV_TYPE_950 && deviceType != DevType::DEV_TYPE_960) {
         HcclCommAicpu* hcclComm = AicpuHcclProcess::AicpuGetCommbyGroup(commId);
         CHK_PRT_RET(!hcclComm, HCCL_ERROR("%s AicpuGetCommbyGroup is null, commId[%s]", __func__, commId), HCCL_E_PTR);
+        // [中文导读] 兼容设备除了查域，还要把该域的 Dispatcher 上下文绑定到当前调用线程。
         CHK_RET(hcclComm->SetDispatcherCtxOnThread());
     } else {
+        // [中文导读] 950/960 通过域管理器等待并设置独占使用标记，再取得当前域；该实现用 isUsed 状态而非引用计数。
         CollCommAicpu* hcclComm = CollCommAicpuMgr::GetInstance().AcquireCommForUse(commId);
         CHK_PRT_RET(!hcclComm, HCCL_ERROR("%s AcquireCommForUse is null, commId[%s]", __func__, commId), HCCL_E_PTR);
     }
@@ -1206,6 +1237,7 @@ int32_t HcommReleaseComm(const char* commId)
     if (deviceType != DevType::DEV_TYPE_950 && deviceType != DevType::DEV_TYPE_960) {
         AicpuHcclProcess::AicpuReleaseCommbyGroup(commId);
     } else {
+        // [中文导读] 950/960 清除此前 AcquireCommForUse 设置的域占用标记；域本身仍由管理器管理生命周期。
         CollCommAicpuMgr::GetInstance().ReleaseComm(commId);
     }
     return HCCL_SUCCESS;
@@ -1232,6 +1264,7 @@ int32_t HcommChannelFenceOnThread(ThreadHandle thread, ChannelHandle channel)
     if (threadPtr->IsDeviceA5()) {
         auto* const transportLitePtr = ReinterpretAs<Hccl::BaseTransportLiteImpl*>(channel);
         CHK_PTR_NULL(transportLitePtr);
+        // [中文导读] A5 解包通道后调用传输层 Fence；此实现没有 AddThread，也没有发起 ThreadJoin 的 SQ 完成轮询。
         CHK_RET(transportLitePtr->Fence());
     }
 
@@ -1261,6 +1294,7 @@ int32_t HcommThreadJoin(ThreadHandle thread, uint32_t timeout)
         uint32_t head = 0;
         uint32_t tail = 0;
         uint32_t sqId = streamLitePtr->GetSqId();
+        // [中文导读] 先固定当前 SQ 尾位置，再轮询头位置是否追上该目标；等待范围由读取尾位置时的队列状态决定。
         EXCEPTION_CATCH(tail = rtsqPtr->QuerySqTail(), return HCCL_E_INTERNAL);
         HCCL_INFO("[%s] aicpu stream sqid[%u] tail[%u]", __func__, sqId, tail);
 
@@ -1268,6 +1302,7 @@ int32_t HcommThreadJoin(ThreadHandle thread, uint32_t timeout)
         u64 lastUsec = startUsec;
         constexpr uint64_t NANOSECOND_TO_SECOND = 1000000000U;
         const uint64_t kPrintSqInterval = 30U;
+        // [中文导读] 以头尾相等判断当前目标完成，timeout 使用秒并换算为时间戳尺度，等待超时返回 TIMEOUT。
         do {
             EXCEPTION_CATCH(head = rtsqPtr->QuerySqHead(), return HCCL_E_INTERNAL);
             u64 curUsec = GetCurAicpuTimestamp();
@@ -1306,6 +1341,7 @@ int32_t HcommChannelDrainOnThread(ThreadHandle thread, ChannelHandle channel)
         auto* const streamLitePtr = static_cast<Hccl::StreamLite*>(threadPtr->GetStreamLitePtr());
         CHK_PTR_NULL(streamLitePtr);
 
+        // [中文导读] 把通道 Drain 操作交给当前 StreamLite；它属于执行序列中的传输控制，接口不做 Host 完成轮询。
         EXCEPTION_CATCH(transportLitePtr->Drain(*streamLitePtr), ret = HCCL_E_INTERNAL);
     } else {
         Stream* stream = GetStream(thread);

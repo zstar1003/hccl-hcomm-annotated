@@ -19,6 +19,7 @@ TaggedMemMap::~TaggedMemMap()
     if (handle_ == nullptr) {
         return;
     }
+    // [中文导读] 遍历此 Endpoint 的所有标签注册并逐项注销；某项失败只记录日志，仍继续清理其他项。
     for (const auto& kv : tagToHandle_) {
         HcommResult ret = HcommMemUnreg(handle_, kv.second);
         if (ret != HCCL_SUCCESS) {
@@ -70,6 +71,7 @@ EndpointMgr::~EndpointMgr()
 // [中文导读] 这正是域级“申请通道”未必触发“创建端点”的原因，测创建需显式准备未命中的场景。
 HcclResult EndpointMgr::Get(EndpointDesc epDesc, EndpointHandle& handle)
 {
+    // [中文导读] 同一把互斥锁覆盖查缓存、创建和插入，防止并发请求为同一端点描述重复建立资源。
     std::lock_guard<std::mutex> lock(mutex_);
     auto iterPtr = endpointMap_.find(epDesc);
     if (iterPtr != endpointMap_.end()) {
@@ -90,6 +92,7 @@ HcclResult EndpointMgr::GetWithTag(EndpointDesc epDesc, const std::string& share
         return Get(epDesc, handle);
     }
 
+    // [中文导读] 共享队列 tag 与端点描述共同构成缓存键，允许同一地址按不同 tag 隔离端点资源。
     EndpointDescTagKey key{epDesc, sharedQueueTag};
 
     // 快路径：持锁查缓存，命中直接返回
@@ -127,6 +130,7 @@ HcclResult EndpointMgr::RegisterMemory(
     uint64_t commMemsVersion)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    // [中文导读] 按 Endpoint 创建或取得注册账本；每个端点分别保存标签句柄和已同步的域内存版本。
     auto& taggedMap = endpointTagMemMap_.try_emplace(epHandle, epHandle).first->second;
 
     // 版本一致，CommMems 无变更，跳过注册
@@ -136,6 +140,7 @@ HcclResult EndpointMgr::RegisterMemory(
             epHandle);
         return HCCL_SUCCESS;
     }
+    // [中文导读] 标签数组必须覆盖全部内存项，保证下面按同一下标配对时不会读到缺失标签。
     CHK_PRT_RET(
         memTag.size() < memVec.size(),
         HCCL_ERROR("[%s] memTag.size()[%zu] < memVec.size()[%zu]", __FUNCTION__, memTag.size(), memVec.size()),
@@ -151,8 +156,10 @@ HcclResult EndpointMgr::RegisterMemory(
             continue;
         }
         MemHandle memHandle = nullptr;
+        // [中文导读] 将域内存的类型、地址和字节大小组装成底层注册描述，注册作用域是当前 Endpoint。
         CommMem commMem{static_cast<CommMemType>(mem.type), mem.addr, mem.size};
         HcclResult ret = static_cast<HcclResult>(HcommMemReg(epHandle, tag.c_str(), &commMem, &memHandle));
+        // [中文导读] 仅 SUCCESS 或 AGAIN 允许继续；即便底层报告已有注册，也要求拿到有效句柄后才能记入账本。
         if (ret != HCCL_SUCCESS && ret != HCCL_E_AGAIN) {
             HCCL_ERROR("[%s]call trace: hcclRet -> %d", __FUNCTION__, ret);
             return ret;
@@ -164,6 +171,7 @@ HcclResult EndpointMgr::RegisterMemory(
         }
     }
 
+    // [中文导读] 只有全部待处理内存注册完成才提交版本；中途失败保留旧版本，以便后续请求重新检查。
     taggedMap.SetVersion(commMemsVersion);
     return HCCL_SUCCESS;
 }
@@ -174,6 +182,7 @@ HcclResult EndpointMgr::GetMemHandlesByTags(
     EndpointHandle epHandle, const std::vector<std::string>& memTags, std::vector<MemHandle>& memHandleVec)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    // [中文导读] 清空本次出参后查找指定端点账本，避免把前次查询结果混入当前 Channel 的内存列表。
     memHandleVec.clear();
     auto it = endpointTagMemMap_.find(epHandle);
     if (it == endpointTagMemMap_.end()) {
@@ -181,6 +190,7 @@ HcclResult EndpointMgr::GetMemHandlesByTags(
         return HCCL_E_MEMORY;
     }
     const auto& taggedMap = it->second;
+    // [中文导读] 按调用方标签顺序输出注册句柄；任一标签缺失立即报错，因此失败时列表可能只有前缀。
     for (const auto& tag : memTags) {
         MemHandle handle = taggedMap.FindHandle(tag);
         if (handle == nullptr) {
@@ -198,6 +208,7 @@ HcclResult EndpointMgr::UnregMemByTag(const std::string& tag)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     HcclResult lastErr = HCCL_SUCCESS;
+    // [中文导读] 同一标签可能注册在多个 Endpoint，遍历所有账本分别注销，跳过未注册的端点。
     for (auto& kv : endpointTagMemMap_) {
         MemHandle handle = kv.second.FindHandle(tag);
         if (handle == nullptr) {
@@ -210,6 +221,7 @@ HcclResult EndpointMgr::UnregMemByTag(const std::string& tag)
             lastErr = static_cast<HcclResult>(ret);
             continue;
         }
+        // [中文导读] 底层注销成功后才移除标签；失败项保留账本供后续处理，最终返回最后一次注销错误。
         kv.second.RemoveTag(tag);
     }
     return lastErr;

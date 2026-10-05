@@ -140,6 +140,7 @@ namespace {
         ProcessSliceFunc processSlice, bool fusePostNotify = false, uint32_t notifyIdx = 0, bool* notifyFused = nullptr)
     {
         u32 repeatNum = srcSlices.size();
+        // [中文导读] 先把非零数据片整理为批传输描述，零长度片不加入搬运列表。
         std::vector<HcclHcommBatchTransferDesc> transferDescs;
 
         for (int i = 0; i < repeatNum; i++) {
@@ -152,10 +153,12 @@ namespace {
             CHK_RET(processSlice(i, srcSlice, dstSlice, transferDescs, repeatNum));
         }
 
+        // [中文导读] 允许融合时尝试把完成通知合到最后一条 WriteReduce 描述；失败仍由外层单独记录通知。
         if (fusePostNotify && notifyFused != nullptr) {
             *notifyFused = FuseNotifyToLastWriteReduceDesc(transferDescs, notifyIdx);
         }
 
+        // [中文导读] 只在存在有效描述时提交批传输，握手通知由调用它的协议层负责。
         if (transferDescs.size() > 0) {
             TraceBatchSummary(funcName, transType, repeatNum, transferDescs.size(), channel);
             CHK_RET(static_cast<HcclResult>(HcclHcommBatchTransferOnThread(
@@ -206,6 +209,7 @@ namespace {
         const std::vector<DataSlice>& dstSlices, HcclDataType dataType, HcclReduceOp reduceOp, const char* funcName)
     {
         const u32 repeatNum = srcSlices.size();
+        // [中文导读] 先找最后一个非空归约片，确定哪次 WriteReduce 可以携带完成通知。
         int lastValidIdx = -1;
         for (int i = 0; i < repeatNum; i++) {
             if (srcSlices[i].size_ != 0) {
@@ -225,6 +229,7 @@ namespace {
             TraceDataSlice(
                 funcName, "WRITE_REDUCE", i, repeatNum, srcSlice, dstSlice, src, dst, srcSlice.count_, dataType,
                 reduceOp);
+            // [中文导读] 最后有效归约片使用带通知原语，其它片只归约，确保通知排在所有有效片之后。
             if (i == lastValidIdx) {
                 CHK_RET(static_cast<HcclResult>(HcommWriteReduceWithNotifyOnThread(
                     thread, sendChannel.handle, dst, src, srcSlice.count_, static_cast<HcommDataType>(dataType),
@@ -235,6 +240,7 @@ namespace {
                     static_cast<HcommReduceOp>(reduceOp))));
             }
         }
+        // [中文导读] 没有数据可归约时仍单独发送完成通知，保持与对端等待的协议匹配。
         if (lastValidIdx < 0) {
             CHK_RET(static_cast<HcclResult>(
                 HcommChannelNotifyRecordOnThread(thread, sendChannel.handle, NOTIFY_IDX_DATA_SIGNAL)));
@@ -248,6 +254,7 @@ namespace {
         const SendRecvInfoType& sendRecvInfo, const ThreadHandle& thread, const char* funcName, const char* transType,
         ProcessSliceFunc processSlice, FallbackFunc fallback, bool fusePostNotify = false)
     {
+        // [中文导读] 运行时不支持批传输时调用逐片实现，握手顺序和双向收发语义保持一致。
         if (!IsHcommBatchTransferOnThreadSupported()) {
             return fallback(sendRecvInfo, thread);
         }
@@ -369,21 +376,25 @@ bool IsHcommBatchTransferOnThreadSupported()
 // [中文导读] size_是字节数；零长片不搬运，但前后握手仍存在。远端dst来自预先建立的Channel/内存描述。
 HcclResult SendWrite(const DataInfo& sendInfo, const ThreadHandle& thread)
 {
+    // [中文导读] 提取一一对应的发送源片、远端目标片及发送通道，下面逐片使用同一通道提交。
     const std::vector<DataSlice> srcSlices = sendInfo.slices_.srcSlices_;
     const std::vector<DataSlice> dstSlices = sendInfo.slices_.dstSlices_;
     const ChannelInfo& sendChannel = sendInfo.channel_;
     u32 sliceNum = srcSlices.size();
     // 获取执行超时时间
+    // [中文导读] 先排入对端允许写入的 ACK 等待，目标缓冲区就绪后才执行实际数据写入。
     u32 execTimeout = ExecTimeoutManager::Instance().GetExecTimeout();
     CHK_RET(static_cast<HcclResult>(
         HcommChannelNotifyWaitOnThread(thread, sendChannel.handle, NOTIFY_IDX_ACK, execTimeout)));
     for (int i = 0; i < sliceNum; i++) {
         const DataSlice srcSlice = srcSlices[i];
         const DataSlice dstSlice = dstSlices[i];
+        // [中文导读] 空片跳过数据原语，循环后的 DATA_SIGNAL 仍需发送以结束本次握手。
         if (srcSlice.size_ == 0) {
             HCCL_WARNING("[AlgDataTransWrapper] SendWrite: size is 0.");
             continue;
         }
+        // [中文导读] 把片基址和字节偏移组合成实际地址，普通 Write 的长度使用字节数。
         void* dst = GetSliceAddr(dstSlice);
         void* src = GetSliceAddr(srcSlice);
         TraceDataSlice(
@@ -391,6 +402,7 @@ HcclResult SendWrite(const DataInfo& sendInfo, const ThreadHandle& thread)
             HcclReduceOp::HCCL_REDUCE_RESERVED);
         CHK_RET(static_cast<HcclResult>(HcommWriteOnThread(thread, sendChannel.handle, dst, src, srcSlice.size_)));
     }
+    // [中文导读] 所有写任务排入后记录数据完成通知，对端用它约束接收后的复制或消费。
     CHK_RET(
         static_cast<HcclResult>(HcommChannelNotifyRecordOnThread(thread, sendChannel.handle, NOTIFY_IDX_DATA_SIGNAL)));
     return HCCL_SUCCESS;
@@ -415,6 +427,7 @@ HcclResult SendBatchWrite(const DataInfo& sendInfo, const ThreadHandle& thread)
 // [中文导读] 被写入的一侧只发送ACK并等待DATA_SIGNAL，数据由对端Write送来；没有再调用一次Read。
 HcclResult RecvWrite(const DataInfo& recvInfo, const ThreadHandle& thread)
 {
+    // [中文导读] 接收端先允许对端写入，再等待数据完成；本函数不重复搬运已经由对端写来的数据。
     const ChannelInfo& recvChannel = recvInfo.channel_;
     CHK_RET(static_cast<HcclResult>(HcommChannelNotifyRecordOnThread(thread, recvChannel.handle, NOTIFY_IDX_ACK)));
     // 获取执行超时时间
@@ -436,16 +449,19 @@ HcclResult SendRecvWrite(const SendRecvInfo& sendRecvInfo, const ThreadHandle& t
 {
     const std::vector<DataSlice> srcSlices = sendRecvInfo.sendRecvSlices_.txSlicesList_.srcSlices_;
     const std::vector<DataSlice> dstSlices = sendRecvInfo.sendRecvSlices_.txSlicesList_.dstSlices_;
+    // [中文导读] 发送通道承担本端写入，接收通道承担对端写入本端，两条通道可以面向不同 Peer。
     const ChannelInfo& sendChannel = sendRecvInfo.sendRecvChannels_.txChannel_;
     const ChannelInfo& recvChannel = sendRecvInfo.sendRecvChannels_.rxChannel_;
     u32 repeatNum = srcSlices.size();
     // 向write rank发送tx同步，确保该rank的hcclBuffer可用
     // 这里只是在host上向device下任务，所以实际在host侧不会因为wait而阻塞
+    // [中文导读] 先告诉接收方向的对端本端可写，再等待发送方向的对端允许本端写入。
     CHK_RET(static_cast<HcclResult>(HcommChannelNotifyRecordOnThread(thread, recvChannel.handle, NOTIFY_IDX_ACK)));
     // 获取执行超时时间
     u32 execTimeout = ExecTimeoutManager::Instance().GetExecTimeout();
     CHK_RET(static_cast<HcclResult>(
         HcommChannelNotifyWaitOnThread(thread, sendChannel.handle, NOTIFY_IDX_ACK, execTimeout)));
+    // [中文导读] 只对发送方向的源目标片执行 Write，接收方向数据由另一端执行 Write 送来。
     for (int i = 0; i < repeatNum; i++) {
         // tx同步完成后准备将自己的userIn上的数据写到对方的hcclBuffer上
         const DataSlice srcSlice = srcSlices[i];
@@ -464,6 +480,7 @@ HcclResult SendRecvWrite(const SendRecvInfo& sendRecvInfo, const ThreadHandle& t
     // 写完之后做后同步告诉对面写完了
     CHK_RET(
         static_cast<HcclResult>(HcommChannelNotifyRecordOnThread(thread, sendChannel.handle, NOTIFY_IDX_DATA_SIGNAL)));
+    // [中文导读] 在发送完成通知之后等待接收方向的 DATA_SIGNAL，使双向交换依赖在本 Thread 上闭合。
     CHK_RET(static_cast<HcclResult>(
         HcommChannelNotifyWaitOnThread(thread, recvChannel.handle, NOTIFY_IDX_DATA_SIGNAL, execTimeout)));
     return HCCL_SUCCESS;
@@ -603,6 +620,7 @@ HcclResult SendRecvWriteReduce(const SendRecvReduceInfo& sendRecvInfo, const Thr
 // [中文导读] Read协议的数据提供方：通知对端数据可读，再等对端读完。真正的数据Read由接收方发起。
 HcclResult SendRead(const DataInfo& sendInfo, const ThreadHandle& thread)
 {
+    // [中文导读] 数据提供方发送可读 ACK，再等待读取方的完成通知；自身没有 Read 数据原语。
     const ChannelInfo& sendChannel = sendInfo.channel_;
     CHK_RET(static_cast<HcclResult>(HcommChannelNotifyRecordOnThread(thread, sendChannel.handle, NOTIFY_IDX_ACK)));
     // 获取执行超时时间
@@ -620,6 +638,7 @@ HcclResult RecvRead(const DataInfo& recvInfo, const ThreadHandle& thread)
     const ChannelInfo& recvChannel = recvInfo.channel_;
     u32 repeatNum = srcSlices.size();
     // 获取执行超时时间
+    // [中文导读] 接收方先等待远端数据可读，再逐片发起远端读取。
     u32 execTimeout = ExecTimeoutManager::Instance().GetExecTimeout();
     CHK_RET(static_cast<HcclResult>(
         HcommChannelNotifyWaitOnThread(thread, recvChannel.handle, NOTIFY_IDX_ACK, execTimeout)));
@@ -630,6 +649,7 @@ HcclResult RecvRead(const DataInfo& recvInfo, const ThreadHandle& thread)
             HCCL_WARNING("[AlgDataTransWrapper] RecvRead: size is 0.");
             continue;
         }
+        // [中文导读] Read 的源地址属于对端，目标地址属于本端；长度仍是数据片的字节容量。
         void* dst = GetSliceAddr(dstSlice);
         void* src = GetSliceAddr(srcSlice);
         TraceDataSlice(
@@ -637,6 +657,7 @@ HcclResult RecvRead(const DataInfo& recvInfo, const ThreadHandle& thread)
             HcclReduceOp::HCCL_REDUCE_RESERVED);
         CHK_RET(static_cast<HcclResult>(HcommReadOnThread(thread, recvChannel.handle, dst, src, srcSlice.size_)));
     }
+    // [中文导读] 所有读任务排入后通知对端读完，使对端可在依赖满足后复用它的数据区。
     CHK_RET(
         static_cast<HcclResult>(HcommChannelNotifyRecordOnThread(thread, recvChannel.handle, NOTIFY_IDX_DATA_SIGNAL)));
     return HCCL_SUCCESS;
@@ -660,6 +681,7 @@ HcclResult RecvBatchRead(const DataInfo& recvInfo, const ThreadHandle& thread)
 
 HcclResult SendRecvRead(const SendRecvInfo& sendRecvInfo, const ThreadHandle& thread)
 {
+    // [中文导读] 双向 Read 只遍历接收方向的片，发送方向由对端拉取本端数据。
     const std::vector<DataSlice> srcSlices = sendRecvInfo.sendRecvSlices_.rxSlicesList_.srcSlices_;
     const std::vector<DataSlice> dstSlices = sendRecvInfo.sendRecvSlices_.rxSlicesList_.dstSlices_;
     const ChannelInfo& sendChannel = sendRecvInfo.sendRecvChannels_.txChannel_;
@@ -667,6 +689,7 @@ HcclResult SendRecvRead(const SendRecvInfo& sendRecvInfo, const ThreadHandle& th
     u32 repeatNum = srcSlices.size();
     // 向read rank发送rx同步，确保该rank的hcclBuffer可用
     // 这里只是在host上向device下任务，所以实际在host侧不会因为wait而阻塞
+    // [中文导读] 先让发送方向的对端读取本端，再等待接收方向对端的数据准备好。
     CHK_RET(static_cast<HcclResult>(HcommChannelNotifyRecordOnThread(thread, sendChannel.handle, NOTIFY_IDX_ACK)));
     // 获取执行超时时间
     u32 execTimeout = ExecTimeoutManager::Instance().GetExecTimeout();
@@ -690,6 +713,7 @@ HcclResult SendRecvRead(const SendRecvInfo& sendRecvInfo, const ThreadHandle& th
     // 写完之后做后同步告诉对面写完了
     CHK_RET(
         static_cast<HcclResult>(HcommChannelNotifyRecordOnThread(thread, recvChannel.handle, NOTIFY_IDX_DATA_SIGNAL)));
+    // [中文导读] 本端读完通知接收方通道对端后，还要等待发送方通道对端已读完本端数据。
     CHK_RET(static_cast<HcclResult>(
         HcommChannelNotifyWaitOnThread(thread, sendChannel.handle, NOTIFY_IDX_DATA_SIGNAL, execTimeout)));
     return HCCL_SUCCESS;
@@ -890,6 +914,7 @@ HcclResult SendRecvBatchReadReduce(const SendRecvReduceInfo& sendRecvInfo, const
 // [中文导读] 可用于自身Rank数据或CCL中转区与用户区之间的搬运；没有跨Rank的Channel参数。
 HcclResult LocalCopy(const ThreadHandle& thread, const DataSlice& srcSlice, const DataSlice& dstSlice)
 {
+    // [中文导读] 零字节本地片无需创建复制任务；非零时还必须检查源目标字节长度相等。
     CHK_PRT_RET(
         srcSlice.size_ == 0, HCCL_WARNING("[AlgDataTransWrapper] LocalCopy: src slice size is [%u].", srcSlice.size_),
         HcclResult::HCCL_SUCCESS);
@@ -900,6 +925,7 @@ HcclResult LocalCopy(const ThreadHandle& thread, const DataSlice& srcSlice, cons
             "[AlgDataTransWrapper] LocalCopy: src slice size [%u] is not equal to dst slice size [%u].", srcSlice.size_,
             dstSlice.size_),
         HcclResult::HCCL_E_INTERNAL);
+    // [中文导读] 计算本地两片的有效地址后提交普通复制，不涉及远端 Channel 或网络握手。
     void* srcIn = GetSliceAddr(srcSlice);
     void* dstOut = GetSliceAddr(dstSlice);
     TraceDataSlice(
@@ -915,6 +941,7 @@ HcclResult LocalReduce(
     const ThreadHandle& thread, const DataSlice& srcSlice, const DataSlice& dstSlice, const HcclDataType dataType,
     const HcclReduceOp reduceOp)
 {
+    // [中文导读] 指定 64 位类型或乘积运算使用 AICPU 软件归约，避开这里的硬件本地归约原语。
     if (dataType == HCCL_DATA_TYPE_INT64 || dataType == HCCL_DATA_TYPE_UINT64 || dataType == HCCL_DATA_TYPE_FP64
         || reduceOp == HcclReduceOp::HCCL_REDUCE_PROD) {
         CHK_RET(AicpuReduce(thread, srcSlice, dstSlice, dataType, reduceOp));
@@ -934,6 +961,7 @@ HcclResult LocalReduce(
     void* dst = GetSliceAddr(dstSlice);
     TraceDataSlice(
         "LocalReduce", "LOCAL_REDUCE", 0, 1, srcSlice, dstSlice, src, dst, srcSlice.count_, dataType, reduceOp);
+    // [中文导读] 本地归约按元素 count 和类型解释数据，将源元素合并到目标元素。
     CHK_RET(static_cast<HcclResult>(HcommLocalReduceOnThread(
         thread, dst, src, srcSlice.count_, static_cast<HcommDataType>(dataType),
         static_cast<HcommReduceOp>(reduceOp))));
@@ -943,6 +971,7 @@ HcclResult LocalReduce(
 HcclResult LocalCopySlices(
     const ThreadHandle& thread, const std::vector<DataSlice>& srcSlices, const std::vector<DataSlice>& dstSlices)
 {
+    // [中文导读] 先保证源目标片数量一一对应，再要求至少一对片，避免访问不存在的首片。
     CHK_PRT_RET(
         srcSlices.size() != dstSlices.size(),
         HCCL_ERROR(
@@ -957,6 +986,7 @@ HcclResult LocalCopySlices(
         HcclResult::HCCL_E_INTERNAL);
 
     // tmpSlices: slices to be transfer in this loop
+    // [中文导读] 用首片作为待合并的复制区间，后面的连续片可以扩展它以减少原语次数。
     DataSlice tmpSrcSlice = srcSlices[0];
     DataSlice tmpDstSlice = dstSlices[0];
 
@@ -977,6 +1007,7 @@ HcclResult LocalCopySlices(
                 sliceIdx, srcSlices[sliceIdx].size_, dstSlices[sliceIdx].size_),
             HcclResult::HCCL_E_INTERNAL);
 
+        // [中文导读] 遍历到最后一片时提交累计区间，结束本次片列表的复制安排。
         if (sliceIdx == (srcSlices.size() - 1)) {
             // last slice
             void* src = GetSliceAddr(tmpSrcSlice);
@@ -986,6 +1017,7 @@ HcclResult LocalCopySlices(
                 tmpSrcSlice.size_, HCCL_DATA_TYPE_RESERVED, HcclReduceOp::HCCL_REDUCE_RESERVED);
             CHK_RET(static_cast<HcclResult>(HcommLocalCopyOnThread(thread, dst, src, tmpSrcSlice.size_)));
         } else if (
+            // [中文导读] 只有源与目标两侧都同基址且首尾相接时才扩大累计区间，保留片间映射关系。
             IsContinuousSlice(srcSlices[sliceIdx + 1], tmpSrcSlice)
             && IsContinuousSlice(dstSlices[sliceIdx + 1], tmpDstSlice)) {
             // nxtSlice is continuous with tmpSlice, update tmpSlice
@@ -1001,6 +1033,7 @@ HcclResult LocalCopySlices(
                 tmpSrcSlice.size_, HCCL_DATA_TYPE_RESERVED, HcclReduceOp::HCCL_REDUCE_RESERVED);
             CHK_RET(static_cast<HcclResult>(HcommLocalCopyOnThread(thread, dst, src, tmpSrcSlice.size_)));
 
+            // [中文导读] 遇到不连续的下一片时，先提交已有区间，再以下一片重新开始累计。
             tmpSrcSlice = srcSlices[sliceIdx + 1];
             tmpDstSlice = dstSlices[sliceIdx + 1];
         }
@@ -1026,6 +1059,7 @@ HcclResult PreSyncInterThreads(
     const std::vector<u32>& notifyIdxMainToSub)
 {
     CHK_PRT_RET(
+        // [中文导读] 前同步要求非空且等长的从 Thread 与通知索引列表，避免缺项或错配。
         subThreads.size() == 0 || notifyIdxMainToSub.size() == 0,
         HCCL_ERROR(
             "[AlgDataTransWrapper] [PreSyncInterThreads] subThreads size: [%u], notifyIdxMainToSub size [%u] "
@@ -1043,12 +1077,14 @@ HcclResult PreSyncInterThreads(
     u32 execTimeout = ExecTimeoutManager::Instance().GetExecTimeout();
     // 主thread向从thread发送record
     for (u32 tidx = 0; tidx < subThreads.size(); tidx++) {
+        // [中文导读] 主 Thread 分别向每个从 Thread 的对应槽记录放行通知。
         CHK_RET(static_cast<HcclResult>(
             HcommThreadNotifyRecordOnThread(mainThread, subThreads[tidx], notifyIdxMainToSub[tidx])));
     }
 
     // 从thread等待主thread的record
     for (u32 tidx = 0; tidx < subThreads.size(); tidx++) {
+        // [中文导读] 每个从 Thread 在自己的任务队列等待放行，之后才执行各自的并行工作。
         CHK_RET(static_cast<HcclResult>(
             HcommThreadNotifyWaitOnThread(subThreads[tidx], notifyIdxMainToSub[tidx], execTimeout)));
     }
@@ -1080,12 +1116,14 @@ HcclResult PostSyncInterThreads(
     u32 execTimeout = ExecTimeoutManager::Instance().GetExecTimeout();
     // 主thread等待所有从thread的record
     for (u32 tidx = 0; tidx < subThreads.size(); tidx++) {
+        // [中文导读] 主 Thread 对每个从 Thread 的完成槽排入等待，把从流尾部任务汇合到主流。
         CHK_RET(
             static_cast<HcclResult>(HcommThreadNotifyWaitOnThread(mainThread, notifyIdxSubToMain[tidx], execTimeout)));
     }
 
     // 从thread向主thread发送record
     for (u32 tidx = 0; tidx < subThreads.size(); tidx++) {
+        // [中文导读] 各从 Thread 在自己的尾部通知主 Thread，和上面的不同主流等待槽逐一配对。
         CHK_RET(static_cast<HcclResult>(
             HcommThreadNotifyRecordOnThread(subThreads[tidx], mainThread, notifyIdxSubToMain[tidx])));
     }
@@ -1276,6 +1314,7 @@ HcclResult AicpuReduce(
     const ThreadHandle& thread, const DataSlice& srcSlice, const DataSlice& dstSlice, const HcclDataType dataType,
     const HcclReduceOp reduceOp)
 {
+    // [中文导读] 此软件归约实现直接在 AICPU 上访问数据，参数 thread 在当前函数中没有用于排队原语。
     (void)thread;
     CHK_PRT_RET(
         srcSlice.size_ != dstSlice.size_,
@@ -1290,6 +1329,7 @@ HcclResult AicpuReduce(
     u8* dst = static_cast<u8*>(GetSliceAddr(dstSlice));
     TraceDataSlice(
         "AicpuReduce", "AICPU_REDUCE", 0, 1, srcSlice, dstSlice, src, dst, srcSlice.size_, dataType, reduceOp);
+    // [中文导读] 依据元素类型选择软件归约实例，FP16 单独转换为 FP32 执行再转回。
     switch (dataType) {
         case HcclDataType::HCCL_DATA_TYPE_INT8:
             ret = AicpuReduceTemplate<int8_t>(

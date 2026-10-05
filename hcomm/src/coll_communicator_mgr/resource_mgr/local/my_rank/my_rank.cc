@@ -229,6 +229,7 @@ HcclResult MyRank::RegisterCommMemsToEndpoint(EndpointHandle epHandle)
     std::vector<HcclMem> memVec;
     std::vector<std::string> memTag;
     uint64_t version = 0;
+    // [中文导读] 获取域内所有内存、标签及同一轮版本，再让 EndpointMgr 把该版本同步到当前端点。
     CHK_RET(commMems_->GetAllMemory(memVec, memTag, version));
     HCCL_INFO("[%s] got %zu memory regions to register, version[%llu]", __func__, memVec.size(), version);
     CHK_RET(endpointMgr_->RegisterMemory(epHandle, memTag, memVec, version));
@@ -241,6 +242,7 @@ HcclResult MyRank::PrepareMemHandles(
     // 从 CommMems 提取该 channel 需要的 tag 列表
     // GetTagsFromHandles 始终 push cclBuffer；用户 handles 异常时内部跳过，不阻断注册
     std::vector<std::string> memTags;
+    // [中文导读] 先由域句柄解析当前 Channel 需要的标签；包含 CCL 区的规则由 CommMems 统一维护。
     CHK_RET(commMems_->GetTagsFromHandles(memHandles, memHandleNum, memTags));
 
     // 确保 CommMems 全量内存已注册到该 endpoint（版本一致则跳过）
@@ -460,6 +462,7 @@ HcclResult MyRank::GetEndpointPairFromChannel(
         "[%s][%u/%u] remoteRank[%u] localProtocol[%d] remoteProtocol[%d]", __func__, channelIndex + 1, channelNum,
         remoteRank, channelDesc.localEndpoint.protocol, channelDesc.remoteEndpoint.protocol);
 
+    // [中文导读] 先按本地/远端 Rank 找 RankPair，再按两端 Endpoint 描述取得 EndpointPair，建立两级资源定位。
     const RankIdPair rankIdPair = std::make_pair(rankId_, remoteRank);
     const EndpointDescPair endpointDescPair = std::make_pair(channelDesc.localEndpoint, channelDesc.remoteEndpoint);
     CHK_RET(rankPairMgr_->Get(rankIdPair, rankPair));
@@ -501,6 +504,7 @@ HcclResult MyRank::BatchServerInitForChannels(
         rankGraph_->GetDeviceId(rankId_, &devicePhyId);
         rankGraph_->GetDeviceId(remoteRank, &remoteDevicePhyId);
 
+        // [中文导读] 把协议加入连接标签后启动监听，避免同一域同一引擎的不同协议连接共用错误 Socket。
         const std::string socketTagAddProto = AddProtocolToSocketTag(socketTag, &channelDescs[i]);
         auto ret = endpointPair->ServerInit(
             rankId_, remoteRank, socketTagAddProto, reuseIdx, devicePhyId, remoteDevicePhyId);
@@ -530,6 +534,7 @@ HcclResult MyRank::BatchGetSocketsForChannels(
         CHK_RET(GetEndpointPairFromChannel(channelDescs[i], i, channelNum, remoteRank, endpointPair, rankPair));
 
         uint32_t listenPort = 0;
+        // [中文导读] 依据端点类型与拓扑求远端监听端口，并把需要的角色/端口字段补进底层 Channel 描述。
         CHK_RET(QueryListenPort(
             rankId_, remoteRank, channelDescs[i].localEndpoint, channelDescs[i].remoteEndpoint, listenPort,
             hcommDescs[i]));
@@ -554,6 +559,7 @@ HcclResult MyRank::BatchGetSocketsForChannels(
             ret);
         CHK_PTR_NULL(socket);
 
+        // [中文导读] 把已连接 Socket 写入对应描述，之后内存/通道描述交换与一致性交换可使用同一连接。
         hcommDescs[i].socket = reinterpret_cast<HcommSocket>(socket);
 
         HCCL_INFO(
@@ -589,6 +595,7 @@ HcclResult MyRank::BatchExchangeAndCheckConsistency(
     // 与非共享路径 MyRank::CreateChannels 一致：仅 DEV_TYPE_950 需要执行通信域一致性校验交换。
     DevType devType;
     CHK_RET(hrtGetDeviceType(devType));
+    // [中文导读] 本实现仅在 950 执行域一致性交换；其他设备直接成功返回，不能据此推断已跨 Rank 比较。
     if (devType != DevType::DEV_TYPE_950) {
         return HCCL_SUCCESS;
     }
@@ -691,6 +698,7 @@ HcclResult MyRank::BatchCreateChannels(
     CHK_SMART_PTR_NULL(commMems_);
     CHK_PTR_NULL(endpointMgr_);
     std::unordered_map<RankPair*, std::unordered_map<CommEngine, std::unordered_map<hcomm::EndpointPair*, u32>>>
+        // [中文导读] 本批复用计数按 RankPair、引擎和 EndpointPair 分组，重复请求依次对应不同 Channel 槽位。
         reuseChannelIdxMap{};
 
     // 记录本轮新申请的channel
@@ -708,6 +716,7 @@ HcclResult MyRank::BatchCreateChannels(
             GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str());
 
         EndpointHandle epHandle = nullptr;
+        // [中文导读] 取得当前请求的本地 Endpoint；缓存命中时沿用对象，首次请求才实际创建端点。
         auto ret = endpointMgr_->Get(localEndpointDesc, epHandle);
         CHK_PRT_RET(
             ret != HCCL_SUCCESS,
@@ -720,6 +729,7 @@ HcclResult MyRank::BatchCreateChannels(
         // 启动监听
         uint32_t listenPort = 0;
         CHK_RET(GetDevicePortInternal(localRank, &listenPort, localEndpointDesc.loc.locType));
+        // [中文导读] 端口仍是默认值时尝试使用环境配置端口范围的首个起点，随后交 Endpoint 启动监听。
         if (listenPort == Hccl::DEFAULT_VALUE_TCPPORT) {
             auto portRanges = Hccl::EnvConfig::GetInstance().GetHostNicConfig().GetDeviceSocketPortRange();
             if (!portRanges.empty()) {
@@ -771,6 +781,7 @@ HcclResult MyRank::BatchCreateChannels(
             reuseChannelIdxMap[rankPair][engine].emplace(endpointPair, 0);
         }
 
+        // [中文导读] 本地/远端端点位置类型不同的 Host–Device 连接禁用槽位复用，以 UNREUSE 请求追加新通道。
         u32& reuseIdx = reuseChannelIdxMap[rankPair][engine][endpointPair];
         u32 idx = reuseIdx;
         /* hostNIC -- DeviceNic（transport不复用link/Channel），此流程也是新创建channel，需要计入isNewChannel */
@@ -794,6 +805,7 @@ HcclResult MyRank::BatchCreateChannels(
                 MyRankUtils::GetTlsTypeStr(localEndpointDesc.loc.locType), MyRankUtils::GetTlsStatusStr(tlsStatus),
                 ret);
         }
+        // [中文导读] 资源不足时停止扩展本批，稍后只清理本轮记录的新通道，保留之前已存在的可复用资源。
         if (ret == HCCL_E_UNAVAIL) {
             // 申请channel因资源不足失败，清理已申请的channel
             HCCL_RUN_WARNING(
@@ -822,6 +834,7 @@ HcclResult MyRank::BatchCreateChannels(
         }
 
         // 登记 handle -> EndpointPair 反查索引；真实槽位由 EndpointPair::handleToLoc_ 维护
+        // [中文导读] 成功后建立 Host 句柄到 EndpointPair 的反查，供后续按句柄销毁；真实槽位由 EndpointPair 维护。
         handleToEpPair_[channelHandles[i]] = endpointPair;
 
         HCCL_INFO(
@@ -846,6 +859,7 @@ HcclResult MyRank::DestroyNewChannels(
 {
     HcclResult firstErr = HCCL_SUCCESS;
     uint32_t localRank = rankId_;
+    // [中文导读] 按创建顺序逆向回滚，避免删除向量槽位后导致尚待销毁的后续下标前移。
     for (auto idxPairIter = std::rbegin(newChannels); idxPairIter != std::rend(newChannels);
          ++idxPairIter) { // 由于新申请的在申请过的后面，所以要从后往前找reuseIdx销毁
         auto idxPair = *idxPairIter;
@@ -884,6 +898,7 @@ HcclResult MyRank::DestroyNewChannels(
 HcclResult
 MyRank::QueryOneChannel(CommEngine engine, const HcclChannelDesc& channelDesc, u32 reuseIdx, ChannelHandle& handle)
 {
+    // [中文导读] 先给出未命中句柄 0；RankPair 或通道槽位不存在时允许查询成功，由句柄值表达未命中。
     handle = 0;
     const RankIdPair rankIdPair = std::make_pair(rankId_, channelDesc.remoteRank);
     const EndpointDescPair endpointDescPair = std::make_pair(channelDesc.localEndpoint, channelDesc.remoteEndpoint);
@@ -948,6 +963,7 @@ HcclResult MyRank::QueryChannels(
 
     // 对发生句柄转换的引擎，经平台 H2D 反向映射把 host 句柄转换为用户实际使用的句柄
     // （device 句柄），保证 Query 返回值与 HcclChannelAcquire 出参一致
+    // [中文导读] AICPU/AIV 查询命中后尝试把 Host 句柄转换成设备表示；未取得有效映射时保留已有句柄。
     if (engine == COMM_ENGINE_AICPU || engine == COMM_ENGINE_AICPU_TS || engine == COMM_ENGINE_AIV) {
         for (uint32_t i = 0; i < channelNum; ++i) {
             if (channels[i] != 0) {
@@ -1002,6 +1018,7 @@ HcclResult MyRank::DestroyOneChannel(
         return HCCL_SUCCESS;
     }
     // 暂只支持 CCU 引擎： 其他场景的 channel 销毁无法保证资源完整释放
+    // [中文导读] 当前域级单通道销毁仅接受 CCU，引擎不受支持时累积错误并让外层继续处理其他句柄。
     if (engine != COMM_ENGINE_CCU) {
         HCCL_WARNING(
             "[%s] channel handle[0x%llx] engine[%s] not supported, only CCU engine supported, channelIndex[%u].",
@@ -1032,6 +1049,7 @@ HcclResult MyRank::DestroyChannels(const ChannelHandle* channels, uint32_t chann
     u32 invalidHandleCnt = 0;
     u32 failedCnt = 0;
 
+    // [中文导读] 逐项处理整批并统计无效/失败句柄，最终返回首个错误；某项失败不阻断后面的清理。
     for (uint32_t i = 0; i < channelNum; ++i) {
         (void)DestroyOneChannel(channels[i], i, firstErr, invalidHandleCnt, failedCnt);
     }
@@ -1049,6 +1067,7 @@ HcclResult MyRank::DestroyChannels(const ChannelHandle* channels, uint32_t chann
 HcclResult
 MyRank::BatchConnectChannels(const HcclChannelDesc* channelDescs, ChannelHandle* channelHandles, uint32_t channelNum)
 {
+    // [中文导读] 从环境取得以秒计的建链超时，使用单调时钟衡量整批连接等待时间。
     auto timeout = std::chrono::seconds(Hccl::EnvConfig::GetInstance().GetSocketConfig().GetLinkTimeOut());
     auto startTime = std::chrono::steady_clock::now();
 
@@ -1085,6 +1104,7 @@ MyRank::BatchConnectChannels(const HcclChannelDesc* channelDescs, ChannelHandle*
         }
 
         // 2. 处理重试（去除频繁的重试日志，一秒可能重试上千次）
+        // [中文导读] 状态尚未就绪时再次轮询；超时检查位于此前，因此反复 AGAIN 也受本批等待期限约束。
         if (ret == HCCL_E_AGAIN) {
             retryCount++;
             continue;
@@ -1199,6 +1219,7 @@ HcclResult MyRank::FinalizeChannelsByEngine(
 {
     if (engine == COMM_ENGINE_AICPU || engine == COMM_ENGINE_AICPU_TS) {
         // 新增：添加 kernelLaunchAicpuCommInit 调用
+        // [中文导读] AICPU 首次使用才下发域初始化 Kernel，成功后标记已初始化，后续建链复用设备侧域状态。
         if (!callbacks_.getAicpuCommState()) {
             HCCL_INFO("MyRank::%s kernelLaunchAicpuCommInit start.", __func__);
             HcclResult ret = callbacks_.kernelLaunchAicpuCommInit();
@@ -1208,6 +1229,7 @@ HcclResult MyRank::FinalizeChannelsByEngine(
             callbacks_.setAicpuCommState(true);
         }
         HcommChannelDesc* hcommDesc = hcommDescs.data();
+        // [中文导读] 把 Host 控制资源带入 AICPU 初始化 Kernel，生成执行侧句柄，并登记故障恢复所需信息。
         CHK_RET(ChannelProcess::ChannelKernelLaunchForComm(
             channelHandles, hostChannelHandleList, hcommDesc, channelNum, commTag, binHandle_));
 
@@ -1248,6 +1270,7 @@ HcclResult MyRank::CreateChannels(
     // 参数检查
     CHK_RET(CheckChannelParam(engine, channelDescs, channelNum));
 
+    // [中文导读] Host 资源句柄单独保存，最终才转换/复制到用户出参；allHandles 保持本批注册句柄数组的有效期。
     std::vector<ChannelHandle> hostChannelHandles(channelNum);
     ChannelHandle* hostChannelHandleList = hostChannelHandles.data();
 
@@ -1256,6 +1279,7 @@ HcclResult MyRank::CreateChannels(
     std::vector<std::vector<MemHandle>> allHandles(channelNum);
     RoceChannelDescConfigurator roceDescConfigurator(channelNum);
     for (u32 i = 0; i < channelNum; ++i) {
+        // [中文导读] 逐条转换描述并应用多 QP 阈值、展开模式 SQ 深度和 RoCE 源端口列表，形成底层建链参数。
         hcommDescs[i] = MyRankUtils::ChannelDescHccl2Hcomm(channelDescs[i], config_);
         hcommDescs[i].roceAttr.qpThreshold = rdmaConfig.GetRdmaMultiQpThreshold();
         CHK_RET(ConfigSqDepthByExpansionMode(engine, hcommDescs[i]));
@@ -1263,6 +1287,7 @@ HcclResult MyRank::CreateChannels(
     }
 
     auto start = std::chrono::steady_clock::now();
+    // [中文导读] 域标签加引擎区分 Socket 资源，再依次完成连接准备与本地 Channel 创建/复用。
     std::string socketTag = commTag + "_engine_" + std::to_string(engine);
     CHK_RET(BatchCreateSockets(channelDescs, channelNum, socketTag, hcommDescs));
     CHK_RET_UNAVAIL(
@@ -1278,6 +1303,7 @@ HcclResult MyRank::CreateChannels(
 
     if (!newChannelsSnapshot.empty()) {
         HcclResult connRet = BatchConnectChannels(channelDescs, hostChannelHandleList, channelNum);
+        // [中文导读] CCU 连接阶段遇到资源不足时按新建快照回滚；清理失败只记录，仍保留原连接错误返回。
         if (connRet == HCCL_E_UNAVAIL && engine == COMM_ENGINE_CCU) {
             // CCU 场景额外回滚本次新建的 channel，避免资源残留
             HCCL_RUN_WARNING(

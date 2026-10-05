@@ -803,6 +803,7 @@ HcclResult HcclExecOp(
 #endif
 
     // 当前通信域的某个算法回退过，则下次直接回退
+    // [中文导读] 先查询该算法的历史回退上下文；命中时恢复已协商的引擎和算法，并重新进入执行枢纽。
     void* fallbackCtx = nullptr;
     uint64_t fallbackCtxSize = 0;
     CHK_RET(SetOpParamFallbackTag(param, algName));
@@ -820,6 +821,7 @@ HcclResult HcclExecOp(
         return HCCL_SUCCESS;
     }
     // 将算法名字放在param参数中
+    // [中文导读] 把选中的算法名写入设备参数，并以通信域和执行模式构造资源关联标识。
     int result = sprintf_s(param.algName, sizeof(param.algName), "%s", algName.c_str());
     if (result <= 0) {
         HCCL_ERROR("failed to fill param.algName");
@@ -835,12 +837,14 @@ HcclResult HcclExecOp(
         return HCCL_E_INTERNAL;
     }
 
+    // [中文导读] 用算子类型和算法名取得 executor；缺少注册项时不能继续计算资源或编排任务。
     std::unique_ptr<InsCollAlgBase> executor = CollAlgExecRegistryV2::Instance().GetAlgExec(param.opType, algName);
     CHK_PRT_RET(
         executor.get() == nullptr, HCCL_ERROR("Fail to find executor for algName[%s]", algName.c_str()), HCCL_E_PARA);
 
     // 资源结构体
     std::unique_ptr<AlgResourceCtxSerializable> resCtxHost = std::make_unique<AlgResourceCtxSerializable>();
+    // [中文导读] 将 Host 探测到的批传输能力写进资源上下文，设备展开据此决定批传输或逐片原语。
     resCtxHost->isHcommBatchTransferOnThreadSupported = HcommIsSupportHcommBatchTransferOnThread();
     // 资源序列化结果
     void* resCtxSequence = nullptr;
@@ -856,6 +860,7 @@ HcclResult HcclExecOp(
         CHK_RET(HcclThreadExportToCommEngine(comm, 1, &cpuTsThread, COMM_ENGINE_AICPU_TS, &exportedAicpuTsThread));
     }
 
+    // [中文导读] 资源层先复用再申请；只有资源不可用这一返回值触发算法回退，其它错误直接传递。
     auto resRet
         = HcclGetAlgRes(comm, param, executor, topoInfo.get(), resCtxHost, &resCtxSequence, isResourceReused, resPack);
     if (resRet == HCCL_E_UNAVAIL) {
@@ -873,6 +878,7 @@ HcclResult HcclExecOp(
         param.algName, ENGINE_STR_MAP.at(param.opExecuteConfig), param.algTag);
 
     // Op注册
+    // [中文导读] 注册本次算子的维测元信息，并把统计后的数据数量写回参数。
     HcclDfxOpInfoCompat hcclDfxOpInfo{};
     CHK_RET(ConstructHcclDfxOpInfo(param, param.algTag, ALG_TAG_LENGTH, hcclDfxOpInfo, cpuTsThread));
     param.dataCount = hcclDfxOpInfo.dataCount;
@@ -882,6 +888,7 @@ HcclResult HcclExecOp(
     u32 notifyNumOnMainThread;
     if ((param.engine == COMM_ENGINE_AICPU_TS) || (param.engine == COMM_ENGINE_CPU)) {
         // 获取主流信息
+        // [中文导读] 取得已有设备主 Thread 和通知容量，再导出到 CPU_TS 以建立用户流与设备流依赖。
         CHK_RET(GetMainThreadInfo(comm, param, mainThread, notifyNumOnMainThread));
         // Export mainThread
         CHK_RET(HcclThreadExportToCommEngine(comm, 1, &mainThread, COMM_ENGINE_CPU_TS, &exportedCpuTsThread));
@@ -893,16 +900,19 @@ HcclResult HcclExecOp(
     // [中文导读] 三类Engine共享部分控制面资源，但不能据此把Thread原语、AIV核内操作与CCU指令混用。
     // 算法执行
     if ((param.engine == COMM_ENGINE_AICPU_TS) || (param.engine == COMM_ENGINE_CPU)) {
+        // [中文导读] AICPU/CPU 分支恢复展开 Thread，并把需要的 Thread 纳入当前流捕获关系。
         ThreadHandle unfoldThread;
         CHK_RET(GetUnfoldThreadInfo(comm, param, unfoldThread));
         // 根据主流的捕获状态决定展开流的状态
         CHK_RET(CaptureSlaveStreams(comm, param.stream, {mainThread, unfoldThread}, param.isCapture));
         // aicpu task cache使能
+        // [中文导读] 将 AICPU 任务缓存配置传入设备入口；设备端还会检查算法和资源是否满足缓存条件。
         param.aicpuCacheEnable = GetExternalInputHcclAicpuCacheEnable();
         CHK_RET(HcclAicpuKernelEntranceLaunch(
             comm, param, cpuTsThread, exportedCpuTsThread, notifyNumOnMainThread, resCtxSequence, algName,
             unfoldThread));
     } else if (param.engine == COMM_ENGINE_AIV) {
+        // [中文导读] AIV 分支使用其专属资源上下文，先确定核数限制，再进入缓存或实际发射逻辑。
         uint64_t aivBeginTime = HcommGetProfilingSysCycleTime();
         param.resCtx = resCtxSequence;
         AlgResourceCtxSerializable& aivResCtxHost = *static_cast<AlgResourceCtxSerializable*>(resCtxSequence);
@@ -912,6 +922,7 @@ HcclResult HcclExecOp(
     } else if (param.engine == COMM_ENGINE_CCU) {
         if (isResourceReused) {
             // 复用资源，则需从engineCtx取得res，进行反序列化
+            // [中文导读] CCU 复用路径从缓存的序列化描述恢复 Host 资源，再用本次用户流重新包装主 Thread。
             char* ctx = static_cast<char*>(resCtxSequence);
             std::vector<char> seq(ctx, ctx + param.ctxSize);
             resCtxHost->DeSerialize(seq);
@@ -925,10 +936,12 @@ HcclResult HcclExecOp(
             }
             resCtxHost->threads[0] = thread;
             // 图模式要全部覆盖
+            // [中文导读] 图模式复用 CCU 资源时，还需按本次外部从流和临时内存重新覆盖图资源。
             if (param.opMode != OpMode::OPBASE) {
                 CHK_RET(GeReuseResource(comm, param, executor, resCtxHost, topoInfo.get(), resPack));
             }
         }
+        // [中文导读] 有从 Thread 的 CCU 算法先建立流捕获关系，再在 Host 调用 executor 编排。
         if (resCtxHost->slaveThreadNum > 0) {
             CHK_RET(CaptureSlaveStreams(comm, param.stream, resCtxHost->threads, param.isCapture));
         }
@@ -1019,6 +1032,7 @@ HcclResult HcclAicpuKernelEntranceLaunch(
     HCCL_DEBUG("[HcclAicpuKernelEntranceLaunch]start to run aicpu kernel");
     (void)algName;
     // 当前aicpu launch接口只能有一个输入参数，将Context指针放在param参数中
+    // [中文导读] 把序列化资源地址合入单一 kernel 参数，并设置用户流等待设备完成的通知槽。
     param.resCtx = resCtxSequence;
     param.aicpuRecordCpuIdx = HOST_WAIT_AICPU_NOTIFYIDX;
 
@@ -1027,6 +1041,7 @@ HcclResult HcclAicpuKernelEntranceLaunch(
         CHK_RET(static_cast<HcclResult>(HcclTaskRegister(comm, param.algTag, HcclLaunchDPUKernel)));
     }
 
+    // [中文导读] 仅具备专用发射接口的 Send/Recv 使用 P2P 描述分支；普通集合通信沿后面的通用下发路径。
     if (HcommIsSupportHcclAicpuKernelLaunch()
         && (param.opType == HcclCMDType::HCCL_CMD_SEND || param.opType == HcclCMDType::HCCL_CMD_RECEIVE)) {
         HCCL_INFO(
@@ -1098,22 +1113,26 @@ HcclResult HcclAicpuKernelEntranceLaunch(
     // 获取执行超时时间
     u32 execTimeout = ExecTimeoutManager::Instance().GetExecTimeout();
 
+    // [中文导读] 根据 ACL 图捕获、GE 图模式或单算子模式选择保序机制，保证展开与核发射的先后关系。
     OrderLaunchMode launchMode = param.isCapture ?
                                      OrderLaunchMode::ORDER_LAUNCH_ACLGRAPH :
                                      (param.opMode == OpMode::OFFLOAD ? OrderLaunchMode::ORDER_LAUNCH_GE :
                                                                         OrderLaunchMode::ORDER_LAUNCH_OPBASE);
 
+    // [中文导读] ACL 图保序需要两个临时事件，由 guard 管理生命周期；其它模式使用已有线程通知。
     HcclRtEventGuard event0Guard;
     HcclRtEventGuard event1Guard;
     if (launchMode == OrderLaunchMode::ORDER_LAUNCH_ACLGRAPH) {
         CHK_RET(event0Guard.Create());
         CHK_RET(event1Guard.Create());
     }
+    // [中文导读] 第一阶段在发射 kernel 前把本次展开纳入保序链，避免后续算子提前展开。
     CHK_RET(HcclOrderLaunchToOrderStream(
         comm, param, unfoldThread, ORDER_UNFOLD_THREAD_NOTIFY_IDX, execTimeout, launchMode, event0Guard.Get()));
 
     // AicpuKernel report
     uint64_t beginTime = HcommGetProfilingSysCycleTime();
+    // [中文导读] 参数和输入依赖准备好后发射 AICPU 入口，再建立保序链的第二阶段。
     CHK_RET(AicpuKernelLaunch(comm, param, unfoldThread));
     CHK_PTR_NULL(comm);
 
@@ -1133,6 +1152,7 @@ HcclResult HcclAicpuKernelEntranceLaunch(
     // [中文导读] 这里保护用户流中后续任务对通信输出的消费；最终通知由设备编排结束路径排入。
     // Host stream等待Device的通知
     AicpuTimeout timeout = DeriveAicpuTimeout(param.opConfig.execTimeout);
+    // [中文导读] 用户流等待设备完成使用独立超时派生值，通知槽与设备末尾 Record 配对。
     u32 hostNotifyWaitTime = IsHcommDefaultTimeoutSupported() ?
                                  timeout.hostNotifyTimeout :
                                  AddAicpuTimeoutOffset(param.opConfig.execTimeout, HOST_NOTIFY_TIMEOUT_OFFSET);
@@ -1151,6 +1171,7 @@ HcclResult AicpuKernelLaunch(HcclComm comm, OpParam& param, ThreadHandle unfoldT
     aclrtArgsHandle argsHandle;
     // 注意，目前开源HCCL加载AICPU kernel使用的是从json文件加载
     // 详见load_kernel.cc中的LoadAICPUKernel函数，且只实现了scatter的，先共用scatter的
+    // [中文导读] 从已加载的二进制 kernel 中取得入口句柄，为本次调用创建运行时参数句柄。
     aclError ret
         = aclrtBinaryGetFunction(g_binKernelHandle.load(std::memory_order_acquire), kernelName.c_str(), &funcHandle);
     CHK_PRT_RET(
@@ -1169,6 +1190,7 @@ HcclResult AicpuKernelLaunch(HcclComm comm, OpParam& param, ThreadHandle unfoldT
             ret, kernelName.c_str()),
         HCCL_E_RUNTIME);
     aclrtParamHandle paraHandle;
+    // [中文导读] 一次下发固定 OpParam 和连续尾部变长描述，因此设备能重建 counts 与位移指针。
     size_t paramSize = sizeof(OpParam) + param.varMemSize;
     ret = aclrtKernelArgsAppend(argsHandle, &param, paramSize, &paraHandle);
     CHK_PRT_RET(
@@ -1187,6 +1209,7 @@ HcclResult AicpuKernelLaunch(HcclComm comm, OpParam& param, ThreadHandle unfoldT
             ret, kernelName.c_str()),
         HCCL_E_RUNTIME);
 
+    // [中文导读] 从算子配置派生 kernel 启动超时，并以 runtime 支持的超时属性填充 launch 配置。
     AicpuTimeout timeout = DeriveAicpuTimeout(param.opConfig.execTimeout);
     u16 kernelLaunchTimeout
         = IsHcommDefaultTimeoutSupported() ?
@@ -1202,6 +1225,7 @@ HcclResult AicpuKernelLaunch(HcclComm comm, OpParam& param, ThreadHandle unfoldT
     HCCL_INFO("[AicpuKernelLaunch] unfoldThread [%lu]", unfoldThread); // 通过Thread获取展开流stream
     void* unfoldStream = nullptr;
     auto& HcclThreadResGetInfoFunc = ops_hccl::DlHcommFunction::GetInstance();
+    // [中文导读] 缺少展开流查询能力或处于 OFFLOAD 时用用户流发射；支持时优先使用展开 Thread 对应流。
     if (!HcclThreadResGetInfoFunc.dlHcclThreadResGetInfo || param.opMode == OpMode::OFFLOAD) { // 不走提前展开
         ret = aclrtLaunchKernelWithConfig(funcHandle, numBlocks, param.stream, &cfg, argsHandle, nullptr);
     } else {
@@ -1304,9 +1328,11 @@ HcclResult HcclCalcTopoInfo(HcclComm comm, OpParam& param, std::unique_ptr<TopoI
     uint64_t size = 0;
     void* ctx = nullptr;
     // 若获取Context失败，表示对应Context尚未缓存
+    // [中文导读] 以算子 tag 查询 CPU_TS 上保存的拓扑序列化上下文，减少重复拓扑读取。
     HcclResult ret = HcclEngineCtxGet(comm, param.tag, CommEngine::COMM_ENGINE_CPU_TS, &ctx, &size);
     if (ret == HCCL_E_NOT_FOUND || ret == HCCL_E_PARA) {
         // 初始化topoInfo
+        // [中文导读] 首次查询未命中时初始化拓扑，再序列化到新上下文，供同类后续调用复用。
         CHK_RET(InitRankInfo(comm, topoInfo.get()));
         // 序列化
         std::vector<char> seq = topoInfo->Serialize();
@@ -1316,6 +1342,7 @@ HcclResult HcclCalcTopoInfo(HcclComm comm, OpParam& param, std::unique_ptr<TopoI
         CHK_SAFETY_FUNC_RET(memcpy_s(ctx, size, seq.data(), size));
         return HCCL_SUCCESS;
     }
+    // [中文导读] 复用路径把缓存字节恢复为新的拓扑对象，后续 selector 使用恢复后的层次信息。
     char* ctxTemp = reinterpret_cast<char*>(ctx);
     std::vector<char> seq(ctxTemp, ctxTemp + size);
     TopoInfoWithNetLayerDetails topoInfoTemp;
@@ -1352,6 +1379,7 @@ static HcclResult TryReuseResource(
     bool& isResourceReused)
 {
     // 增量建链模式下不能复用资源
+    // [中文导读] BatchSendRecv 单算子需要增量建链，因此先关闭普通整套资源复用快路径。
     if (param.opType == HcclCMDType::HCCL_CMD_BATCH_SEND_RECV && param.opMode == OpMode::OPBASE) {
         increCreateChannelFlag = true;
         return HCCL_E_NOT_FOUND;
@@ -1370,6 +1398,7 @@ static HcclResult TryReuseResource(
         // host dpu申请device内存用于存放resctx
         ctxEngine = COMM_ENGINE_AICPU_TS;
     }
+    // [中文导读] 查询成功后返回已有上下文地址与大小，同时标记资源复用；不在这里重新申请通道。
     if (HcclEngineCtxGet(comm, param.algTag, ctxEngine, &ctx, &size) == HCCL_SUCCESS) {
         HCCL_DEBUG("Already have context, skip create, ctxSize is %llu", size);
         isResourceReused = true;
@@ -1391,11 +1420,13 @@ HcclResult HcclGetAlgRes(
     HCCL_INFO("[HcclGetAlgRes] Start to execute HcclGetAlgRes.");
 
     // 获取当前算法的完整属性
+    // [中文导读] 读取选定算法的引擎与层次属性，作为拓扑分层和资源计算的依据。
     AlgAttrs algoMeta = executor->GetAlgoMeta(std::string(param.algName));
     HCCL_INFO(
         "[HcclGetAlgRes] algName=%s, engine=%d, opType=%d, algoTypes.size=%zu.", param.algName,
         static_cast<int>(algoMeta.engine), static_cast<int>(algoMeta.opType), algoMeta.algoTypes.size());
 
+    // [中文导读] 先尝试已有资源上下文；成功则直接返回，避免再次计算和申请同一套资源。
     bool increCreateChannelFlag = false;
     uint64_t size = 0;
     if (TryReuseResource(comm, param, increCreateChannelFlag, resCtxSequence, size, isResourceReused) == HCCL_SUCCESS) {
@@ -1403,15 +1434,18 @@ HcclResult HcclGetAlgRes(
     }
 
     // context创建前做是否需要参数一致性的判断，context未创建则判断为首次下发该算子
+    // [中文导读] 未命中资源时判断是否需要首次参数一致性检查，后续建链会使用这个标志。
     needInconsistentCheck = NeedInconsistentCheck(comm, param);
 
     // 计算AlgHierarchyInfo
+    // [中文导读] 先把物理拓扑转换为算法层次通信域，再由 executor 计算 Thread/Channel 等需求。
     AlgHierarchyInfoForAllLevel algHierarchyInfo; // 分级通信域信息{localRankId, localRankSize}
     CHK_RET(executor->CalcAlgHierarchyInfoV2(topoInfo, algHierarchyInfo, algoMeta));
     // 资源计算
     HCCL_INFO("[HcclGetAlgRes] executor->CalcRes.");
     AlgResourceRequest resRequest;
     CHK_RET(executor->CalcRes(comm, param, topoInfo, algHierarchyInfo, resRequest));
+    // [中文导读] 按选定引擎获得资源，资源不足保留专门返回码供更上层协商或回退。
     auto ret = GetAlgResWithEngine(
         comm, param, resRequest, resCtxHost, topoInfo, algHierarchyInfo, resCtxSequence, size, increCreateChannelFlag,
         resPack);
@@ -1436,6 +1470,7 @@ HcclResult HcclGetAlgRes(
     }
 
     // 参数一致性校验
+    // [中文导读] 资源建立后比较远端交换的算子元信息，确认当前调用参数在通信域中一致。
     if (needInconsistentCheck) {
         OpExchangeInfo exchangeInfo{};
         CHK_RET(FillOpExchangeInfo(comm, param, exchangeInfo));
@@ -1568,15 +1603,18 @@ HcclResult GetAlgResWithEngine(
     } else if (param.engine == COMM_ENGINE_AIV) {
         CHK_RET(GetAlgResAiv(comm, param, resRequest, topoInfo, algHierarchyInfo, resCtxSequence));
     } else if (param.engine == COMM_ENGINE_CCU) {
+        // [中文导读] CCU 申请结果还需参与多 Rank 资源协商；本端成功不能单独代表全域都能执行。
         auto ret = GetAlgResCcu(
             comm, param, resRequest, resCtxHost, topoInfo, algHierarchyInfo, resCtxSequence, size, resPack);
         // 多卡CCU资源协商回退
 #if CANN_VERSION_NUM >= CANN_VERSION(9, 2, 0)
         if (ret == HCCL_E_UNAVAIL || ret == HCCL_SUCCESS) {
+            // [中文导读] 把本端是否取得资源转为协商输入，任何 Rank 不可用时全域转入回退。
             bool localResAvailable = (ret == HCCL_SUCCESS);
             auto negRet = CheckCcuResNegotiation(comm, param, localResAvailable);
             if (negRet == HCCL_E_UNAVAIL) {
                 // 多卡协商失败，释放本端已申请的CCU通道资源
+                // [中文导读] 协商决定回退时释放本端已经取得的 CCU 通道，再返回资源不可用。
                 ReleaseCcuAcquiredChannels(comm, resRequest);
                 return HCCL_E_UNAVAIL;
             }
@@ -1701,17 +1739,20 @@ HcclResult GetAlgResAICPU(
     AlgHierarchyInfoForAllLevel& algHierarchyInfo, void** resCtxSequence, uint64_t& ctxSize,
     bool increCreateChannelFlag, const ResPackGraphMode& resPack)
 {
+    // [中文导读] 增量建链除了设备上下文，还保留 Host 序列化副本用于比较已有 Peer 通道。
     std::string hostCacheTag = std::string(param.algTag) + "_hostCache";
     void* hostCtxPtr = nullptr;
     uint64_t hostCtxSize = 0;
     HcclResult hostCtxRet
         = HcclEngineCtxGet(comm, hostCacheTag.c_str(), CommEngine::COMM_ENGINE_CPU_TS, &hostCtxPtr, &hostCtxSize);
+    // [中文导读] 普通申请或首次增量申请需填充拓扑、算法层次及实际资源，随后复制设备上下文。
     if (!increCreateChannelFlag || hostCtxRet != HCCL_SUCCESS) {
         resCtxHost->commInfoPtr = static_cast<void*>(comm);
         resCtxHost->topoInfo = *topoInfo;
         resCtxHost->algHierarchyInfo = algHierarchyInfo;
         HcclResult ret = HcclAllocAlgResourceAICPU(comm, param, resRequest, resCtxHost, resPack);
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("failed to alloc alg resource."), ret);
+        // [中文导读] 序列化的是执行资源描述，设备入口随后反序列化使用其中的 Thread、Channel 和拓扑。
         std::vector<char> hostCtxSeq = resCtxHost->Serialize();
         ret = HcclMemcpyCtxHostToDevice(comm, param, hostCtxSeq, resCtxSequence, ctxSize);
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("failed to memcpy hostCtx to device."), ret);
@@ -1719,10 +1760,12 @@ HcclResult GetAlgResAICPU(
             CHK_RET(CacheHostCtxToEngine(comm, param.algTag, hostCacheTag, hostCtxSeq));
         }
     } else {
+        // [中文导读] 已存在增量 Host 缓存时先恢复对象，再筛出尚未拥有通道的 Peer。
         std::vector<char> cachedData(static_cast<char*>(hostCtxPtr), static_cast<char*>(hostCtxPtr) + hostCtxSize);
         AlgResourceCtxSerializable hostCtxObj;
         hostCtxObj.DeSerialize(cachedData);
         CompReqChannelWithExistChannel(hostCtxObj.channels, resRequest);
+        // [中文导读] 没有新增 Peer 时直接复用设备上下文；有新增请求才更新通道和两侧缓存。
         if (resRequest.channels[0].size() == 0) {
             return ReuseCachedDeviceCtx(comm, param, resCtxSequence, ctxSize);
         }
@@ -1763,11 +1806,13 @@ HcclResult HcclAllocAlgResourceAICPU(
     // 从通信域获取CCL buffer
     CHK_RET(HcclGetHcclBuffer(comm, &cclBufferAddr, &cclBufferSize));
     // CCL IN使用所有的CCL Buffer，这个其实就是scratch buffer
+    // [中文导读] 把通信域中转缓冲区及算法请求的通知容量记入上下文，供模板分片与同步使用。
     resCtxHost->cclMem = HcclMem{HCCL_MEM_TYPE_DEVICE, cclBufferAddr, cclBufferSize};
     resCtxHost->notifyNumOnMainThread = resRequest.notifyNumOnMainThread;
     resCtxHost->slaveThreadNum = resRequest.slaveThreadNum;
     UpdateAicpuTimeoutCtx(param, *resCtxHost);
     resCtxHost->notifyNumPerThread = resRequest.notifyNumPerThread;
+    // [中文导读] 先取得执行 Thread，再取得每层通道；这一步准备资源，不进行用户数据传输。
     CHK_RET(HcclGetThread(comm, param, resRequest, resCtxHost, resPack));
     CHK_RET(HcclGetChannel(comm, param, resRequest, resCtxHost.get()));
     return HCCL_SUCCESS;
@@ -1779,6 +1824,7 @@ static HcclResult HcclGetThreadWithConfig(
 {
     std::vector<ThreadConfig> threadConfigs(threadNum);
     CHK_RET(static_cast<HcclResult>(ThreadConfigInit(threadConfigs.data(), threadNum)));
+    // [中文导读] 主 Thread 在算法需要的通知之外增加一个 Host/Device 依赖槽，各从 Thread 则按各自需求配置。
     threadConfigs[0].notifyNumPerThread = resRequest.notifyNumOnMainThread + 1; // 主流上多一个用于host-device同步
     HCCL_DEBUG("[HcclGetThread] AICPU thread[0] notify num[%u].", threadConfigs[0].notifyNumPerThread);
     CHK_PRT_RET(
@@ -1828,11 +1874,13 @@ static HcclResult HcclGetAicpuThread(
     std::vector<ThreadHandle> threads(threadNum);
     bool unfoldReady = false;
     ThreadHandle existingUnfoldThread = 0;
+    // [中文导读] 展开 Thread 以通信域关联标识复用，与每个算法独立保存的主 Thread 信息不同。
     if (GetUnfoldThreadInfo(comm, param, existingUnfoldThread) == HCCL_SUCCESS) {
         resCtxHost->unfoldThread = existingUnfoldThread;
         unfoldReady = true;
         HCCL_INFO("[HcclGetThread] reuse unfoldThread [%lu]", resCtxHost->unfoldThread);
     }
+    // [中文导读] 具备配置接口时按 Thread 定义通知数量，否则统一采用本算法的最大通知数量。
     if (HcommIsSupportHcclThreadAcquireWithConfig()) {
         CHK_RET(HcclGetThreadWithConfig(comm, param, resRequest, threadNum, threads, resCtxHost, unfoldReady));
     } else {
@@ -2017,12 +2065,14 @@ HcclResult HcclGetChannel(
     HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest, AlgResourceCtxSerializable* resCtxHost)
 {
     MemRegInfo memRegInfo;
+    // [中文导读] 图模式先注册输入和输出内存，使建链能交换对应用户区的远端访问描述。
     if (param.opMode == OpMode::OFFLOAD) {
         HCCL_INFO("[HcclGetChannelImpl] start to RegGraphModeBuffers");
         CHK_RET(
             RegGraphModeBuffers(comm, param, memRegInfo.inputBuffTag, memRegInfo.outputBuffTag, memRegInfo.memHandles));
     }
     resCtxHost->channels.resize(resRequest.channels.size());
+    // [中文导读] 逐算法层处理建链请求，每层再按 Endpoint 所在位置拆成 Device 和 Host 两组。
     for (u32 level = 0; level < resRequest.channels.size(); level++) {
         // 获取子通信域的建链请求
         std::vector<HcclChannelDesc>& levelNChannelRequest = resRequest.channels[level];
@@ -2051,6 +2101,7 @@ static HcclResult BuildChannelInfo(
     MemRegInfo& memRegInfo, ChannelInfo& channel)
 {
     // 对于真实建链的链路进行填充
+    // [中文导读] 把取得的句柄与请求中的远端 Rank、协议和通知容量组合成模板可使用的通道描述。
     channel.isValid = true;
     channel.remoteRank = channelDesc.remoteRank;
     channel.protocol = channelDesc.channelProtocol;
@@ -2062,6 +2113,7 @@ static HcclResult BuildChannelInfo(
     using portSizeType = uint32_t;
     const uint32_t portSizeTypeSize = sizeof(portSizeType);
     portSizeType portSize = 0;
+    // [中文导读] 查询端口带宽系数，后面的多通道分片会依据这些端口组信息分配数据。
     CHK_RET(HcclRankGraphGetEndpointInfo(
         comm, userRank, &localEndpoint, ENDPOINT_ATTR_BW_COEFF, portSizeTypeSize, static_cast<void*>(&portSize)));
     channel.portGroupSize = portSize;
@@ -2081,6 +2133,7 @@ static HcclResult BuildChannelInfo(
             userRank, channel.remoteRank, HCCL_ERROR_CODE(dieIdRet));
     }
 #endif
+    // [中文导读] 查出此通道对端的 CCL 中转区地址和容量，保存在远端描述中供 Read/Write 构造切片。
     void* remoteCclBufferAddr = nullptr;
     uint64_t remoteCclBufferSize = 0;
     CHK_RET(HcclChannelGetHcclBuffer(comm, channelHandle, &remoteCclBufferAddr, &remoteCclBufferSize));
@@ -2104,6 +2157,7 @@ HcclResult HcclGetChannelImpl(
     const CommEngine commEngine, AlgResourceCtxSerializable* resCtxHost, MemRegInfo& memRegInfo)
 {
     // 获取子通信域的建链数量
+    // [中文导读] 无请求的这一组无需登记交换信息或调用建链接口，直接成功返回。
     if (channelRequest.empty()) {
         HCCL_INFO("[HcclGetChannelImpl] channelRequest is empty");
         return HCCL_SUCCESS;
@@ -2111,6 +2165,7 @@ HcclResult HcclGetChannelImpl(
     u32 channelNum = channelRequest.size();
     std::vector<ChannelHandle> levelNChannels;
     levelNChannels.resize(channelNum);
+    // [中文导读] 图模式把此前注册得到的内存句柄挂入每条请求，以便通道交换远端用户区描述。
     if (param.opMode == OpMode::OFFLOAD) {
         for (auto& channelDesc : channelRequest) {
             channelDesc.memHandles = memRegInfo.memHandles.data();
@@ -2119,10 +2174,12 @@ HcclResult HcclGetChannelImpl(
     }
     if (channelNum > 0) {
         // 参数一致性校验信息注册到通信域，HcclChannelAcquire内部存在读清动作，每次调用前均需注册
+        // [中文导读] 每次 Acquire 前重新登记算子元信息，因为下层建链流程会读取并清理这份交换信息。
         CHK_RET(AddExchangeInfo(comm, param));
         CHK_RET(HcclChannelAcquire(comm, commEngine, channelRequest.data(), channelNum, levelNChannels.data()));
     }
 
+    // [中文导读] 取得所有句柄后逐条补齐远端内存及端口属性，存入对应算法层的通道列表。
     for (u32 idx = 0; idx < channelNum; idx++) {
         ChannelInfo channel;
         CHK_RET(BuildChannelInfo(
@@ -2189,10 +2246,12 @@ HcclResult GetAlgResCcu(
     AlgHierarchyInfoForAllLevel& algHierarchyInfo, void** resCtxSequence, uint64_t& ctxSize,
     const ResPackGraphMode& resPack)
 {
+    // [中文导读] 把选择阶段的拓扑和算法层次保存进资源对象，供 CCU 编排和后续复用恢复。
     resCtxHost->topoInfo = *topoInfo;
     resCtxHost->algHierarchyInfo = algHierarchyInfo;
 
     // 创建资源，并填充到Host内存上
+    // [中文导读] 先取得实际资源；资源不可用向上传递以触发回退，其它错误按原返回码结束。
     HcclResult ret = HcclAllocAlgResourceCcu(comm, param, resRequest, resCtxHost, resPack);
     if (ret == HCCL_E_UNAVAIL) {
         HCCL_WARNING("[HcclAllocAlgResourceCcu] resource unavailable, try to fallback.");
@@ -2202,6 +2261,7 @@ HcclResult GetAlgResCcu(
         return ret;
     }
     // 序列化
+    // [中文导读] 资源准备成功后序列化到 CCU EngineCtx，缓存的是 Host 可恢复的资源描述。
     std::vector<char> seq = resCtxHost->Serialize();
     uint64_t size = seq.size();
 
@@ -2232,10 +2292,12 @@ HcclResult HcclAllocAlgResourceCcu(
     resCtxHost->notifyNumPerThread = resRequest.notifyNumPerThread;
     resCtxHost->dieSplitRatio = resRequest.dieSplitRatio;
     // CCU模式下不构造ChannelInfo，端口信息由executor在CalcRes阶段采集，此处透传给执行阶段
+    // [中文导读] CCU 路径不构造普通 ChannelInfo，直接保留 executor 计算的并行端口信息供执行使用。
     resCtxHost->parallelPortInfo = resRequest.parallelPortInfo;
     CHK_RET(HcclGetThread(comm, param, resRequest, resCtxHost, resPack));
 #if CANN_VERSION_NUM >= CANN_VERSION(9, 1, 0)
     // 资源回退
+    // [中文导读] 先准备 CCU kernel 所需通道，通道资源不足时不继续注册 kernel。
     auto ret = HcclGetChannelForCcu(comm, param, resRequest);
     if (ret == HCCL_E_UNAVAIL) {
         // 进行资源回退
@@ -2246,6 +2308,7 @@ HcclResult HcclAllocAlgResourceCcu(
     }
 
     // opMode 透传：CCU_MS 与 CCU_SCHED 使用不同的默认资源阈值（MS 模式 LOOP/CCU_BUF 阈值更大）
+    // [中文导读] 再按展开模式取得 CCU 指令和 kernel 资源；不同模式会影响动态申请阈值。
     ret = HcclGetCcuKernel(comm, param.commOpExpansionMode, resRequest, resCtxHost);
     if (ret == HCCL_E_UNAVAIL) {
         // 资源不足导致回退：打印算子信息方便定位
@@ -3028,6 +3091,7 @@ HcclResult GetAlgResAiv(
     HcclComm comm, const OpParam& param, AlgResourceRequest& resRequest, TopoInfoWithNetLayerDetails* topoInfo,
     AlgHierarchyInfoForAllLevel& algHierarchyInfo, void** resCtxSequence)
 {
+    // [中文导读] AIV 的算法资源对象在 CPU_TS 上分配，里面的设备通信信息指针由后面的专用资源准备填充。
     uint64_t size = sizeof(AlgResourceCtxSerializable);
     CHK_RET(HcclEngineCtxCreate(comm, param.algTag, CommEngine::COMM_ENGINE_CPU_TS, size, resCtxSequence));
 
@@ -3053,6 +3117,7 @@ HcclResult HcclAllocAlgResourceAiv(
     uint64_t commInfoSize = 0;
     HcclResult ret
         = HcclEngineCtxGet(comm, param.commModeTag, param.engine, &(resCtxHost->aivCommInfoPtr), &commInfoSize);
+    // [中文导读] 按通信域和执行模式查询设备通信信息区，首次未命中才申请并清零标记区。
     if (ret == HCCL_E_NOT_FOUND || ret == HCCL_E_PARA) {
         CHK_RET(HcclEngineCtxCreate(
             comm, param.commModeTag, param.engine, AIV_TAG_BUFF_LEN, &(resCtxHost->aivCommInfoPtr)));
@@ -3062,6 +3127,7 @@ HcclResult HcclAllocAlgResourceAiv(
             CHK_RET(HcclCommRegCommStateCallback(param.commModeTag, ClearAivTagCb, resCtxHost->aivCommInfoPtr));
         }
         // 注册到通信域，支持建链时交换
+        // [中文导读] 把 AIV 标记及地址信息区注册到通信域，建链时才能向 Peer 交换该区的远端描述。
         CommMem regMem{COMM_MEM_TYPE_DEVICE, resCtxHost->aivCommInfoPtr, AIV_TAG_BUFF_LEN};
         CHK_RET(HcclCommMemReg(comm, param.commModeTag, &regMem, &memHandle));
         void* memHandleCachePtr = nullptr; // 当前AIV存放注册内存的memHandle使用
@@ -3069,6 +3135,7 @@ HcclResult HcclAllocAlgResourceAiv(
             comm, param.commModeTag, CommEngine::COMM_ENGINE_CPU_TS, sizeof(HcclMemHandle), &memHandleCachePtr));
         static_cast<HcclMemHandle*>(memHandleCachePtr)[0] = memHandle;
     } else {
+        // [中文导读] 复用设备区时从 CPU_TS 上恢复其注册句柄，并校验缓存容量与句柄类型匹配。
         void* memHandleCachePtr = nullptr;
         uint64_t memHandleCacheSize = 0;
         HcclResult ret = HcclEngineCtxGet(
@@ -3082,6 +3149,7 @@ HcclResult HcclAllocAlgResourceAiv(
         memHandle = static_cast<HcclMemHandle*>(memHandleCachePtr)[0];
 
         // 有的算子，如send recv，可能多个算子对端不同导致buffer被覆盖，需先获取一遍之前的信息
+        // [中文导读] 先读回设备上的已有 Peer 地址表，避免后续只更新本次 Peer 时覆盖其它已保存条目。
         CHK_RET(haclrtMemcpy(
             buffersIn, MAX_RANK_SIZE * sizeof(void*), resCtxHost->aivCommInfoPtr, MAX_RANK_SIZE * sizeof(void*),
             ACL_MEMCPY_DEVICE_TO_HOST));
@@ -3101,10 +3169,12 @@ HcclResult HcclAllocAlgResourceAiv(
     HCCL_INFO("[%s]local cclBufferAddr[%p] cclBufferSize[%llu]", __func__, cclBufferAddr, cclBufferSize);
     resCtxHost->cclMem = HcclMem{HCCL_MEM_TYPE_DEVICE, cclBufferAddr, cclBufferSize};
 
+    // [中文导读] 将本 Rank 的 CCL 数据区和 AIV 信息区地址放入本地槽，随后补齐各远端 Rank 的地址。
     buffersIn[resCtxHost->topoInfo.userRank] = cclBufferAddr;
     buffersOut[resCtxHost->topoInfo.userRank] = resCtxHost->aivCommInfoPtr;
 
     // 迭代每个子通信域的建链请求，创建链路
+    // [中文导读] 每层建链请求都携带 AIV 注册句柄，使下层可交换本端标记区的访问描述。
     for (u32 level = 0; level < resRequest.channels.size(); level++) {
         // 获取子通信域的建链请求
         std::vector<HcclChannelDesc>& levelNChannelRequest = resRequest.channels[level];
@@ -3132,6 +3202,7 @@ HcclResult HcclAllocAlgResourceAiv(
                 HCCL_ERROR(
                     "[%s] remoteRank[%u] exceeds MAX_RANK_SIZE[%u]", __func__, channelDesc.remoteRank, MAX_RANK_SIZE),
                 HCCL_E_PARA);
+            // [中文导读] 取得每条通道对应的远端 CCL 区，把远端 Rank 的数据区地址填入输入地址表。
             void* remoteBufferAddr;
             uint64_t remoteBufferSize;
             CHK_RET(HcclChannelGetHcclBuffer(comm, levelNChannels[idx], &remoteBufferAddr, &remoteBufferSize));
@@ -3140,6 +3211,7 @@ HcclResult HcclAllocAlgResourceAiv(
                 remoteBufferAddr, remoteBufferSize);
             buffersIn[channelDesc.remoteRank] = remoteBufferAddr;
 
+            // [中文导读] 从通道查询远端注册内存，并按此实现约定取末项地址作为该 Rank 的 AIV 标记区。
             u32 memNum;
             CommMem* remoteMems;
             char** memTags;
@@ -3153,6 +3225,7 @@ HcclResult HcclAllocAlgResourceAiv(
         }
     }
 
+    // [中文导读] 建链和地址收集完成后，把 CCL 地址表及标记区地址表写回设备；此处仍只是 AIV 核的执行准备。
     CHK_RET(haclrtMemcpy(
         resCtxHost->aivCommInfoPtr, MAX_RANK_SIZE * sizeof(void*), buffersIn, MAX_RANK_SIZE * sizeof(void*),
         ACL_MEMCPY_HOST_TO_DEVICE));

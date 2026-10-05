@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>@@TITLE@@ · 中文目录与文件导读</title>
+<style>
+:root{color-scheme:light;--ink:#20332e;--muted:#65756f;--line:#dbe4df;--accent:#17634a;--paper:#fff}
+*{box-sizing:border-box}body{margin:0;background:#f5f7f4;color:var(--ink);font:15px/1.7 system-ui,-apple-system,"PingFang SC",sans-serif}
+header{background:var(--ink);color:white;padding:30px 4vw}header p{max-width:980px;margin:8px 0;color:#d8e7df}h1{font-size:30px;margin:0;font-weight:650}
+a{color:var(--accent);overflow-wrap:anywhere}header a{color:#bde1cd}button,input,select{font:inherit}button{cursor:pointer;background:white;border:1px solid var(--line);border-radius:5px;padding:5px 12px;color:var(--ink)}button:disabled{opacity:.4;cursor:default}
+main{max-width:1560px;margin:auto;padding:24px 3vw}.guide{background:var(--paper);border:1px solid var(--line);padding:16px 22px;margin-bottom:22px;border-radius:8px}.guide pre{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.85 system-ui,-apple-system,"PingFang SC",sans-serif;margin:18px 0;max-width:1050px}
+summary{cursor:pointer}summary:hover{color:var(--accent)}.toolbar{display:flex;flex-wrap:wrap;gap:10px;background:var(--paper);border:1px solid var(--line);padding:15px;border-radius:8px}label{display:flex;align-items:center;gap:6px}#query{width:min(450px,70vw);padding:7px 10px;border:1px solid #a6bab0;border-radius:5px}select{padding:7px;border:1px solid var(--line);max-width:220px}.stats{margin:12px 0;color:var(--muted)}
+.guide-body{max-width:1120px}.guide-body h1{font-size:26px;margin:25px 0 12px}.guide-body h2{font-size:21px;margin:28px 0 12px}.guide-body code{font:13px/1.7 ui-monospace,monospace;background:#f1f4ef;padding:2px 4px;border-radius:3px}.guide-body pre{overflow:auto;white-space:pre;font:13px/1.8 ui-monospace,monospace;background:#f1f4ef;padding:15px}.guide-body pre code{padding:0}.table-wrap{overflow-x:auto}.guide-body table{border-collapse:collapse;width:100%;font-size:14px}.guide-body th,.guide-body td{text-align:left;vertical-align:top;border:1px solid var(--line);padding:9px 12px}.guide-body th{background:#edf3ef}.guide-body ol{padding-left:24px}
+.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px}.tree{background:white;border:1px solid var(--line);border-radius:8px;padding:12px;max-height:78vh;overflow:auto;position:sticky;top:16px;align-self:start}.tree details{margin-left:13px}.tree summary{overflow-wrap:anywhere;line-height:1.6;margin:5px 0}.tree .choose{font-size:12px;padding:1px 5px;margin-left:5px}.directory{padding:18px;background:#eaf1ed;border:1px solid var(--line);border-radius:8px;margin-bottom:12px}.directory h2{font-size:19px;margin:0 0 5px;overflow-wrap:anywhere}.directory p{margin:4px 0}
+.file{background:white;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:15px 18px}.file h3{margin:0 0 5px;font-size:16px}.path{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.file p{margin:7px 0}.tag{font-size:12px;background:#ecf3ef;border-radius:4px;padding:2px 7px;margin-left:8px;font-weight:400}.symbols{display:flex;flex-wrap:wrap;gap:7px}.symbols a{font:12px/1.6 ui-monospace,monospace;border:1px solid var(--line);padding:2px 7px;border-radius:4px}.hint{font-size:12px;color:var(--muted)}.pager{display:flex;align-items:center;gap:12px;margin:15px 0}.empty{background:white;padding:30px;border:1px solid var(--line)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.tree{max-height:280px;position:static}h1{font-size:24px}main{padding:15px}.file{padding:12px}}
+@media print{header{background:white;color:#20332e}.toolbar,.tree,.pager{display:none}.layout{display:block}.guide pre{font-size:11px}.file{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><h1>@@TITLE@@ / 中文目录与文件导读</h1><p id="snapshot"></p><p>先读分层与阅读路线，再按目录找文件。目录树包含全部受Git跟踪的层级；文件摘要结合目录职责和本地内容定位。页面可离线搜索，源码链接联网打开。</p></header>
+<main>
+<details class="guide"><summary>展开详细导读：分层职责、关键文件、跨仓调用与阅读路线</summary><div class="guide-body">@@GUIDE@@</div></details>
+<div class="toolbar">
+<label for="query">搜索<input id="query" type="search" placeholder="文件、接口、功能、路径…"></label>
+<label for="kind">类型<select id="kind"><option value="">全部文件</option></select></label>
+<label><input id="annotated" type="checkbox">只看中文注释文件</label>
+<label><input id="recursive" type="checkbox" checked>包含子目录</label>
+<button id="reset">显示全仓</button>
+</div>
+<p class="stats" id="stats" role="status" aria-live="polite"></p>
+<div class="layout"><nav class="tree" aria-label="目录树" id="tree"></nav><section aria-label="文件索引"><div class="directory" id="directory"></div><div class="pager"><button id="previous">上一页</button><span id="page"></span><button id="next">下一页</button></div><div id="files"></div></section></div>
+</main>
+<script id="catalogue-data" type="application/json">@@DATA@@</script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('catalogue-data').textContent);
+const el=id=>document.getElementById(id);
+const dirs=new Map(data.dirs.map(d=>[d.path,d]));
+const children=new Map();data.dirs.forEach(d=>{if(!children.has(d.parent))children.set(d.parent,[]);children.get(d.parent).push(d)});
+const source='https://github.com/zstar1003/hccl-hcomm-annotated/blob/main/';
+const size=60;let selected=data.repo,page=0,matches=[];
+const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n};
+function sourceLink(path,label,line){const a=node('a',label);a.href=source+path.split('/').map(encodeURIComponent).join('/')+(line?'#L'+line:'');a.target='_blank';a.rel='noopener noreferrer';return a}
+function choose(path){selected=path;page=0;refresh()}
+function branch(d){const details=node('details');const summary=node('summary');summary.append(node('span',d.path.split('/').pop()+' / ('+d.files+')'));const b=node('button','查看','choose');b.setAttribute('aria-label','查看目录 '+d.path);b.onclick=e=>{e.preventDefault();choose(d.path)};summary.append(b);details.append(summary);let built=false;details.addEventListener('toggle',()=>{if(details.open&&!built){built=true;(children.get(d.path)||[]).forEach(c=>details.append(branch(c)))}});return details}
+el('tree').append(branch(dirs.get(data.repo)));el('tree').firstChild.open=true;
+[...new Set(data.files.map(f=>f.kind))].sort().forEach(k=>{const option=node('option',k);option.value=k;el('kind').append(option)});
+el('snapshot').textContent=data.files.length.toLocaleString()+' 个文件 · '+data.dirs.length.toLocaleString()+' 层级目录 · 上游固定提交 '+data.upstream;
+function refresh(){const query=el('query').value.trim().toLocaleLowerCase();const kind=el('kind').value;const recursive=el('recursive').checked;
+matches=data.files.filter(f=>(recursive?(f.path.startsWith(selected+'/')):f.dir===selected)&&(!kind||f.kind===kind)&&(!el('annotated').checked||f.annotated)&&(!query||[f.path,f.description,f.role,...f.symbols.map(s=>s.name)].join(' ').toLocaleLowerCase().includes(query)));
+page=Math.min(page,Math.max(0,Math.ceil(matches.length/size)-1));
+const d=dirs.get(selected);el('directory').replaceChildren(node('h2',selected+'/'),node('p',d.role),node('p','直接文件 '+d.direct+' 个；包含子目录共 '+d.files+' 个。'));
+el('stats').textContent='当前目录：'+selected+' / · 匹配 '+matches.length.toLocaleString()+' 个文件';
+el('page').textContent=(page+1)+' / '+Math.max(1,Math.ceil(matches.length/size));el('previous').disabled=page===0;el('next').disabled=(page+1)*size>=matches.length;
+el('files').replaceChildren();
+if(!matches.length)el('files').append(node('p','没有匹配文件。可清空搜索或显示全仓。','empty'));
+matches.slice(page*size,(page+1)*size).forEach(f=>{const card=node('article',undefined,'file');const h=node('h3');h.append(sourceLink(f.path,f.name),node('span',f.kind,'tag'));if(f.annotated)h.append(node('span','中文导读','tag'));card.append(h,node('div',f.path,'path'),node('p',f.description));
+const list=node('div',undefined,'symbols');const search=el('query').value.trim().toLocaleLowerCase();const matchingSymbols=f.symbols.filter(s=>search&&s.name.toLocaleLowerCase().includes(search));const shown=matchingSymbols.length?matchingSymbols:f.symbols.slice(0,12);shown.forEach(s=>list.append(sourceLink(f.path,s.kind+' · '+s.name,s.line)));card.append(list);if(f.symbols.length>shown.length){const more=node('details');more.append(node('summary','查看全部 '+f.symbols.length+' 个抽取符号'));let built=false;more.addEventListener('toggle',()=>{if(more.open&&!built){built=true;const links=node('div',undefined,'symbols');f.symbols.forEach(s=>links.append(sourceLink(f.path,s.kind+' · '+s.name,s.line)));more.append(links)}});card.append(more)}card.append(node('p',f.hint,'hint'));el('files').append(card)});
+}
+['query','kind','annotated','recursive'].forEach(id=>el(id).addEventListener(id==='query'?'input':'change',()=>{page=0;refresh()}));el('reset').onclick=()=>{selected=data.repo;page=0;el('query').value='';el('kind').value='';el('annotated').checked=false;el('recursive').checked=true;refresh()};el('previous').onclick=()=>{page--;refresh()};el('next').onclick=()=>{page++;refresh()};refresh();
+</script>
+</body></html>

@@ -278,6 +278,7 @@ inline HcclResult
 OpOrchestrate(OpParam* param, const AlgResourceCtxSerializable* resCtxPtr, ThreadHandle thread, std::string& algName)
 {
     // RTSQ等待时间: 与算子展开无关, 但resCtx固定该设置不会再变更
+    // [中文导读] 先应用资源上下文中的执行队列资源等待超时；是否可设置取决于运行时能力。
     if (HcommIsSupportHcommThreadResAcquireTimeOut()) {
         CHK_RET(HcclThreadResAcquireTimeOut(resCtxPtr->fullTimeout));
     }
@@ -288,6 +289,7 @@ OpOrchestrate(OpParam* param, const AlgResourceCtxSerializable* resCtxPtr, Threa
     }
 
     // 主thread等待Host stream的通知
+    // [中文导读] 根据新旧 Thread 申请方式找出 Host 输入通知槽，旧接口需按各流最大通知数定位。
     u32 maxNotifyNum = resCtxPtr->notifyNumOnMainThread;
     if (!resCtxPtr->isHcclThreadAcquireWithConfigSupported) {
         for (u32 i = 0; i < resCtxPtr->notifyNumPerThread.size(); i++) {
@@ -299,15 +301,18 @@ OpOrchestrate(OpParam* param, const AlgResourceCtxSerializable* resCtxPtr, Threa
     HCCL_DEBUG(
         "[%s]Notify wait on thread[%llu], maxNotifyNum[%u], timeout[%u] s", __func__, thread, maxNotifyNum,
         resCtxPtr->waitTimeout);
+    // [中文导读] 把输入就绪等待排入设备主 Thread，与 Host 在用户流中发送的通知配对。
     CHK_RET(HcclThreadNotifyWaitOnThreadDefault(thread, maxNotifyNum, resCtxPtr->waitTimeout));
 
     // 设置执行超时时间: 用于NotifyWait, 只在算子展开过程中使用
     ExecTimeoutManager::Instance().SetExecTimeout(param->opConfig.execTimeout);
 
     // 设置BatchTransfer是否可行: 只在算子展开过程中使用
+    // [中文导读] 将 Host 记录的批传输能力应用到设备包装层，保证本次展开采用可用的传输接口。
     CHK_RET(InitHcommBatchTransferOnThreadSupported(resCtxPtr->isHcommBatchTransferOnThreadSupported));
 
     // 根据算法名字获取executor: 只用于算子展开
+    // [中文导读] 用算子类型和算法名取得新 executor，再调用 Orchestrate 展开模板任务。
     std::shared_ptr<InsCollAlgBase> executor = CollAlgExecRegistryV2::Instance().GetAlgExec(param->opType, algName);
     if (executor.get() == nullptr) {
         HCCL_ERROR("Fail to find executor for algName[%s]", algName.c_str());
@@ -343,17 +348,19 @@ static HcclResult HcclOrderLaunchNotifyRecord(const OpParam* param)
 }
 
 // [中文导读] Host下发的AICPU入口，不是上层HcclAlltoAll API本身。param携带算子参数及设备可读的资源描述。
-// [中文导读] 新流程依次取得通信域使用引用、恢复资源/变长参数、展开或回放任务，最后排入完成通知并释放引用。
+// [中文导读] 新流程依次取得通信域占用保护、恢复资源/变长参数、展开或回放任务，最后排入完成通知并清除占用标记。
 // [中文导读] 下文还保留旧流程；不要将两个分支连成同一次算子的必经步骤。错误路径会提前返回。
 extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
 {
     // 修改当前进程的调度策略和优先级
+    // [中文导读] 入口先恢复普通调度策略，失败则结束本次 kernel 调用。
     struct sched_param schedParam;
     schedParam.sched_priority = 0; // 设置优先级为0
     if (sched_setscheduler(0, SCHED_OTHER, &schedParam) == -1) {
         HCCL_ERROR("%s sched_setscheduler to SCHED_OTHER failed", __func__);
         return 1;
     }
+    // [中文导读] 参数非空后才能读取通信域和算法标识；通信域占用保护在算法工作开始前取得。
     if (param == nullptr) {
         HCCL_ERROR("%s param is nullptr", __func__);
         return 1;
@@ -365,9 +372,11 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
     }
 
     // AICPU 按序下发
+    // [中文导读] 通知 Host 保序 Thread 本次 kernel 已进入展开阶段，配合 Host 的两阶段保序逻辑。
     CHK_RET(HcclOrderLaunchNotifyRecord(param));
 
     std::string algName = std::string(param->algName);
+    // [中文导读] 兼容流程需要 Scatter 维测描述；新流程稍后使用独立的算子信息转换。
     if (!ops_hccl::IsOpsV2(param->algName, param->deviceType)) {
         ScatterOpInfo opInfo;
         if (CreateScatter(param, &opInfo) != HCCL_SUCCESS) {
@@ -394,6 +403,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
 
     if (ops_hccl::IsOpsV2(param->algName, param->deviceType)) {
         // 判断通信域状态
+        // [中文导读] 新流程在展开任务前查询通信域状态；暂停中清除本次占用标记并返回专用暂停错误。
         HcclCommStatus commStatus = HCCL_COMM_STATUS_INVALID;
         if (HcommIsSupportHcclCommGetStatus()) {
             auto statusRet = HcclCommGetStatus(param->commName, &commStatus);
@@ -423,6 +433,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
         u32 hitRateNum = 100;
         if (param->opType != HcclCMDType::HCCL_CMD_BATCH_SEND_RECV) {
             // 通过缓存实现反序列化优化
+            // [中文导读] 按通信域与算法 tag 查反序列化缓存，并检查资源仍适用于当前参数。
             cachedResCtxHolder = g_cacheManager.Get(param->algTag, param->commName);
             if (cachedResCtxHolder != nullptr && IsResCtxCacheReusable(*cachedResCtxHolder, *param)) {
                 HCCL_INFO("[%s] Cache HIT for algTag[%s]", __func__, param->algTag);
@@ -437,10 +448,12 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
                         "[%s] comm[%s] hitRate=%.2f%%, cacheSize=%zu", __func__, commName.c_str(),
                         stats.hitRate() * hitRateNum, cacheSize);
                 }
+                // [中文导读] 命中后使用 shared_ptr 持有的只读资源对象，保证本次展开期间缓存对象存活。
                 resCtxPtr = cachedResCtxHolder.get();
             } else {
                 bool isStaleCache = (cachedResCtxHolder != nullptr);
                 // 未命中或者通信域恢复后缓存失效，进行反序列化并存入缓存
+                // [中文导读] 未命中或陈旧缓存时恢复 Host 下发的序列化资源，并刷新设备侧资源对象缓存。
                 resCtx = DeserializeResCtx(param);
                 g_cacheManager.Put(param->algTag, *resCtx, param->commName);
                 resCtxPtr = resCtx.get();
@@ -460,6 +473,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
         // [中文导读] AllToAll系列恢复counts/displacements等描述的可用指针，不是在这里交换各Rank的用户数据。
         // 还原变长指针
         HcclResult ret = HCCL_SUCCESS;
+        // [中文导读] 按算子类型恢复尾部描述的内部指针；BatchSendRecv 与变长集合通信采用不同布局。
         if (param->opType == HCCL_CMD_BATCH_SEND_RECV) {
             ret = ops_hccl::RestoreVarDataBatchSendRecv(*param);
         } else if (
@@ -476,6 +490,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             return 1;
         }
         // 获取Device测主thread
+        // [中文导读] 取资源列表中的主 Thread，并开启当前算法 tag 的批量下发模式。
         ThreadHandle thread = resCtxPtr->threads[0];
         if (HcommBatchModeStart(param->algTag) != HCCL_SUCCESS) {
             HCCL_ERROR("failed set batch mode, tag is %s.", param->algTag);
@@ -483,6 +498,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
         }
 
         // 要在下第一个task之前上报
+        // [中文导读] 在第一个执行任务之前注册维测信息，使后续任务异常可以关联本次算子。
         HcclDfxOpInfoCompat dfxOpInfo{};
         if (ConvertToHcclDfxOpInfo(param, &dfxOpInfo) != HCCL_SUCCESS) {
             HCCL_ERROR("ConvertToHcclDfxOpInfo fail, commName is %s, tag is %s", param->commName, param->algTag);
@@ -504,6 +520,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
         ThreadHandle exportedAicpuTsThread = param->opThread;
 
         // 检查aicpu task cache使能约束
+        // [中文导读] 只有运行时提供查询能力且缓存策略允许时才尝试任务缓存；资源缓存命中不等于任务缓存命中。
         bool enableCache = false;
         if (HcommIsSupportHcommAicpuTsTaskCacheLookup()) {
             CHK_RET(AicpuTaskCachePolicy::IsAicpuTaskCacheEnable(*param, *resCtxPtr, enableCache));
@@ -526,6 +543,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             // 因此, 无需通过强制下发SQE, 来避免cache miss下缓存算法无关的task 或 cache hit下task下发乱序
 
             // 准备地址信息 (当前rank的userIn和userOut)
+            // [中文导读] 任务缓存以本次输入和输出地址及有效容量更新重放任务，缓存不固定绑定首次用户地址。
             constexpr uint64_t ADDRS_COUNT = 2;
             void* addrs[ADDRS_COUNT] = {param->inputPtr, param->outputPtr};
             uint64_t inputSize = 0;
@@ -537,6 +555,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             std::string cacheTag;
             bool isCacheHit = false;
             // 组装aicpu task cache tag
+            // [中文导读] 按本次参数及输入容量生成任务缓存键，再查询是否已有可重放任务。
             CHK_RET(AicpuTaskCacheKey::GetAicpuTaskCacheTag(*param, inputSize, cacheTag));
 
             // 查询aicpu task cache
@@ -545,6 +564,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             }
             HCCL_INFO("[HcclLaunchAicpuKernel] isCacheHit[%d] for cacheTag[%s]", isCacheHit, cacheTag.c_str());
 
+            // [中文导读] 任务缓存未命中时围绕算法展开建立一次采集区间，命中则走后面的刷新重放分支。
             if (!isCacheHit) { // cache miss
                 HcclResult cacheRet = HCCL_SUCCESS;
                 do {
@@ -558,6 +578,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
                     }
 
                     // 设置算子展开相关的配置, 下发首个NotifyWait, 构造executor并执行算子展开
+                    // [中文导读] 采集区间内完成输入等待和算法任务生成，确保缓存覆盖算子展开相关的任务。
                     cacheRet = OpOrchestrate(param, resCtxPtr, thread, algName);
                     CHK_PRT_BREAK(
                         cacheRet != HCCL_SUCCESS, HCCL_ERROR("[%s] OpOrchestrate error, ret[%d]", __func__, cacheRet),
@@ -567,12 +588,14 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
                     // miss下避免缓存算法无关的task 注意: cache hit时, task刷新后直接下发, 这里无需强制下发 注意:
                     // hccl无法识别cache容量是否已满; 理论上如果cache容量满了, cache不使能, 无需强制下发
                     // (仅首次执行触发, 开销有限)
+                    // [中文导读] 强制提交本次展开的待下发任务，使缓存采集不夹带后面的算法无关任务。
                     cacheRet = EnforceLaunchTask(param->algTag);
                     CHK_PRT_BREAK(
                         cacheRet != HCCL_SUCCESS,
                         HCCL_ERROR("[%s] EnforceLaunchTask error, ret[%d]", __func__, cacheRet), (void)0);
 
                     // 算子展开后, 通知aicpu task cache停止缓存task
+                    // [中文导读] 任务采集结束后关闭缓存区间；停止采集和设备任务执行完成是不同阶段。
                     if (HcommIsSupportHcommAicpuTsTaskCacheEnd()) {
                         cacheRet = static_cast<HcclResult>(HcommAicpuTsTaskCacheEnd(cacheTag.c_str()));
                         CHK_PRT_BREAK(
@@ -581,6 +604,7 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
                     }
                 } while (0);
 
+                // [中文导读] 采集或提交失败时清除这个 tag 的任务缓存，避免下次重放不完整内容。
                 if (UNLIKELY(cacheRet != HCCL_SUCCESS)) {
                     if (HcommIsSupportHcommAicpuTsTaskCacheClear()) {
                         HCCL_ERROR("[%s] cache submit error, clear tag[%s]", __func__, cacheTag.c_str());
@@ -590,9 +614,11 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
                 }
 
                 // 首次缓存记录通信域与tag关系
+                // [中文导读] 建立通信域到缓存 tag 的关系，供后续通信域缓存清理时找到相关任务。
                 AicpuTaskCacheCommManager::Instance().AddCommTagMap(param->hcclComm, cacheTag);
             } else { // cache hit
                 // 刷新并下发task
+                // [中文导读] 命中后刷新用户地址并重放任务，因此此次调用不再执行模板展开。
                 if (HcommIsSupportHcommAicpuTsTaskCacheExecute()) {
                     CHK_RET(static_cast<HcclResult>(
                         HcommAicpuTsTaskCacheExecute(cacheTag.c_str(), addrs, sizes, ADDRS_COUNT)));
@@ -600,10 +626,12 @@ extern "C" unsigned int HcclLaunchAicpuKernel(OpParam* param)
             }
         } else { // 不使能aicpu task cache
             // 设置算子展开相关的配置, 下发首个NotifyWait, 构造executor并执行算子展开
+            // [中文导读] 未启用任务缓存时直接展开本次算法，仍然包含同样的输入依赖与执行配置。
             CHK_RET(OpOrchestrate(param, resCtxPtr, thread, algName));
         }
 
         // [中文导读] 算法任务之后排入对用户流所导出Thread的通知，与Host侧的等待配对；API返回不等于设备已执行完。
+        // [中文导读] 在算法尾部向导出的用户流 Thread 记录通知，使用户流后续消费输出保持先后关系。
         constexpr u32 DEFAULT_NOTIFY_IDX = 0;
         HCCL_DEBUG(
             "[%s]Notify record on srcThread[%llu], dstThread[%llu], notifyIdx[%u]", __func__, thread,
@@ -922,6 +950,7 @@ HcclResult ops_hccl::RestoreVarDataBatchSendRecv(OpParam& param)
 HcclResult ops_hccl::RestoreVarDataAlltoAllV(OpParam& param, const AlgResourceCtxSerializable& resCtx)
 {
     u64 rankSize = resCtx.topoInfo.userRankSize;
+    // [中文导读] 根据 AllToAll 或 VC 布局检查描述区的最小和最大容量，防止按非法长度恢复数组指针。
     u64 minVectorNum = ALL_TO_ALL_V_VECTOR_NUM;
     u64 maxVectorNum
         = (param.opType == HcclCMDType::HCCL_CMD_ALLTOALLVC) ? ALL_TO_ALL_VC_VECTOR_NUM : ALL_TO_ALL_V_VECTOR_NUM;
@@ -940,12 +969,14 @@ HcclResult ops_hccl::RestoreVarDataAlltoAllV(OpParam& param, const AlgResourceCt
     constexpr u32 ALL_TO_ALL_V_OFFSET_RDISPLS = 3;
     constexpr u32 ALL_TO_ALL_VC_OFFSET_PEER_RDISPLS = 4;
 
+    // [中文导读] 按固定段偏移重建四个数组，段内每个元素对应一个通信域 Rank。
     u64* data = reinterpret_cast<u64*>(param.varData);
     param.all2AllVDataDes.sendCounts = data;
     param.all2AllVDataDes.recvCounts = data + ALL_TO_ALL_V_OFFSET_RECV_COUNTS * rankSize;
     param.all2AllVDataDes.sdispls = data + ALL_TO_ALL_V_OFFSET_SDISPLS * rankSize;
     param.all2AllVDataDes.rdispls = data + ALL_TO_ALL_V_OFFSET_RDISPLS * rankSize;
 
+    // [中文导读] 只有 VC 的第五段实际存在时恢复对端接收位移；四段参数仍保留普通中转路径。
     if (param.opType == HcclCMDType::HCCL_CMD_ALLTOALLVC
         && param.varMemSize == ALL_TO_ALL_VC_VECTOR_NUM * rankSize * sizeof(u64)) {
         param.all2AllVDataDes.peerRdispls = data + ALL_TO_ALL_VC_OFFSET_PEER_RDISPLS * rankSize;

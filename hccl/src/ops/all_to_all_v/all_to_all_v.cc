@@ -28,6 +28,7 @@ HcclResult HcclAlltoAll(
     HcclDataType recvType, HcclComm comm, aclrtStream stream)
 {
     HCCL_INFO("Start to run execute HcclAlltoAll");
+    // [中文导读] 先检查新 HCOMM 版本，再检查设备支持；任一条件不满足就进入原 AllToAll 实现。
     if (GetHcommVersion() < CANN_VERSION(9, 0, 0)) { // compat handle
         return HcclAlltoAllInner(sendBuf, sendCount, sendType, recvBuf, recvCount, recvType, comm, stream);
     }
@@ -38,6 +39,7 @@ HcclResult HcclAlltoAll(
     if (!isOutPlace) {
         return HcclAlltoAllInner(sendBuf, sendCount, sendType, recvBuf, recvCount, recvType, comm, stream);
     }
+    // [中文导读] 发送和接收数量同时为零时直接成功；只一侧为空仍需继续处理另一侧的数据。
     CHK_PRT_RET(
         sendCount == 0 && recvCount == 0, HCCL_WARNING("sendCount and recvCount are both 0, return AllToAll success"),
         HCCL_SUCCESS);
@@ -45,6 +47,7 @@ HcclResult HcclAlltoAll(
     CHK_RET(InitEnvConfig());
 
     // 参数校验等工作
+    // [中文导读] 确认类型和收发数量匹配，再取得通信域规模以构造每个 Peer 的布局。
     CHK_RET(CheckAlltoAllInputPara(comm, sendBuf, sendCount, sendType, recvBuf, recvCount, recvType, stream));
     u32 rankSize = INVALID_VALUE_RANKSIZE;
     CHK_RET(HcclGetRankSize(comm, &rankSize));
@@ -61,6 +64,7 @@ HcclResult HcclAlltoAll(
     // [中文导读] 数量和位移先按元素计数；算法构造字节切片时再乘数据类型大小。
     // [中文导读] 这里整理的是Host侧描述数组，并没有搬运sendBuf中的用户数据。
     // 构造四个矩阵，适配alltoallV的逻辑
+    // [中文导读] 按通信域规模创建四个向量；每个 Peer 的等长数量在合法性检查后以 recvCount 填充。
     std::vector<u64> sdispls(rankSize, 0);
     std::vector<u64> rdispls(rankSize, 0);
     std::vector<u64> sendCounts(rankSize, recvCount);
@@ -80,6 +84,7 @@ HcclResult HcclAlltoAll(
 
     CHK_RET(LogHcclExit("HcclAlltoAll", tag.c_str(), startut));
 
+    // [中文导读] 公共调度仅设置兼容回退标志时，回到本入口真正调用旧实现。
     if (useInnerOp) {
         return HcclAlltoAllInner(sendBuf, sendCount, sendType, recvBuf, recvCount, recvType, comm, stream);
     }
@@ -109,6 +114,7 @@ HcclResult HcclAlltoAllV(
     CHK_RET(InitEnvConfig());
 
     // 参数校验等工作
+    // [中文导读] 先检查四个描述数组及类型，再按实际非零数量检查用户缓冲区是否必须存在。
     CHK_RET(CheckAlltoAllVInputPara(
         comm, sendBuf, sendCounts, sdispls, sendType, recvBuf, recvCounts, rdispls, recvType, stream));
     u32 rankSize = INVALID_VALUE_RANKSIZE;
@@ -124,6 +130,7 @@ HcclResult HcclAlltoAllV(
     CHK_RET(
         CheckBufNullptr(reinterpret_cast<const u64*>(recvCounts), rankSize, recvBuf, std::string(__func__), "recvBuf"));
 
+    // [中文导读] 扫描本 Rank 面向所有 Peer 的收发数量，用最大单 Peer 数量进行系统上限检查。
     u64 maxSendRecvCount = 0;
     for (u64 i = 0; i < rankSize; i++) {
         maxSendRecvCount = max(maxSendRecvCount, static_cast<const u64*>(sendCounts)[i]);
@@ -183,11 +190,13 @@ HcclResult HcclAlltoAllVC(
     CHK_RET_AND_PRINT_IDE(HcomCheckUserRank(rankSize, userRank), tag.c_str());
 
     // 构造四个矩阵，适配alltoallV的逻辑
+    // [中文导读] 将全域的数量矩阵转换成本 Rank 的四个描述向量，复用 AllToAllV 的执行框架。
     std::vector<u64> sendCounts(rankSize, 0);
     std::vector<u64> recvCounts(rankSize, 0);
     std::vector<u64> sdispls(rankSize, 0);
     std::vector<u64> rdispls(rankSize, 0);
     // 额外构造一个peerRdispls矩阵，存储对端recvBuf中本端的数据偏移地址
+    // [中文导读] 额外计算本 Rank 数据在每个对端输出中的起点，为对称内存直写提供远端布局。
     std::vector<u64> peerRdispls(rankSize, 0);
     CHK_RET(ConvertAlltoAllVCParam(rankSize, userRank, sendCountMatrix, sendCounts, recvCounts, sdispls, rdispls));
     CHK_RET(ConvertPeerRdispls(rankSize, userRank, sendCountMatrix, peerRdispls));
@@ -403,6 +412,7 @@ HcclResult GenResPack(
         return HCCL_E_INTERNAL;
     }
     // 设置streams
+    // [中文导读] 把图模式提供的外部从流收入资源包；公共资源层随后把流包装为 Thread。
     if (streams != nullptr && streamCount > 0) {
         for (size_t i = 0; i < streamCount; i++) {
             resPack.streams.push_back(static_cast<aclrtStream>(streams[i]));
@@ -417,6 +427,7 @@ HcclResult GenResPack(
 HcclResult
 ConvertAlltoAllParam(const u64 recvCount, const u32 rankSize, std::vector<u64>& sdispls, std::vector<u64>& rdispls)
 {
+    // [中文导读] 用等长数量做前缀累加，得到按 Peer 顺序连续排列的发送和接收元素位移。
     u64 dataCountOffset = 0;
     for (u64 i = 0; i < rankSize; i++) {
         sdispls[i] = dataCountOffset;
@@ -432,12 +443,14 @@ HcclResult ConvertAlltoAllVCParam(
 {
     // 取出sendCountMatrix的数据
     const u64* data = static_cast<const u64*>(sendCountMatrix);
+    // [中文导读] 检查矩阵中的最大数量，避免任何 Rank 对的描述越过数量上限。
     u64 maxSendRecvCount = 0;
     for (u64 i = 0; i < static_cast<u64>(rankSize) * rankSize; i++) {
         maxSendRecvCount = max(maxSendRecvCount, data[i]);
     }
     CHK_RET(CheckCount(maxSendRecvCount));
 
+    // [中文导读] 把行优先的平面矩阵按源 Rank 分行，随后分别抽取本端发送行和接收列。
     std::vector<std::vector<u64>> outputMatrix;
     outputMatrix.resize(rankSize);
     for (u64 i = 0; i < rankSize; ++i) {
@@ -449,6 +462,7 @@ HcclResult ConvertAlltoAllVCParam(
 
     u64 dataCountOffset = 0;
     for (u64 i = 0; i < rankSize; i++) {
+        // [中文导读] 本 Rank 所在行描述发给各目的 Rank 的数量，发送位移由这些数量累加生成。
         sendCounts[i] = outputMatrix[userRank][i];
         sdispls[i] = dataCountOffset;
         dataCountOffset += sendCounts[i];
@@ -456,6 +470,7 @@ HcclResult ConvertAlltoAllVCParam(
 
     dataCountOffset = 0;
     for (u64 i = 0; i < rankSize; i++) {
+        // [中文导读] 本 Rank 所在列描述从各源 Rank 接收的数量，接收位移按源 Rank 顺序累加生成。
         recvCounts[i] = outputMatrix[i][userRank];
         rdispls[i] = dataCountOffset;
         dataCountOffset += recvCounts[i];
@@ -468,6 +483,7 @@ HcclResult
 ConvertPeerRdispls(const u32 rankSize, const u32 userRank, const void* sendCountMatrix, std::vector<u64>& peerRdispls)
 {
     const u64* data = static_cast<const u64*>(sendCountMatrix);
+    // [中文导读] 对每个目的 Rank 累加排在本 Rank 前面的发送者数量，得到本端数据的远端接收位移。
     for (u64 j = 0; j < rankSize; j++) {
         u64 peerRecvOff = 0;
         for (u64 k = 0; k < userRank; k++) {
@@ -627,6 +643,7 @@ HcclResult ConstructVarData(
 {
     CHK_PTR_NULL(param.varData);
     u64* data = reinterpret_cast<u64*>(param.varData);
+    // [中文导读] 将连续尾部划分成四个 rankSize 段；段号选择数组，段内下标选择 Peer。
     for (u64 i = 0; i < ALL_TO_ALL_V_VECTOR_NUM * userRankSize; i++) {
         u64 val = i / rankSize;
         switch (val) {
@@ -670,6 +687,7 @@ HcclResult AlltoAllVConstructOpParam(
         return HCCL_E_INTERNAL;
     }
 
+    // [中文导读] 绑定用户地址和描述区容量，sendType 与 recvType 使用入口校验后的统一类型。
     param.inputPtr = const_cast<void*>(sendBuf);
     param.outputPtr = const_cast<void*>(recvBuf);
     param.varMemSize = varMemSize;
@@ -681,6 +699,7 @@ HcclResult AlltoAllVConstructOpParam(
     const u64* sdisplsData = static_cast<const u64*>(sdispls);
     const u64* rdisplsData = static_cast<const u64*>(rdispls);
     // 计算整片数据包含中间间隔的大小，防止图模式注册内存踩踏
+    // [中文导读] 分别计算发送和接收布局的最大终点，覆盖位移间空洞；这里得到的是元素跨度。
     u64 inputSize = 0;
     u64 outputSize = 0;
     CHK_RET(
@@ -691,6 +710,7 @@ HcclResult AlltoAllVConstructOpParam(
     param.enableDetour = false;
     param.opType = opType;
 
+    // [中文导读] 将调用者的描述复制到参数尾部，再把四个内部指针定位到各自的连续段。
     CHK_RET(ConstructVarData(sendCountsData, recvCountsData, sdisplsData, rdisplsData, rankSize, rankSize, param));
     u64* data = reinterpret_cast<u64*>(param.varData);
     param.all2AllVDataDes.sendCounts = data;
@@ -698,6 +718,7 @@ HcclResult AlltoAllVConstructOpParam(
     param.all2AllVDataDes.sdispls = data + SEND_DISPL_IDX * rankSize;
     param.all2AllVDataDes.rdispls = data + RECV_DISPL_IDX * rankSize;
 
+    // [中文导读] 仅在预留了第五段且提供对端位移时填充 peerRdispls，供 VC 直接内存路径使用。
     if (hasPeerRdisplsSlot && peerRdispls != nullptr) {
         const u64* peerRdisplsData = static_cast<const u64*>(peerRdispls);
         u64* peerRdisplsSlot = data + PEER_RECV_DISPL_IDX * rankSize;
@@ -750,10 +771,12 @@ HcclResult AlltoAllVExecDispatch(
     // 9.0.0 ccu模式走老流程
     if (opMode == OpMode::OPBASE && GetHcommVersion() == CANN_VERSION(9, 0, 0)
         && param.engine == CommEngine::COMM_ENGINE_CCU) {
+        // [中文导读] 此兼容分支只通知外层入口去执行旧实现；这里的成功并不代表已经完成通信。
         useInnerOp = true;
         return HCCL_SUCCESS;
     }
 
+    // [中文导读] 已有 CCU 发射上下文可直接使用，避免本次常规算法选择和资源准备。
     CcuFastLaunchCtx* ccuFastLaunchCtx = nullptr;
     if (ShouldGoCcuFastLaunch(comm, param, &ccuFastLaunchCtx)) {
         return HcclExecOpCcuFastLaunch(comm, param, ccuFastLaunchCtx);
@@ -767,6 +790,7 @@ HcclResult AlltoAllVExecDispatch(
         }
     }
 
+    // [中文导读] 单 Rank 将自发自收交给本地处理，无需多 Peer 通信调度。
     if (rankSize == 1) {
         HCCL_WARNING("[%s] rankSize == 1, enter SingleRankProc", __func__);
         CHK_RET(SingleRankProc(comm, param));
@@ -776,6 +800,7 @@ HcclResult AlltoAllVExecDispatch(
     std::string algName;
     std::unique_ptr<TopoInfoWithNetLayerDetails> topoInfo = std::make_unique<TopoInfoWithNetLayerDetails>();
     CHK_PTR_NULL(topoInfo);
+    // [中文导读] 多 Rank 常规路径先取得拓扑与算法，再判断该具体组合能否沿用对称内存探测结果。
     CHK_RET(Selector(comm, param, topoInfo, algName));
     const bool isSoleAlltoAllUbxSymmetric
         = param.opType == HcclCMDType::HCCL_CMD_ALLTOALL && algName == "AicpuAllToAllSoleMeshMultiJetty"
@@ -802,10 +827,12 @@ HcclResult AlltoAllVOutPlaceCommon(
     HcclCMDType opType, u32 rankSize, bool& useInnerOp, OpMode opMode, const ResPackGraphMode& resPack,
     const void* peerRdispls)
 {
+    // [中文导读] 先用轻量参数探测对称内存能力，因为这个结果会决定变长参数需要四段还是五段。
     OpParam probeParam;
     CHK_RET(PreCheckSymmetricMemory(
         probeParam, comm, opMode, opType, sendBuf, sendCounts, sdispls, recvBuf, recvCounts, rdispls, rankSize));
 
+    // [中文导读] 仅 VC 的对称内存候选需要额外对端位移段，据此计算整个参数块大小。
     bool needPeerRdisplsSlot = (opType == HcclCMDType::HCCL_CMD_ALLTOALLVC && probeParam.supportSymmetricMemory);
     u64 vectorNum = needPeerRdisplsSlot ? ALL_TO_ALL_VC_VECTOR_NUM : ALL_TO_ALL_V_VECTOR_NUM;
     u64 varMemSize = vectorNum * rankSize * sizeof(u64);
@@ -815,6 +842,7 @@ HcclResult AlltoAllVOutPlaceCommon(
         HCCL_ERROR("[AlltoAllVOutPlaceCommon] malloc OpParam failed!");
         return HCCL_E_INTERNAL;
     }
+    // [中文导读] 在一次分配的连续区域构造 OpParam，并用定制删除器成对执行析构和释放。
     OpParam* tmpParamPtr = new (paramMem) OpParam();
     auto deleter = [](OpParam* p) {
         if (p) {
@@ -829,6 +857,7 @@ HcclResult AlltoAllVOutPlaceCommon(
         sendBuf, sendCounts, sdispls, recvBuf, recvCounts, rdispls, dataType, comm, stream, tag, opType, rankSize,
         opMode, varMemSize, param, peerRdispls, needPeerRdisplsSlot));
 
+    // [中文导读] 完整参数组装后确定引擎，随后由调度分支消费探测结果和图资源包。
     CHK_RET(HcclGetOpExpansionMode(comm, param));
 
     CHK_RET(AlltoAllVExecDispatch(comm, param, probeParam, opMode, rankSize, useInnerOp, resPack));
