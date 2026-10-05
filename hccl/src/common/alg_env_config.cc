@@ -814,26 +814,47 @@ HcclResult ParseEntryLogEnable()
     return HCCL_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S817] 声明选择器开关解析入口，返回配置解析结果。
 HcclResult ParseNewSelector()
+// [中文导读] [AllReduce逐行 S818] 进入开关解析函数体。
 {
+    // [中文导读] [AllReduce逐行 S819] 读取HCCL_USE_NEW_SELECTOR原始环境字符串，尚未选择算法。
     std::string useNewSelectorEnv = GetEnv("HCCL_USE_NEW_SELECTOR");
+    // [中文导读] [AllReduce逐行 S820] 检测GetEnv用EmptyString表示的未配置情况。
     if (useNewSelectorEnv == "EmptyString") {
+        // [中文导读] [AllReduce逐行 S821] 记录当前快照未配置时默认使用规则选择器0。
         HCCL_INFO("HCCL_USE_NEW_SELECTOR set by default to [0]");
+        // [中文导读] [AllReduce逐行 S822] 未配置时成功返回，不覆盖现有配置字段。
         return HCCL_SUCCESS;
+    // [中文导读] [AllReduce逐行 S823] 结束未配置的提前返回分支。
     }
+    // [中文导读] [AllReduce逐行 S824] 拒绝除字符串0和1以外的显式值。
     if (useNewSelectorEnv != "0" && useNewSelectorEnv != "1") {
+        // [中文导读] [AllReduce逐行 S825] 开始记录非法选择器开关错误。
         HCCL_ERROR(
+            // [中文导读] [AllReduce逐行 S826] 提供错误文本，标明出错环境变量和值占位。
             "[Parser][NewSelector]environmental variable HCCL_USE_NEW_SELECTOR [%s] is invalid, set by "
+            // [中文导读] [AllReduce逐行 S827] 续接日志中的默认值提示；实际随后返回参数错误。
             "default to [0]",
+            // [中文导读] [AllReduce逐行 S828] 把非法环境字符串填入错误日志。
             useNewSelectorEnv.c_str());
+        // [中文导读] [AllReduce逐行 S829] 中止配置解析并返回HCCL_E_PARA。
         return HCCL_E_PARA;
+    // [中文导读] [AllReduce逐行 S830] 结束非法值分支。
     }
+    // [中文导读] [AllReduce逐行 S831] 合法值先设useNewSelector=false，对应规则选择器。
     g_algEnvConfig.useNewSelector = false;
+    // [中文导读] [AllReduce逐行 S832] 检查合法值是否为1。
     if (useNewSelectorEnv == "1") {
+        // [中文导读] [AllReduce逐行 S833] 值为1时启用成本模型SelectorEngine。
         g_algEnvConfig.useNewSelector = true;
+    // [中文导读] [AllReduce逐行 S834] 结束启用新选择器分支。
     }
+    // [中文导读] [AllReduce逐行 S835] 记录最终useNewSelector布尔值供定位选算法路径。
     HCCL_INFO("HCCL_USE_NEW_SELECTOR set by environment to [%u]", g_algEnvConfig.useNewSelector);
+    // [中文导读] [AllReduce逐行 S836] 合法配置解析成功。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S837] 结束ParseNewSelector。
 }
 
 HcclResult ParseOpExpansion()

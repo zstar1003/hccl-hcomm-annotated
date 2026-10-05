@@ -152,10 +152,15 @@ private:
         std::function<void(const RmaBufSliceLite&, const RmtRmaBufSliceLite&, SlicePosition)> processOneSlice,
         std::function<void(const RmaBufSliceLite&, const RmtRmaBufSliceLite&, SlicePosition)> processOneSliceWithNotify,
         DataType dataType = DataType::INVALID) const;
+    // [中文导读] [AllReduce逐行 S155] ProcessOneWqe的接口声明：当前UB WQE结构、UB读写操作码、承载任务的执行流；这些参数属于本函数调用边界。
     inline void ProcessOneWqe(UdmaSqeWrite* sqe, UdmaSqOpcode opCode, const StreamLite& stream)
+    // [中文导读] [AllReduce逐行 S156] 进入ProcessOneWqe函数体：忽略stream参数并将已构造数据WQE交LaunchOneWqe写入UB SQ。
     {
+        // [中文导读] [AllReduce逐行 S157] 显式忽略`stream`（承载任务的执行流），该接口参数/调用结果在此实现中未参与后续计算。
         (void)stream;
+        // [中文导读] [AllReduce逐行 S158] 维护UB PI并复制WQE到对应UB SQ环槽；传入/处理当前UB WQE结构、UB读写操作码。
         LaunchOneWqe(sqe, opCode);
+    // [中文导读] [AllReduce逐行 S159] 结束ProcessOneWqe函数体；控制流返回外层。
     }
     void FillOneWqeWithNotify(
         const RmaBufSliceLite& loc, const RmtRmaBufSliceLite& rmt, const SqeConfigLite& cfg,

@@ -170,27 +170,45 @@ HcclResult AicpuTsUrmaChannel::BuildNotify()
     return HCCL_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S173] AicpuTsUrmaChannel::BuildUbMemTransport的接口声明：按已建立Socket与端点对描述构造Host UbMemTransport；这些参数属于本函数调用边界。
 HcclResult AicpuTsUrmaChannel::BuildUbMemTransport()
+// [中文导读] [AllReduce逐行 S174] 进入AicpuTsUrmaChannel::BuildUbMemTransport函数体：按已建立Socket与端点对描述构造Host UbMemTransport。
 {
+    // [中文导读] [AllReduce逐行 S175] 准备`Hccl::BaseMemTransport::LocCntNotifyRes locCntNotifyRes{}`的局部存储/结构描述，初始化方式以本行声明为准。
     Hccl::BaseMemTransport::LocCntNotifyRes locCntNotifyRes{};
+    // [中文导读] [AllReduce逐行 S176] 调用clear。
     locCntNotifyRes.vec.clear();
+    // [中文导读] [AllReduce逐行 S177] 调用clear。
     locCntNotifyRes.desc.clear();
+    // [中文导读] [AllReduce逐行 S178] 设置已连接的Socket对象为/按`*socket_`。
     const Hccl::Socket& socket = *socket_;
 
+    // [中文导读] [AllReduce逐行 S180] 设置按端点对构造的链路描述为/按`BuildDefaultLinkData()`；调用BuildDefaultLinkData。
     Hccl::LinkData linkData = BuildDefaultLinkData();
+    // [中文导读] [AllReduce逐行 S181] 把本端与远端端点描述转换为链路属性；返回非成功时由检查宏立即向上传递。
     CHK_RET(EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
 
+    // [中文导读] [AllReduce逐行 S183] 设置按Socket角色决定的描述交换先后顺序为/按`socket.GetRole() == Hccl::SocketRole::CLIENT ? true : false`（已连接的Socket对象的GetRole字段）；调用GetRole，使用已连接的Socket对象的GetRole字段。
     bool isRecvFirst = socket.GetRole() == Hccl::SocketRole::CLIENT ? true : false;
 
     // make_unique / make_shared / release 包一层抛异常的宏
+    // [中文导读] [AllReduce逐行 S186] 在异常捕获边界执行后续表达式；异常按后续处理语句转换成HCCL状态或提前返回。
     EXCEPTION_CATCH(
+        // [中文导读] [AllReduce逐行 S187] 为前述多行表达式补入`memTransport_ = std::make_unique<Hccl::UbMemTransport>(`（Host侧UB内存传输对象）；本行是参数/结构化初始化续行。
         memTransport_ = std::make_unique<Hccl::UbMemTransport>(
+            // [中文导读] [AllReduce逐行 S188] 为前述多行表达式补入`commonRes_, attr_, linkData, socket, rdmaHandle_, locCntNotifyRes, isRecvFirst),`（通道公共本地资源、UB传输属性、按端点对构造的链路描述、已连接的Socket对象、底层网络资源句柄、按Socket角色决定的描述交换先后顺序）；本行是参数/结构化初始化续行。
             commonRes_, attr_, linkData, socket, rdmaHandle_, locCntNotifyRes, isRecvFirst),
+        // [中文导读] [AllReduce逐行 S189] 直接返回`HCCL_E_PTR)`；将当前查询结果/句柄交给调用者。
         return HCCL_E_PTR);
+    // [中文导读] [AllReduce逐行 S190] 记录AicpuTsUrmaChannel::BuildUbMemTransport的状态/性能诊断；日志本身不执行传输。
     PLF_CONFIG_INFO(
+        // [中文导读] [AllReduce逐行 S191] 为前述多行表达式补入`PLF_CHANNEL, "[AicpuTsUrmaChannel] create UbMemTransport, socket[%s], linkData[%s].",`；本行是参数/结构化初始化续行。
         PLF_CHANNEL, "[AicpuTsUrmaChannel] create UbMemTransport, socket[%s], linkData[%s].",
+        // [中文导读] [AllReduce逐行 S192] 为取得对象诊断文本用于日志补入`socket_->Describe().c_str(), linkData.Describe().c_str())`（按端点对构造的链路描述的Describe字段）；本行是参数/结构化初始化续行。
         socket_->Describe().c_str(), linkData.Describe().c_str());
+    // [中文导读] [AllReduce逐行 S193] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S194] 结束AicpuTsUrmaChannel::BuildUbMemTransport函数体；控制流返回外层。
 }
 
 HcclResult AicpuTsUrmaChannel::BuildSocket()
@@ -243,31 +261,46 @@ HcclResult AicpuTsUrmaChannel::BuildSocket()
     return HCCL_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S246] AicpuTsUrmaChannel::Init的接口声明：UB_CTP具体通道初始化：端点/监听/Socket/属性/连接/通知与Host UB传输对象；这些参数属于本函数调用边界。
 HcclResult AicpuTsUrmaChannel::Init()
+// [中文导读] [AllReduce逐行 S247] 进入AicpuTsUrmaChannel::Init函数体：UB_CTP具体通道初始化：端点/监听/Socket/属性/连接/通知与Host UB传输对象。
 {
     /*
         Argue result: make_unique 配合一场捕获的宏 EXCEPTION CATCH
         Attention: const 和引用
     */
     // TODO: 处理抛异常
+    // [中文导读] [AllReduce逐行 S253] 准备逻辑设备编号的局部存储/结构描述，初始化方式以本行声明为准。
     s32 devLogicId;
+    // [中文导读] [AllReduce逐行 S254] 解析Endpoint与Hcomm描述，取得内存和驱动资源；返回非成功时由检查宏立即向上传递。
     CHK_RET(ParseInputParam());
+    // [中文导读] [AllReduce逐行 S255] 读取当前运行时逻辑设备编号；返回非成功时由检查宏立即向上传递。
     CHK_RET(hrtGetDevice(&devLogicId));
+    // [中文导读] [AllReduce逐行 S256] 把逻辑设备编号转换为物理设备编号；返回非成功时由检查宏立即向上传递。
     CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<u32>(devLogicId), devicePhyId_));
+    // [中文导读] [AllReduce逐行 S257] 在具体端点上准备监听；返回非成功时由检查宏立即向上传递。
     CHK_RET(StartListen());
+    // [中文导读] [AllReduce逐行 S258] 准备具体通道的Socket对象；返回非成功时由检查宏立即向上传递。
     CHK_RET(BuildSocket());
+    // [中文导读] [AllReduce逐行 S259] 形成具体通道的UB资源属性；返回非成功时由检查宏立即向上传递。
     CHK_RET(BuildAttr());
     /*
         HccpRaGetDevBaseAttr
         获取urma read/write 单个wr的最大传输数据大小
         调用前,rdmaHandle_要在ParseInputParam中被赋值好,之后BuildConnection会使用获取的属性
     */
+    // [中文导读] [AllReduce逐行 S265] 外部网络适配边界：取得UB单WR最大传输等设备能力；返回非成功时由检查宏立即向上传递。
     CHK_RET(HccpRaGetDevBaseAttr(rdmaHandle_, &devBaseAttr_));
+    // [中文导读] [AllReduce逐行 S266] 按协议与驱动资源创建Host UB连接；返回非成功时由检查宏立即向上传递。
     CHK_RET(BuildConnection());
+    // [中文导读] [AllReduce逐行 S267] 准备通道本地/远端通知资源描述；返回非成功时由检查宏立即向上传递。
     CHK_RET(BuildNotify());
+    // [中文导读] [AllReduce逐行 S268] 构造Host UbMemTransport保存连接/通知/内存交换资源；返回非成功时由检查宏立即向上传递。
     CHK_RET(BuildUbMemTransport());
 
+    // [中文导读] [AllReduce逐行 S270] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S271] 结束AicpuTsUrmaChannel::Init函数体；控制流返回外层。
 }
 
 HcclResult AicpuTsUrmaChannel::GetNotifyNum(uint32_t* notifyNum) const
@@ -313,26 +346,41 @@ HcclResult SetModuleDataName(Hccl::ModuleData& module, const std::string& name)
     return HCCL_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S316] AicpuTsUrmaChannel::PackOpData的接口声明：将Host UB transport唯一标识打包供设备恢复传输对象；这些参数属于本函数调用边界。
 HcclResult AicpuTsUrmaChannel::PackOpData(std::vector<char>& data)
+// [中文导读] [AllReduce逐行 S317] 进入AicpuTsUrmaChannel::PackOpData函数体：将Host UB transport唯一标识打包供设备恢复传输对象。
 {
+    // [中文导读] [AllReduce逐行 S318] 准备分模块的设备资源包数组的局部存储/结构描述，初始化方式以本行声明为准。
     std::vector<Hccl::ModuleData> dataVec;
+    // [中文导读] [AllReduce逐行 S319] 调用resize，使用分模块的设备资源包数组的resize字段；传入/处理分模块的设备资源包数组的resize字段。
     dataVec.resize(Hccl::AicpuResMgrType::__COUNT__);
 
+    // [中文导读] [AllReduce逐行 S321] 设置Hccl::AicpuResMgrType resType为/按`Hccl::AicpuResMgrType::STREAM`。
     Hccl::AicpuResMgrType resType = Hccl::AicpuResMgrType::STREAM;
+    // [中文导读] [AllReduce逐行 S322] 为资源模块设置供设备恢复识别的名称；返回非成功时由检查宏立即向上传递。
     CHK_RET(SetModuleDataName(dataVec[resType], "UbMemTransport"));
 
+    // [中文导读] [AllReduce逐行 S324] 准备`std::vector<char> result`的局部存储/结构描述，初始化方式以本行声明为准。
     std::vector<char> result;
+    // [中文导读] [AllReduce逐行 S325] 准备资源标识序列化/反序列化流的局部存储/结构描述，初始化方式以本行声明为准。
     Hccl::BinaryStream binaryStream;
+    // [中文导读] [AllReduce逐行 S326] 序列化Host transport的设备恢复描述；传入/处理资源标识序列化/反序列化流、Host侧UB内存传输对象的GetUniqueIdV2字段。
     binaryStream << memTransport_->GetUniqueIdV2();
 
+    // [中文导读] [AllReduce逐行 S328] 把序列化流内容输出到字节数组；传入/处理资源标识序列化/反序列化流的Dump字段。
     binaryStream.Dump(result);
 
+    // [中文导读] [AllReduce逐行 S330] 设置分模块的设备资源包数组为/按`result`。
     dataVec[resType].data = result;
 
+    // [中文导读] [AllReduce逐行 S332] 准备`Hccl::AicpuResPackageHelper helper`的局部存储/结构描述，初始化方式以本行声明为准。
     Hccl::AicpuResPackageHelper helper;
+    // [中文导读] [AllReduce逐行 S333] 设置data为/按`helper.GetPackedData(dataVec)`（分模块的设备资源包数组）；将分模块资源内容打包为设备恢复数据。
     data = helper.GetPackedData(dataVec);
 
+    // [中文导读] [AllReduce逐行 S335] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S336] 结束AicpuTsUrmaChannel::PackOpData函数体；控制流返回外层。
 }
 
 HcclResult AicpuTsUrmaChannel::H2DResPack(std::vector<char>& buffer)

@@ -23,12 +23,19 @@ namespace ops_hccl {
 
 using CollExecCreatorV2 = std::function<InsCollAlgBase*()>;
 
+// [中文导读] [AllReduce逐行 S26] 声明执行器工厂模板参数P，注册宏为其绑定具体算法模板执行器类型。
 template <typename P>
+// [中文导读] [AllReduce逐行 S27] 声明返回算法基类指针的默认执行器工厂函数。
 static InsCollAlgBase* DefaultExecCreatorV2()
+// [中文导读] [AllReduce逐行 S28] 开始DefaultExecCreatorV2的函数体。
 {
+    // [中文导读] [AllReduce逐行 S29] 开始编译期继承关系检查，防止注册非InsCollAlgBase执行器。
     static_assert(
+        // [中文导读] [AllReduce逐行 S30] 要求P派生自InsCollAlgBase，不满足时触发这里的编译错误提示。
         std::is_base_of<InsCollAlgBase, P>::value, "Executor type must derived from Hccl::DefaultExecCreatorV2");
+    // [中文导读] [AllReduce逐行 S31] 以nothrow new创建具体执行器P；分配失败返回nullptr，由GetAlgExec调用者检查。
     return new (std::nothrow) P();
+// [中文导读] [AllReduce逐行 S32] 结束DefaultExecCreatorV2函数体。
 }
 
 class CollAlgExecRegistryV2 {

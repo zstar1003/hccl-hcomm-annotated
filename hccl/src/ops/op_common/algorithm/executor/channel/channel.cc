@@ -226,108 +226,204 @@ HcclResult CalcLevel2ChannelRequest(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S229] 定义 GetProtocolByEngine 入口：按引擎和 CANN 版本生成协议优先级：AICPU/AICPU_TS 优先 UB_CTP，再 PCIe、UBOE，9.2+ 最后 UB_RTP。
 HcclResult GetProtocolByEngine(const OpParam& param, std::vector<CommProtocol>& protocols)
+// [中文导读] [AllReduce逐行 S230] 进入 GetProtocolByEngine 的实现作用域；按引擎和 CANN 版本生成协议优先级：AICPU/AICPU_TS 优先 UB_CTP，再 PCIe、UBOE，9.2+ 最后 UB_RTP。
 {
+    // [中文导读] [AllReduce逐行 S231] 对 protocols 清空 ，准备或更新本阶段列表。
     protocols.clear();
+// [中文导读] [AllReduce逐行 S232] 编译期能力条件 CANN_VERSION_NUM >= CANN_VERSION(9, 1, 0) 决定是否生成下方协议或运行时逻辑。
 #if CANN_VERSION_NUM >= CANN_VERSION(9, 1, 0)
     // HCCL不再选择UBC_TP（值5）；HCOMM仅为兼容历史调用方保留该协议。
+    // [中文导读] [AllReduce逐行 S234] 续接 GetProtocolByEngine 当前语句的具体实参/字段：switch (实际通信引擎) {；由其完整表达式完成参数组装、检查或结果写回。
     switch (param.engine) {
+        // [中文导读] [AllReduce逐行 S235] 处理 CommEngine::COMM_ENGINE_AICPU 的专用实现，不同类型或运算在其它 case 分开处理。
         case CommEngine::COMM_ENGINE_AICPU:
+        // [中文导读] [AllReduce逐行 S236] 处理 CommEngine::AICPU_TS 引擎 的专用实现，不同类型或运算在其它 case 分开处理。
         case CommEngine::COMM_ENGINE_AICPU_TS:
+            // [中文导读] [AllReduce逐行 S237] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_UB_CTP，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_UB_CTP);
+            // [中文导读] [AllReduce逐行 S238] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_PCIE，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_PCIE);
+            // [中文导读] [AllReduce逐行 S239] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_UBOE，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_UBOE);
+// [中文导读] [AllReduce逐行 S240] 编译期能力条件 CANN_VERSION_NUM >= CANN_VERSION(9, 2, 0) 决定是否生成下方协议或运行时逻辑。
 #if CANN_VERSION_NUM >= CANN_VERSION(9, 2, 0)
+            // [中文导读] [AllReduce逐行 S241] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_UB_RTP，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_UB_RTP);
+// [中文导读] [AllReduce逐行 S242] 结束该编译期能力/Host 边界，后续公共返回逻辑在相应构建中保留。
 #endif
+            // [中文导读] [AllReduce逐行 S243] 退出当前 switch 或内层循环，保留此前选中的结果，不继续后续项。
             break;
+        // [中文导读] [AllReduce逐行 S244] 处理 CommEngine::CCU 引擎 的专用实现，不同类型或运算在其它 case 分开处理。
         case CommEngine::COMM_ENGINE_CCU:
+            // [中文导读] [AllReduce逐行 S245] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_UB_CTP，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_UB_CTP);
+            // [中文导读] [AllReduce逐行 S246] 退出当前 switch 或内层循环，保留此前选中的结果，不继续后续项。
             break;
+        // [中文导读] [AllReduce逐行 S247] 处理 CommEngine::AIV 引擎 的专用实现，不同类型或运算在其它 case 分开处理。
         case CommEngine::COMM_ENGINE_AIV:
+            // [中文导读] [AllReduce逐行 S248] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_UB_MEM，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_UB_MEM);
+            // [中文导读] [AllReduce逐行 S249] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_PCIE，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_PCIE);
+            // [中文导读] [AllReduce逐行 S250] 退出当前 switch 或内层循环，保留此前选中的结果，不继续后续项。
             break;
+        // [中文导读] [AllReduce逐行 S251] 处理 CommEngine::COMM_ENGINE_CPU 的专用实现，不同类型或运算在其它 case 分开处理。
         case CommEngine::COMM_ENGINE_CPU:
             // level 1到level n-1使用UB协议，server内建联，最外层使用网卡建联
+            // [中文导读] [AllReduce逐行 S253] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_UB_CTP，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_UB_CTP);
+            // [中文导读] [AllReduce逐行 S254] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_ROCE，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_ROCE);
+            // [中文导读] [AllReduce逐行 S255] 退出当前 switch 或内层循环，保留此前选中的结果，不继续后续项。
             break;
+        // [中文导读] [AllReduce逐行 S256] 处理 CommEngine::COMM_ENGINE_CPU_TS 的专用实现，不同类型或运算在其它 case 分开处理。
         case CommEngine::COMM_ENGINE_CPU_TS:
+            // [中文导读] [AllReduce逐行 S257] 对 protocols 追加 CommProtocol::COMM_PROTOCOL_ROCE，准备或更新本阶段列表。
             protocols.push_back(CommProtocol::COMM_PROTOCOL_ROCE);
+            // [中文导读] [AllReduce逐行 S258] 退出当前 switch 或内层循环，保留此前选中的结果，不继续后续项。
             break;
+        // [中文导读] [AllReduce逐行 S259] 未列出的类型或状态进入兜底分支；按下面返回码判为不支持或错误。
         default:
+            // [中文导读] [AllReduce逐行 S260] 开始 HCCL_WARNING 诊断输出，记录 GetProtocolByEngine 当前阶段的参数、候选或错误；日志本身不决定返回码。
             HCCL_WARNING(
+                // [中文导读] [AllReduce逐行 S261] 续接 GetProtocolByEngine 的诊断格式串，展示此行列出的字段标签；它是编译期字符串拼接，不发起额外操作。
                 "[GetProtocolByEngine] Unknown engine[%s], set protocol to RESERVED",
+                // [中文导读] [AllReduce逐行 S262] 为 GetProtocolByEngine 的诊断/错误宏提供实参：GetEnumToString(GetCommEngineStatusStrMap(), 实际通信引擎).c_str(，与前面的格式占位依次对应。
                 GetEnumToString(GetCommEngineStatusStrMap(), param.engine).c_str());
+            // [中文导读] [AllReduce逐行 S263] 退出当前 switch 或内层循环，保留此前选中的结果，不继续后续项。
             break;
+    // [中文导读] [AllReduce逐行 S264] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
     }
+// [中文导读] [AllReduce逐行 S265] 转入该版本或构建条件不成立时的兼容分支。
 #else
     // 8.5.0 CANN 无 UB_CTP/UB_MEM 等枚举值；此函数所在的 CalcChannelRequestXxx/CreateChannelRequestByRankId 通路
     // 仅 9.0.0 新路径使用，运行时已由算子入口 GetHcommVersion() < CANN_VERSION(9, 0, 0) 分流到 HcclXxxInner，
     // 8.5.0 下不会真正走到。这里保留空桩让 libhccl.so 外部链接（hccl_test 等）能解析符号。
+    // [中文导读] [AllReduce逐行 S269] 显式标记 param 在此兼容/default 分支未使用，避免编译器未使用参数警告。
     (void)param;
+// [中文导读] [AllReduce逐行 S270] 结束该编译期能力/Host 边界，后续公共返回逻辑在相应构建中保留。
 #endif
+    // [中文导读] [AllReduce逐行 S271] 当前路径返回成功；异步原语的成功表示任务/协议提交成功，数据完成依赖相应通知或 Join。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S272] 结束 GetProtocolByEngine 实现；其返回状态或已写回字段由调用者接收。
 }
 
+// [中文导读] [AllReduce逐行 S274] 定义 CreateChannelFromLink 入口：将 RankGraph 的链路端点、地址、协议和远端 Rank 转为 HcclChannelDesc 请求；尚未申请 ChannelHandle。
 HcclResult CreateChannelFromLink(
+    // [中文导读] [AllReduce逐行 S275] 续接 CreateChannelFromLink 的入口参数/基类初始化：HcclComm comm, u32 本地用户 Rank, u32 rank, uint32_t 当前网络层编号, u32 idx, const CommLink& link, const std::string& funcName,；引用参数按声明的 const 限制读写。
     HcclComm comm, u32 myRank, u32 rank, uint32_t netLayer, u32 idx, const CommLink& link, const std::string& funcName,
+    // [中文导读] [AllReduce逐行 S276] 续接 CreateChannelFromLink 的入口参数/基类初始化：std::vector<HcclChannelDesc>& 通道请求输出列表)；引用参数按声明的 const 限制读写。
     std::vector<HcclChannelDesc>& channels)
+// [中文导读] [AllReduce逐行 S277] 进入 CreateChannelFromLink 的实现作用域；将 RankGraph 的链路端点、地址、协议和远端 Rank 转为 HcclChannelDesc 请求；尚未申请 ChannelHandle。
 {
+    // [中文导读] [AllReduce逐行 S278] 显式标记 comm 在此兼容/default 分支未使用，避免编译器未使用参数警告。
     (void)comm;
+    // [中文导读] [AllReduce逐行 S279] 声明本阶段局部变量 HcclChannelDesc 待申请通道描述，实际值由后续查询/计算填写。
     HcclChannelDesc channelDesc;
+    // [中文导读] [AllReduce逐行 S280] 清零/初始化描述的默认值；这里没有检查 HcclChannelDescInit 返回码。
     HcclChannelDescInit(&channelDesc, 1);
+    // [中文导读] [AllReduce逐行 S281] 设置 目标 Peer 用户 Rank 为 rank；该值供下方当前分支使用。
     channelDesc.remoteRank = rank;
+    // [中文导读] [AllReduce逐行 S282] 设置 本地链路端点描述.protocol 为 RankGraph 链路源端点Desc.protocol；该值供下方当前分支使用。
     channelDesc.localEndpoint.protocol = link.srcEndpointDesc.protocol;
+    // [中文导读] [AllReduce逐行 S283] 设置 本地链路端点描述.commAddr 为 RankGraph 链路源端点Desc.commAddr；该值供下方当前分支使用。
     channelDesc.localEndpoint.commAddr = link.srcEndpointDesc.commAddr;
+    // [中文导读] [AllReduce逐行 S284] 设置 本地链路端点描述.loc 为 RankGraph 链路源端点Desc.loc；该值供下方当前分支使用。
     channelDesc.localEndpoint.loc = link.srcEndpointDesc.loc;
+    // [中文导读] [AllReduce逐行 S285] 设置 远端链路端点描述.protocol 为 RankGraph 链路目标端点Desc.protocol；该值供下方当前分支使用。
     channelDesc.remoteEndpoint.protocol = link.dstEndpointDesc.protocol;
+    // [中文导读] [AllReduce逐行 S286] 设置 远端链路端点描述.commAddr 为 RankGraph 链路目标端点Desc.commAddr；该值供下方当前分支使用。
     channelDesc.remoteEndpoint.commAddr = link.dstEndpointDesc.commAddr;
+    // [中文导读] [AllReduce逐行 S287] 设置 远端链路端点描述.loc 为 RankGraph 链路目标端点Desc.loc；该值供下方当前分支使用。
     channelDesc.remoteEndpoint.loc = link.dstEndpointDesc.loc;
+    // [中文导读] [AllReduce逐行 S288] 开始 HCCL_DEBUG 诊断输出，记录 CreateChannelFromLink 当前阶段的参数、候选或错误；日志本身不决定返回码。
     HCCL_DEBUG(
+        // [中文导读] [AllReduce逐行 S289] 续接 CreateChannelFromLink 的诊断格式串，展示此行列出的字段标签；它是编译期字符串拼接，不发起额外操作。
         "[CreateChannelFromLink]%s local device phyId: %u, remote device phyId: %u.", funcName.c_str(),
+        // [中文导读] [AllReduce逐行 S290] 为 CreateChannelFromLink 的诊断/错误宏提供实参：本地链路端点描述.loc.device.devPhyId, 远端链路端点描述.loc.device.devPhyId，与前面的格式占位依次对应。
         channelDesc.localEndpoint.loc.device.devPhyId, channelDesc.remoteEndpoint.loc.device.devPhyId);
+    // [中文导读] [AllReduce逐行 S291] 开始 HCCL_INFO 诊断输出，记录 CreateChannelFromLink 当前阶段的参数、候选或错误；日志本身不决定返回码。
     HCCL_INFO(
+        // [中文导读] [AllReduce逐行 S292] 续接 CreateChannelFromLink 的诊断格式串，展示此行列出的字段标签；它是编译期字符串拼接，不发起额外操作。
         "[CreateChannelFromLink]%s Add channel request between %zu and %zu, netLayerIdx %u, "
+        // [中文导读] [AllReduce逐行 S293] 续接 CreateChannelFromLink 的诊断格式串，展示此行列出的字段标签；它是编译期字符串拼接，不发起额外操作。
         "linkListIdx %u, protocol %zu",
+        // [中文导读] [AllReduce逐行 S294] 为 CreateChannelFromLink 的诊断/错误宏提供实参：funcName.c_str(), 本地用户 Rank, 目标 Peer 用户 Rank, 当前网络层编号, idx, 远端链路端点描述.protocol，与前面的格式占位依次对应。
         funcName.c_str(), myRank, channelDesc.remoteRank, netLayer, idx, channelDesc.remoteEndpoint.protocol);
+    // [中文导读] [AllReduce逐行 S295] 设置 通道协议 为 链路属性.linkProtocol；该值供下方当前分支使用。
     channelDesc.channelProtocol = link.linkAttr.linkProtocol;
+    // [中文导读] [AllReduce逐行 S296] 设置 通道通知槽请求数量 为 NORMAL_NOTIFY_NUM；该值供下方当前分支使用。
     channelDesc.notifyNum = NORMAL_NOTIFY_NUM;
+    // [中文导读] [AllReduce逐行 S297] 对 通道请求输出列表 追加 待申请通道描述，准备或更新本阶段列表。
     channels.push_back(channelDesc);
+    // [中文导读] [AllReduce逐行 S298] 当前路径返回成功；异步原语的成功表示任务/协议提交成功，数据完成依赖相应通知或 Join。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S299] 结束 CreateChannelFromLink 实现；其返回状态或已写回字段由调用者接收。
 }
 
+// [中文导读] [AllReduce逐行 S301] 定义 ProcessLinkForProtocol 入口：依协议优先级筛选链路，同一协议去重本地源端点 Die；找到任一可用协议后不再尝试低优先级协议。
 HcclResult ProcessLinkForProtocol(
+    // [中文导读] [AllReduce逐行 S302] 续接 ProcessLinkForProtocol 的入口参数/基类初始化：HcclComm comm, const std::vector<CommProtocol>& 按引擎排序的候选协议, const std::vector<CommLink>& RankGraph 返回的链路数组,；引用参数按声明的 const 限制读写。
     HcclComm comm, const std::vector<CommProtocol>& expectedProtocols, const std::vector<CommLink>& linkList,
+    // [中文导读] [AllReduce逐行 S303] 续接 ProcessLinkForProtocol 的入口参数/基类初始化：u32 本地用户 Rank, u32 remoteRank, uint32_t 当前网络层编号, std::vector<HcclChannelDesc>& 通道请求输出列表, bool& 当前协议找到链路的标志,；引用参数按声明的 const 限制读写。
     u32 myRank, u32 remoteRank, uint32_t netLayer, std::vector<HcclChannelDesc>& channels, bool& protocolFound,
+    // [中文导读] [AllReduce逐行 S304] 续接 ProcessLinkForProtocol 的入口参数/基类初始化：const std::string& funcName)；引用参数按声明的 const 限制读写。
     const std::string& funcName)
+// [中文导读] [AllReduce逐行 S305] 进入 ProcessLinkForProtocol 的实现作用域；依协议优先级筛选链路，同一协议去重本地源端点 Die；找到任一可用协议后不再尝试低优先级协议。
 {
+    // [中文导读] [AllReduce逐行 S306] 设置 当前协议找到链路的标志 为 false；该值供下方当前分支使用。
     protocolFound = false;
+    // [中文导读] [AllReduce逐行 S307] 建立本阶段局部对象 std::set<uint32_t> 已选本地源端点 Die 集合，供 ProcessLinkForProtocol 下方参数组装和子调用使用。
     std::set<uint32_t> seenDie;
+    // [中文导读] [AllReduce逐行 S308] 按执行引擎协议优先级枚举候选协议；边界/迭代规则为 (auto expectedProtocol : 按引擎排序的候选协议。
     for (auto expectedProtocol : expectedProtocols) {
+        // [中文导读] [AllReduce逐行 S309] 遍历当前网络层查询出的链路；边界/迭代规则为 (u32 idx = 0; idx 小于 RankGraph 返回的链路数组.size(); idx++。
         for (u32 idx = 0; idx < linkList.size(); idx++) {
+            // [中文导读] [AllReduce逐行 S310] 分支条件为 RankGraph 返回的链路数组[idx].linkAttr.linkProtocol 不等于 expectedProtocol；成立进入本块，未成立继续后续分支。
             if (linkList[idx].linkAttr.linkProtocol != expectedProtocol) {
+                // [中文导读] [AllReduce逐行 S311] 跳过当前遍历项的剩余步骤，直接处理下一项。
                 continue;
+            // [中文导读] [AllReduce逐行 S312] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
             }
+            // [中文导读] [AllReduce逐行 S313] 设置 EndpointAttrDieId dieId 为 0；该值供下方当前分支使用。
             EndpointAttrDieId dieId = 0;
+            // [中文导读] [AllReduce逐行 S314] 查询链路对应的本地源端点 Die 身份用于同 Die 去重；失败不直接返回错误，仍可添加该匹配链路。
             HcclResult dieRet = HcclRankGraphGetEndpointInfo(
+                // [中文导读] [AllReduce逐行 S315] 续接 ProcessLinkForProtocol 当前语句的具体实参/字段：comm, 本地用户 Rank, &RankGraph 返回的链路数组[idx].srcEndpointDesc, ENDPOINT_ATTR_DIE_ID, sizeof(dieId), &dieId)；由其完整表达式完成参数组装、检查或结果写回。
                 comm, myRank, &linkList[idx].srcEndpointDesc, ENDPOINT_ATTR_DIE_ID, sizeof(dieId), &dieId);
+            // [中文导读] [AllReduce逐行 S316] 设置 是否为该链路新增描述的标志 为 true；该值供下方当前分支使用。
             bool shouldAdd = true;
+            // [中文导读] [AllReduce逐行 S317] 分支条件为 Die 信息查询返回码 等于 成功状态；成立进入本块，未成立继续后续分支。
             if (dieRet == HCCL_SUCCESS) {
+                // [中文导读] [AllReduce逐行 S318] 设置 是否为该链路新增描述的标志 为 已选本地源端点 Die 集合.insert(dieId).second；该值供下方当前分支使用。
                 shouldAdd = seenDie.insert(dieId).second;
+            // [中文导读] [AllReduce逐行 S319] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
             }
+            // [中文导读] [AllReduce逐行 S320] 分支条件为 是否为该链路新增描述的标志；成立进入本块，未成立继续后续分支。
             if (shouldAdd) {
+                // [中文导读] [AllReduce逐行 S321] 执行下方完整子调用；返回值非成功时立即从当前函数返回该错误。
                 CHK_RET(
+                    // [中文导读] [AllReduce逐行 S322] 把链路端点转换成待申请通道描述；本行实参为 CreateChannelFromLink(comm, 本地用户 Rank, remoteRank, 当前网络层编号, idx, RankGraph 返回的链路数组[idx], funcName, 通道请求输出列表))。
                     CreateChannelFromLink(comm, myRank, remoteRank, netLayer, idx, linkList[idx], funcName, channels));
+                // [中文导读] [AllReduce逐行 S323] 设置 当前协议找到链路的标志 为 true；该值供下方当前分支使用。
                 protocolFound = true;
+            // [中文导读] [AllReduce逐行 S324] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
             }
+        // [中文导读] [AllReduce逐行 S325] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
         }
+        // [中文导读] [AllReduce逐行 S326] 当前协议只要找到任意匹配链路就停止协议优先级循环，不再尝试后续低优先级协议。
         if (protocolFound) {
+            // [中文导读] [AllReduce逐行 S327] 退出当前 switch 或内层循环，保留此前选中的结果，不继续后续项。
             break;
+        // [中文导读] [AllReduce逐行 S328] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
         }
+    // [中文导读] [AllReduce逐行 S329] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
     }
+    // [中文导读] [AllReduce逐行 S330] 当前路径返回成功；异步原语的成功表示任务/协议提交成功，数据完成依赖相应通知或 Join。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S331] 结束 ProcessLinkForProtocol 实现；其返回状态或已写回字段由调用者接收。
 }
 
 HcclResult GetRankFullMeshLayers(
@@ -376,55 +472,105 @@ HcclResult GetRankFullMeshLayers(
 #endif
 }
 
+// [中文导读] [AllReduce逐行 S379] 定义 CalcChannelRequestMesh1D 入口：遍历一层 Mesh 的其它 Rank，逐网络层查询链路，选择首个有可用协议的层并产生通道描述请求。
 HcclResult CalcChannelRequestMesh1D(
+    // [中文导读] [AllReduce逐行 S380] 续接 CalcChannelRequestMesh1D 的入口参数/基类初始化：HcclComm comm, const OpParam& param, const TopoInfoWithNetLayerDetails* topoInfo,；引用参数按声明的 const 限制读写。
     HcclComm comm, const OpParam& param, const TopoInfoWithNetLayerDetails* topoInfo,
+    // [中文导读] [AllReduce逐行 S381] 续接 CalcChannelRequestMesh1D 的入口参数/基类初始化：const std::vector<std::vector<u32>>& subcommInfo, std::vector<HcclChannelDesc>& 通道请求输出列表)；引用参数按声明的 const 限制读写。
     const std::vector<std::vector<u32>>& subcommInfo, std::vector<HcclChannelDesc>& channels)
+// [中文导读] [AllReduce逐行 S382] 进入 CalcChannelRequestMesh1D 的实现作用域；遍历一层 Mesh 的其它 Rank，逐网络层查询链路，选择首个有可用协议的层并产生通道描述请求。
 {
+// [中文导读] [AllReduce逐行 S383] 以下资源/成本逻辑仅在 Host 编译版本执行；AICPU_COMPILE 构建跳过该段。
 #ifndef AICPU_COMPILE
+    // [中文导读] [AllReduce逐行 S384] 显式标记 param 在此兼容/default 分支未使用，避免编译器未使用参数警告。
     (void)param;
+    // [中文导读] [AllReduce逐行 S385] 清空输出请求，避免重用上一次资源计算的 Peer 通道描述。
     channels.clear();
+    // [中文导读] [AllReduce逐行 S386] 在第零层算法 Rank 列表中定位自身，确保后续 Peer 枚举基于包含本地 Rank 的通信域。
     auto it = std::find(subcommInfo[COMM_LEVEL0].begin(), subcommInfo[COMM_LEVEL0].end(), topoInfo->userRank);
+    // [中文导读] [AllReduce逐行 S387] 开始条件错误返回宏：条件成立时打印下方诊断并返回所列错误码；判断对象由下一行展开。
     CHK_PRT_RET(
+        // [中文导读] [AllReduce逐行 S388] 调用 end 完成当前参数所指的子步骤；本行实参为 (it 等于 subcommInfo[COMM_LEVEL0].end()),。
         (it == subcommInfo[COMM_LEVEL0].end()),
+        // [中文导读] [AllReduce逐行 S389] 开始 HCCL_ERROR 诊断输出，记录 CalcChannelRequestMesh1D 当前阶段的参数、候选或错误；日志本身不决定返回码。
         HCCL_ERROR("[CollAlgFactory] [channel] Rank [%d] is not in commInfo.", topoInfo->userRank),
+        // [中文导读] [AllReduce逐行 S390] 向条件返回宏提供 HcclResult::参数错误；上方检查成立才退出当前函数。
         HcclResult::HCCL_E_PARA);
+    // [中文导读] [AllReduce逐行 S391] 设置 本地用户 Rank 为 本地用户 Rank；该值供下方当前分支使用。
     u32 myRank = topoInfo->userRank;
+    // [中文导读] [AllReduce逐行 S392] 建立本阶段局部对象 std::vector<CommProtocol> 按引擎排序的候选协议，供 CalcChannelRequestMesh1D 下方参数组装和子调用使用。
     std::vector<CommProtocol> expectedProtocols;
+    // [中文导读] [AllReduce逐行 S393] AICPU_TS 的 UB 路径按引擎取得 UB_CTP、PCIe、UBOE 等候选协议顺序。
     CHK_RET(GetProtocolByEngine(param, expectedProtocols));
+    // [中文导读] [AllReduce逐行 S394] 为第零层每个用户 Rank 枚举通道请求；下一分支跳过自身。
     for (u32 rank : subcommInfo[COMM_LEVEL0]) {
+        // [中文导读] [AllReduce逐行 S395] 分支条件为 rank 等于 本地用户 Rank；成立进入本块，未成立继续后续分支。
         if (rank == topoInfo->userRank) {
+            // [中文导读] [AllReduce逐行 S396] 跳过当前遍历项的剩余步骤，直接处理下一项。
             continue;
+        // [中文导读] [AllReduce逐行 S397] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
         }
+        // [中文导读] [AllReduce逐行 S398] 设置 当前 Peer 处理前的请求数 为 通道请求输出列表.size()；该值供下方当前分支使用。
         size_t channelCountBefore = channels.size();
+        // [中文导读] [AllReduce逐行 S399] 声明本阶段局部变量 uint32_t* 当前网络层编号s，实际值由后续查询/计算填写。
         uint32_t* netLayers;
+        // [中文导读] [AllReduce逐行 S400] 声明本阶段局部变量 uint32_t 网络层数量，实际值由后续查询/计算填写。
         uint32_t netLayerNum;
+        // [中文导读] [AllReduce逐行 S401] 查询 RankGraph 的网络层列表；失败立即退出资源计算。
         CHK_RET(HcclRankGraphGetLayers(comm, &netLayers, &netLayerNum));
+        // [中文导读] [AllReduce逐行 S402] 调用 netLayersVector 完成当前参数所指的子步骤；本行实参为 std::vector<uint32_t> 网络层编号列表(当前网络层编号s, 当前网络层编号s + 网络层数量)。
         std::vector<uint32_t> netLayersVector(netLayers, netLayers + netLayerNum);
+        // [中文导读] [AllReduce逐行 S403] 按 RankGraph 顺序枚举网络层；边界/迭代规则为 (auto 当前网络层编号 : 网络层编号列表。
         for (auto netLayer : netLayersVector) {
+            // [中文导读] [AllReduce逐行 S404] 设置 CommLink* RankGraph 返回的链路数组 为 nullptr；该值供下方当前分支使用。
             CommLink* linkList = nullptr;
+            // [中文导读] [AllReduce逐行 S405] 声明本阶段局部变量 u32 链路数组长度，实际值由后续查询/计算填写。
             u32 listSize;
+            // [中文导读] [AllReduce逐行 S406] 查询当前网络层本地 Rank 到当前 Peer 的所有 CommLink。
             CHK_RET(HcclRankGraphGetLinks(comm, netLayer, myRank, rank, &linkList, &listSize));
+            // [中文导读] [AllReduce逐行 S407] 分支条件为 链路数组长度 等于 0；成立进入本块，未成立继续后续分支。
             if (listSize == 0) {
+                // [中文导读] [AllReduce逐行 S408] 跳过当前遍历项的剩余步骤，直接处理下一项。
                 continue;
+            // [中文导读] [AllReduce逐行 S409] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
             }
+            // [中文导读] [AllReduce逐行 S410] 调用 links 完成当前参数所指的子步骤；本行实参为 std::vector<CommLink> links(RankGraph 返回的链路数组, RankGraph 返回的链路数组 + 链路数组长度)。
             std::vector<CommLink> links(linkList, linkList + listSize);
+            // [中文导读] [AllReduce逐行 S411] 设置 当前协议找到链路的标志 为 false；该值供下方当前分支使用。
             bool protocolFound = false;
+            // [中文导读] [AllReduce逐行 S412] 按协议顺序和 Die 去重筛选当前层链路；返回值非成功时立即从当前函数返回该错误。
             CHK_RET(ProcessLinkForProtocol(
+                // [中文导读] [AllReduce逐行 S413] 续接本次错误检查/子调用实参：comm, 按引擎排序的候选协议, links, 本地用户 Rank, rank, 当前网络层编号, 通道请求输出列表, 当前协议找到链路的标志；返回行为由所在完整宏决定。
                 comm, expectedProtocols, links, myRank, rank, netLayer, channels, protocolFound,
+                // [中文导读] [AllReduce逐行 S414] 续接本次错误检查/子调用实参：std::string("[CalcChannelRequestMesh1D]"；返回行为由所在完整宏决定。
                 std::string("[CalcChannelRequestMesh1D]")));
+            // [中文导读] [AllReduce逐行 S415] 当前层一旦增加了通道请求，就不再继续查找此 Peer 的后续网络层。
             if (channels.size() > channelCountBefore) {
+                // [中文导读] [AllReduce逐行 S416] 退出当前 switch 或内层循环，保留此前选中的结果，不继续后续项。
                 break;
+            // [中文导读] [AllReduce逐行 S417] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
             }
+        // [中文导读] [AllReduce逐行 S418] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
         }
+        // [中文导读] [AllReduce逐行 S419] 若所有网络层均未给此 Peer 增加通道描述，报内部错误；保证每个其它 Rank 至少有一个请求。
         CHK_PRT_RET(
+            // [中文导读] [AllReduce逐行 S420] 调用 size 完成当前参数所指的子步骤；本行实参为 通道请求输出列表.size() 等于 当前 Peer 处理前的请求数,。
             channels.size() == channelCountBefore,
+            // [中文导读] [AllReduce逐行 S421] 开始 HCCL_ERROR 诊断输出，记录 CalcChannelRequestMesh1D 当前阶段的参数、候选或错误；日志本身不决定返回码。
             HCCL_ERROR(
+                // [中文导读] [AllReduce逐行 S422] 续接 CalcChannelRequestMesh1D 的诊断格式串，展示此行列出的字段标签；它是编译期字符串拼接，不发起额外操作。
                 "[CalcChannelRequestMesh1D] Failed to create channel between myRank=%u and rank=%u, there is no link.",
+                // [中文导读] [AllReduce逐行 S423] 为 CalcChannelRequestMesh1D 的诊断/错误宏提供实参：本地用户 Rank, rank，与前面的格式占位依次对应。
                 myRank, rank),
+            // [中文导读] [AllReduce逐行 S424] 向条件返回宏提供 HcclResult::内部错误；上方检查成立才退出当前函数。
             HcclResult::HCCL_E_INTERNAL);
+    // [中文导读] [AllReduce逐行 S425] 结束当前条件、循环或局部对象构造的作用域，恢复外层执行流程。
     }
+// [中文导读] [AllReduce逐行 S426] 结束该编译期能力/Host 边界，后续公共返回逻辑在相应构建中保留。
 #endif
+    // [中文导读] [AllReduce逐行 S427] 当前路径返回成功；异步原语的成功表示任务/协议提交成功，数据完成依赖相应通知或 Join。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S428] 结束 CalcChannelRequestMesh1D 实现；其返回状态或已写回字段由调用者接收。
 }
 
 #ifndef AICPU_COMPILE

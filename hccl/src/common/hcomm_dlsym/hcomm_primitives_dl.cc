@@ -84,15 +84,25 @@ static HcclHcommBatchTransferOnThreadFunc g_HcommBatchTransferOnThread = nullptr
 
 extern "C" bool HcommIsSupportHcommBatchTransferOnThread(void) { return g_HcommBatchTransferOnThreadSupported; }
 
+// [中文导读] [AllReduce逐行 S87] 声明HCCL批传输动态适配入口，保持C链接符号。
 extern "C" int32_t HcclHcommBatchTransferOnThread(
+    // [中文导读] [AllReduce逐行 S88] 接收执行Thread、Channel和只读批描述数组。
     ThreadHandle thread, ChannelHandle channel, const HcclHcommBatchTransferDesc* transferDescs,
+    // [中文导读] [AllReduce逐行 S89] 接收描述数，不是数据字节数。
     uint32_t transferDescNum)
+// [中文导读] [AllReduce逐行 S90] 进入动态桥函数体。
 {
+    // [中文导读] [AllReduce逐行 S91] 先检查HCOMM批传输符号是否加载成功。
     if (g_HcommBatchTransferOnThread == nullptr) {
+        // [中文导读] [AllReduce逐行 S92] 缺少符号时记录兼容层错误。
         HCCL_COMPAT_ERROR("[HcclWrapper] HcommBatchTransferOnThread not supported");
+        // [中文导读] [AllReduce逐行 S93] 缺少批接口返回-1，未执行传输。
         return -1;
+    // [中文导读] [AllReduce逐行 S94] 结束符号缺失分支。
     }
+    // [中文导读] [AllReduce逐行 S95] 调用加载的HCOMM函数，转发Thread、Channel、描述数组和数量，并返回其结果。
     return g_HcommBatchTransferOnThread(thread, channel, transferDescs, transferDescNum);
+// [中文导读] [AllReduce逐行 S96] 结束批传输桥。
 }
 
 // ---------- 初始化函数 ----------
@@ -144,51 +154,93 @@ void HcommPrimitivesDlInit(void* libHcommHandle)
     }
 }
 
+// [中文导读] [AllReduce逐行 S147] 声明默认超时能力联合探测函数。
 bool IsHcommDefaultTimeoutSupported()
+// [中文导读] [AllReduce逐行 S148] 进入能力检查函数体。
 {
+    // [中文导读] [AllReduce逐行 S149] 只有设置默认等待时间和默认Thread Wait两种符号均支持才返回true。
     return HcommIsSupportHcommSetNotifyWaitTimeOut() && HcommIsSupportHcommThreadNotifyWaitOnThreadWithDefaultTimeout();
+// [中文导读] [AllReduce逐行 S150] 结束能力联合检查。
 }
 
+// [中文导读] [AllReduce逐行 S152] 声明通知等待时间的HCCL适配接口，timeout沿用下层单位。
 HcclResult HcclSetNotifyWaitTimeOut(uint32_t timeout)
+// [中文导读] [AllReduce逐行 S153] 进入通知等待时间设置函数体。
 {
+    // [中文导读] [AllReduce逐行 S154] 先探测动态加载的HcommSetNotifyWaitTimeOut是否支持。
     if (!HcommIsSupportHcommSetNotifyWaitTimeOut()) {
+        // [中文导读] [AllReduce逐行 S155] 符号缺失时返回NOT_SUPPORT，不调用空入口。
         return HCCL_E_NOT_SUPPORT;
+    // [中文导读] [AllReduce逐行 S156] 结束接口缺失分支。
     }
+// [中文导读] [AllReduce逐行 S157] 编译期选择HCOMM使用float超时参数的ABI。
 #ifdef HCOMM_TIMEOUT_FLOAT_TYPE
+    // [中文导读] [AllReduce逐行 S158] 将timeout转为float调用HcommSetNotifyWaitTimeOut，并转换返回码类型。
     return static_cast<HcclResult>(HcommSetNotifyWaitTimeOut(static_cast<float>(timeout)));
+// [中文导读] [AllReduce逐行 S159] 编译期切换到整数参数ABI。
 #else
+    // [中文导读] [AllReduce逐行 S160] 保持timeout整数类型调用HcommSetNotifyWaitTimeOut，并返回其状态。
     return static_cast<HcclResult>(HcommSetNotifyWaitTimeOut(timeout));
+// [中文导读] [AllReduce逐行 S161] 结束超时ABI条件编译。
 #endif
+// [中文导读] [AllReduce逐行 S162] 结束HcclSetNotifyWaitTimeOut。
 }
 
+// [中文导读] [AllReduce逐行 S164] 声明执行流资源申请等待时间的HCCL适配接口，timeout沿用下层单位。
 HcclResult HcclThreadResAcquireTimeOut(uint32_t timeout)
+// [中文导读] [AllReduce逐行 S165] 进入执行流资源申请等待时间设置函数体。
 {
+    // [中文导读] [AllReduce逐行 S166] 先探测动态加载的HcommThreadResAcquireTimeOut是否支持。
     if (!HcommIsSupportHcommThreadResAcquireTimeOut()) {
+        // [中文导读] [AllReduce逐行 S167] 符号缺失时返回NOT_SUPPORT，不调用空入口。
         return HCCL_E_NOT_SUPPORT;
+    // [中文导读] [AllReduce逐行 S168] 结束接口缺失分支。
     }
+// [中文导读] [AllReduce逐行 S169] 编译期选择HCOMM使用float超时参数的ABI。
 #ifdef HCOMM_TIMEOUT_FLOAT_TYPE
+    // [中文导读] [AllReduce逐行 S170] 将timeout转为float调用HcommThreadResAcquireTimeOut，并转换返回码类型。
     return static_cast<HcclResult>(HcommThreadResAcquireTimeOut(static_cast<float>(timeout)));
+// [中文导读] [AllReduce逐行 S171] 编译期切换到整数参数ABI。
 #else
+    // [中文导读] [AllReduce逐行 S172] 保持timeout整数类型调用HcommThreadResAcquireTimeOut，并返回其状态。
     return static_cast<HcclResult>(HcommThreadResAcquireTimeOut(timeout));
+// [中文导读] [AllReduce逐行 S173] 结束超时ABI条件编译。
 #endif
+// [中文导读] [AllReduce逐行 S174] 结束HcclThreadResAcquireTimeOut。
 }
 
+// [中文导读] [AllReduce逐行 S176] 声明Thread等待适配入口，接收Thread、通知槽和兼容超时。
 HcclResult HcclThreadNotifyWaitOnThreadDefault(ThreadHandle thread, uint32_t notifyIdx, uint32_t fallbackTimeout)
+// [中文导读] [AllReduce逐行 S177] 进入Thread等待适配函数体。
 {
+    // [中文导读] [AllReduce逐行 S178] 要求设置默认超时和默认Thread Wait两项动态能力都支持。
     if (HcommIsSupportHcommSetNotifyWaitTimeOut() && HcommIsSupportHcommThreadNotifyWaitOnThreadWithDefaultTimeout()) {
+        // [中文导读] [AllReduce逐行 S179] 走默认超时Thread Wait；通知槽与Record配对，返回排队结果。
         return static_cast<HcclResult>(HcommThreadNotifyWaitOnThreadWithDefaultTimeout(thread, notifyIdx));
+    // [中文导读] [AllReduce逐行 S180] 结束默认超时路径。
     }
+    // [中文导读] [AllReduce逐行 S181] 能力不足时使用显式fallbackTimeout等待，并返回下层状态。
     return static_cast<HcclResult>(HcommThreadNotifyWaitOnThread(thread, notifyIdx, fallbackTimeout));
+// [中文导读] [AllReduce逐行 S182] 结束Thread默认超时适配。
 }
 
+// [中文导读] [AllReduce逐行 S184] 声明在Thread上等待Channel通知的HCCL兼容接口。
 HcclResult HcclChannelNotifyWaitOnThreadDefault(
+    // [中文导读] [AllReduce逐行 S185] 接收Thread、Channel、本地通知槽以及兼容超时。
     ThreadHandle thread, ChannelHandle channel, uint32_t localNotifyIdx, uint32_t fallbackTimeout)
+// [中文导读] [AllReduce逐行 S186] 进入Channel等待适配函数体。
 {
+    // [中文导读] [AllReduce逐行 S187] 同时探测默认超时设置与Channel默认Wait能力。
     if (HcommIsSupportHcommSetNotifyWaitTimeOut() && HcommIsSupportHcommChannelNotifyWaitOnThreadWithDefaultTimeout()) {
+        // [中文导读] [AllReduce逐行 S188] 把默认Wait返回码转换为HCCL返回码。
         return static_cast<HcclResult>(
+            // [中文导读] [AllReduce逐行 S189] 在给定Thread等待Channel的localNotifyIdx，超时使用先前默认配置。
             HcommChannelNotifyWaitOnThreadWithDefaultTimeout(thread, channel, localNotifyIdx));
+    // [中文导读] [AllReduce逐行 S190] 结束默认Channel等待路径。
     }
+    // [中文导读] [AllReduce逐行 S191] 能力不齐时将fallbackTimeout显式传给普通Channel Wait并返回状态。
     return static_cast<HcclResult>(HcommChannelNotifyWaitOnThread(thread, channel, localNotifyIdx, fallbackTimeout));
+// [中文导读] [AllReduce逐行 S192] 结束Channel默认超时适配。
 }
 
 HcclResult HcclChannelNotifyWaitDefault(ChannelHandle channel, uint32_t localNotifyIdx, uint32_t fallbackTimeout)

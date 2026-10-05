@@ -346,44 +346,78 @@ HcclResult HcclGetHeterogMode(HcclComm comm, HcclHeterogMode* mode)
     return HCCL_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S349] HcclGetRankSize的接口声明：通信域句柄、域内Rank总数；这些参数属于本函数调用边界。
 HcclResult HcclGetRankSize(HcclComm comm, uint32_t* rankSize)
+// [中文导读] [AllReduce逐行 S350] 进入HcclGetRankSize函数体：取得域内 Rank 总数，输出的是 Rank 条数而非字节容量。
 {
     // 入参合法性校验
+    // [中文导读] [AllReduce逐行 S352] 检查`comm`（通信域句柄）不是空对象；宏命中失败条件时立即返回对应指针错误。
     CHK_PTR_NULL(comm);
+    // [中文导读] [AllReduce逐行 S353] 检查`rankSize`（域内Rank总数）不是空对象；宏命中失败条件时立即返回对应指针错误。
     CHK_PTR_NULL(rankSize);
+    // [中文导读] [AllReduce逐行 S354] 定义逐片处理回调，捕获当前连接/配置上下文；回调参数描述本地与远端同一分片及其首尾位置。
     HCCLV2_FUNC_RUN([&]() -> HcclResult {
+        // [中文导读] [AllReduce逐行 S355] 为Host编译时检查设备是否支持V2，支持则直接返回新流程表达式的状态补入`RankGraph* rankGraph = nullptr`；本行是参数/结构化初始化续行。
         RankGraph* rankGraph = nullptr;
+        // [中文导读] [AllReduce逐行 S356] 调用GetRankGraphFromComm，使用通信域句柄；返回非成功时由检查宏立即向上传递。
         CHK_RET(GetRankGraphFromComm(comm, &rankGraph));
+        // [中文导读] [AllReduce逐行 S357] 取得域Rank总数；返回非成功时由检查宏立即向上传递。
         CHK_RET(rankGraph->GetRankSize(rankSize));
+        // [中文导读] [AllReduce逐行 S358] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
         return HCCL_SUCCESS;
+    // [中文导读] [AllReduce逐行 S359] 关闭并立即调用前述lambda；其新域查询结果交由外层异常/返回宏处理。
     }());
+    // [中文导读] [AllReduce逐行 S360] 设置域的兼容外层对象为/按`static_cast<hccl::hcclComm*>(comm)`（域的兼容外层对象、通信域句柄）。
     hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    // [中文导读] [AllReduce逐行 S361] 设置临时Rank总数为/按`INVALID_VALUE_RANKSIZE`。
     u32 tmpRankSize = INVALID_VALUE_RANKSIZE;
+    // [中文导读] [AllReduce逐行 S362] 取得域Rank总数；返回非成功时由检查宏立即向上传递。
     CHK_RET(hcclComm->GetRankSize(tmpRankSize));
+    // [中文导读] [AllReduce逐行 S363] 设置域内Rank总数为/按`tmpRankSize`（临时Rank总数）。
     *rankSize = tmpRankSize;
     /* 关键状态记录 */
+    // [中文导读] [AllReduce逐行 S365] 记录HcclGetRankSize的状态/性能诊断，字段包含域内Rank总数、临时Rank总数；日志本身不执行传输。
     HCCL_INFO("HcclGetRankSize success, rankSizePtr[%p], rankSize[%u]", rankSize, tmpRankSize);
+    // [中文导读] [AllReduce逐行 S366] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S367] 结束HcclGetRankSize函数体；控制流返回外层。
 }
 
+// [中文导读] [AllReduce逐行 S369] HcclGetRankId的接口声明：通信域句柄、Rank编号；这些参数属于本函数调用边界。
 HcclResult HcclGetRankId(HcclComm comm, uint32_t* rank)
+// [中文导读] [AllReduce逐行 S370] 进入HcclGetRankId函数体：取得通信域中的本端 Rank ID，按编译路径与新旧域对象适配。
 {
     // 入参合法性校验
+    // [中文导读] [AllReduce逐行 S372] 检查`comm`（通信域句柄）不是空对象；宏命中失败条件时立即返回对应指针错误。
     CHK_PTR_NULL(comm);
+    // [中文导读] [AllReduce逐行 S373] 检查`rank`（Rank编号）不是空对象；宏命中失败条件时立即返回对应指针错误。
     CHK_PTR_NULL(rank);
+    // [中文导读] [AllReduce逐行 S374] 定义逐片处理回调，捕获当前连接/配置上下文；回调参数描述本地与远端同一分片及其首尾位置。
     HCCLV2_FUNC_RUN([&]() -> HcclResult {
+        // [中文导读] [AllReduce逐行 S375] 为Host编译时检查设备是否支持V2，支持则直接返回新流程表达式的状态补入`RankGraph* rankGraph = nullptr`；本行是参数/结构化初始化续行。
         RankGraph* rankGraph = nullptr;
+        // [中文导读] [AllReduce逐行 S376] 调用GetRankGraphFromComm，使用通信域句柄；返回非成功时由检查宏立即向上传递。
         CHK_RET(GetRankGraphFromComm(comm, &rankGraph));
+        // [中文导读] [AllReduce逐行 S377] 调用GetRankId，使用Rank编号；返回非成功时由检查宏立即向上传递。
         CHK_RET(rankGraph->GetRankId(rank));
+        // [中文导读] [AllReduce逐行 S378] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
         return HCCL_SUCCESS;
+    // [中文导读] [AllReduce逐行 S379] 关闭并立即调用前述lambda；其新域查询结果交由外层异常/返回宏处理。
     }());
+    // [中文导读] [AllReduce逐行 S380] 设置域的兼容外层对象为/按`static_cast<hccl::hcclComm*>(comm)`（域的兼容外层对象、通信域句柄）。
     hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    // [中文导读] [AllReduce逐行 S381] 设置临时Rank编号为/按`Hccl::DFX_INVALID_RANKID`。
     u32 tmpRankId = Hccl::DFX_INVALID_RANKID;
+    // [中文导读] [AllReduce逐行 S382] 取得当前域中本端Rank编号；返回非成功时由检查宏立即向上传递。
     CHK_RET(hcclComm->GetUserRank(tmpRankId));
+    // [中文导读] [AllReduce逐行 S383] 设置Rank编号为/按`tmpRankId`（临时Rank编号）。
     *rank = tmpRankId;
     /* 关键状态记录 */
+    // [中文导读] [AllReduce逐行 S385] 记录HcclGetRankId的状态/性能诊断，字段包含Rank编号、临时Rank编号；日志本身不执行传输。
     HCCL_INFO("HcclGetRankId success, rankIdPtr[%p], rankId[%u]", rank, tmpRankId);
+    // [中文导读] [AllReduce逐行 S386] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S387] 结束HcclGetRankId函数体；控制流返回外层。
 }
 #endif
 

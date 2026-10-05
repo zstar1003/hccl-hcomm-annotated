@@ -23,9 +23,13 @@ HcclResult RestoreVarDataReduceScatterV(OpParam& param, const AlgResourceCtxSeri
 
 HcclResult RestoreVarDataAllGatherV(OpParam& param, const AlgResourceCtxSerializable& resCtx);
 
+// [中文导读] [AllReduce逐行 S26] 声明IsResCtxCacheReusable接口：资源cacheValid成立且缓存记录的通信域地址等于本次域地址才可复用。
 inline bool IsResCtxCacheReusable(const AlgResourceCtxSerializable& cachedResCtx, const OpParam& param)
+// [中文导读] [AllReduce逐行 S27] 开始IsResCtxCacheReusable的函数体。
 {
+    // [中文导读] [AllReduce逐行 S28] 只有Host标记资源已复用且缓存通信域地址仍等于本次通信域时返回true。
     return param.cacheValid && cachedResCtx.commInfoPtr == param.hcclComm;
+// [中文导读] [AllReduce逐行 S29] 结束IsResCtxCacheReusable函数体。
 }
 
 } // namespace ops_hccl

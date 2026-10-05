@@ -98,7 +98,7 @@ export function verifyRepository(root) {
   if (untracked) throw new Error('Untracked additions found inside upstream directories');
   const results = [];
   for (const path of declared) {
-    if (!/^(hccl|hcomm)\/src\/[\w/.-]+\.cc$/.test(path)) throw new Error(`Unexpected annotation path: ${path}`);
+    if (!/^(hccl|hcomm)\/src\/[\w/.-]+\.(cc|h|hpp)$/.test(path)) throw new Error(`Unexpected annotation path: ${path}`);
     const stat = lstatSync(resolve(root, path));
     if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`${path}: not a regular source file`);
     const originalMode = text('ls-tree', baseline, '--', path).split(' ')[0];

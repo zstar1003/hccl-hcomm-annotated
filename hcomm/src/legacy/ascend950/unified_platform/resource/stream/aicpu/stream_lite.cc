@@ -43,6 +43,7 @@ StreamLite::StreamLite(u32 id, u32 sqIds, u32 phyId, u32 cqIds, bool launchFlag)
     rtsq = std::make_unique<RtsqA5>(phyId, id, sqIds, launchFlag);
 }
 
+// [中文导读] [AllReduce逐行 S46] 本行定义并直接执行StreamLite::GetRtsq：返回 StreamLite 持有的执行队列对象；具体 950 队列为 RtsqA5；调用get，使用执行队列对象的get字段。
 RtsqBase* StreamLite::GetRtsq() const { return rtsq.get(); }
 
 std::string StreamLite::Describe() const

@@ -1,40 +1,175 @@
 {
   "format": 1,
   "baseline": "efbe1cd23c64f4c62525c81d39812834113f4aa9",
-  "scope": "细化版：Ascend 950、新流程、AICPU_TS单算子主链及CCU/AIV公共资源分支，按功能小段解释；非全仓注释",
+  "scope": "AllReduce具体主链逐物理行说明（规则选择器、AICPU_TS Mesh1D OneShot、UB_CTP）与此前核心功能小段导读；精确范围见docs/allreduce/COVERAGE.zh-CN.md，非全仓注释",
   "marker": "// [中文导读] ",
   "files": [
     {
-      "path": "hccl/src/ops/all_to_all_v/all_to_all_v.cc",
-      "topic": "AllToAll/V入口、参数布局、公共调度"
+      "path": "hccl/src/common/alg_env_config.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/common/hcomm_dlsym/hcomm_primitives_dl.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/common/inconsistent_check.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
       "path": "hccl/src/ops/all_gather/all_gather.cc",
       "topic": "AllGather入口、图资源、参数容量、快速路径与算法调度"
     },
     {
+      "path": "hccl/src/ops/all_reduce/algorithm/executor/ins_v2_all_reduce_sole_executor.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/all_reduce/algorithm/template/aicpu/ins_temp_all_reduce_mesh_1D_one_shot.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
       "path": "hccl/src/ops/all_reduce/all_reduce.cc",
-      "topic": "AllReduce入口、类型/运算校验、参数与对称内存条件、算法调度"
+      "topic": "AllReduce入口、类型/运算校验、参数与对称内存条件、算法调度",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
-      "path": "hccl/src/ops/op_common/op_common.cc",
-      "topic": "公共调度、资源复用、AICPU/CCU/AIV分支"
-    },
-    {
-      "path": "hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.cc",
-      "topic": "设备入口、上下文恢复、任务缓存与编排"
+      "path": "hccl/src/ops/all_reduce/selector/all_reduce_auto_selector.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
       "path": "hccl/src/ops/all_to_all_v/algorithm/template/aicpu/ins_temp_all_to_all_v_mesh_1D.cc",
       "topic": "Mesh1D模板资源需求、分片、Peer轮次及Read/Write路径"
     },
     {
+      "path": "hccl/src/ops/all_to_all_v/all_to_all_v.cc",
+      "topic": "AllToAll/V入口、参数布局、公共调度"
+    },
+    {
+      "path": "hccl/src/ops/op_common/algorithm/executor/channel/channel.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/algorithm/executor/registry/coll_alg_v2_exec_registry.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/algorithm/executor/registry/coll_alg_v2_exec_registry.h",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.cc",
+      "topic": "设备入口、上下文恢复、任务缓存与编排",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/algorithm/template/aicpu/kernel_launch.h",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
       "path": "hccl/src/ops/op_common/algorithm/template/wrapper/alg_data_trans_wrapper.cc",
-      "topic": "收发协议、LocalCopy/Reduce、主从同步"
+      "topic": "收发协议、LocalCopy/Reduce、主从同步",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/algorithm/topo_match/topo_match_one_level.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/op_common.cc",
+      "topic": "公共调度、资源复用、AICPU/CCU/AIV分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/order_launch.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/selector/auto_selector_base.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/selector/execute_selector.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hccl/src/ops/op_common/selector/selector_engine.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/primitives/api_c_adpt/aicpu_ts_primitives_c_adpt.cc",
+      "topic": "本地/远端数据原语、通知、批提交与域使用保护",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/primitives/api_c_adpt/hcomm_channel_c_adpt.cc",
+      "topic": "集合通信创建入口与公开创建入口的区别",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/primitives/launch_context.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/primitives/launch_context.h",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/resources/comm_engine_res/threads/aicpu_ts_thread.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/resources/endpoint_pairs/channels/aicpu/aicpu_ts_urma_channel.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/resources/endpoint_pairs/channels/aicpu/device/aicpu_channel_process.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/resources/endpoint_pairs/channels/channel.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/resources/endpoint_pairs/channels/channel_process.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/base_comm/resources/endpoint_pairs/endpoint_pair.cc",
+      "topic": "按Engine及复用槽位创建或更新通道",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_rank_graph_a_adpt.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
       "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/coll_comm_res_c_adpt.cc",
-      "topic": "HcclChannelAcquire申请边界"
+      "topic": "HcclChannelAcquire申请边界",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
       "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/exchange_info_c_adpt.cc",
@@ -42,35 +177,68 @@
     },
     {
       "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/resource/channel_c_adpt.cc",
-      "topic": "通道通知数、远端CCL/注册内存查询"
+      "topic": "通道通知数、远端CCL/注册内存查询",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
       "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/resource/comm_mem_c_adpt.cc",
-      "topic": "本地CCL缓冲区获取及生命周期"
+      "topic": "本地CCL缓冲区获取及生命周期",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
       "path": "hcomm/src/coll_communicator_mgr/api_c_adpt/resource/thread_c_adpt.cc",
-      "topic": "Thread申请、TS枚举转换、用户流包装"
-    },
-    {
-      "path": "hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/my_rank.cc",
-      "topic": "Socket、Endpoint、Channel创建/复用与一致性交换"
+      "topic": "Thread申请、TS枚举转换、用户流包装",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
       "path": "hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints/endpoint_mgr.cc",
-      "topic": "Endpoint缓存、内存注册、句柄选择与释放顺序"
+      "topic": "Endpoint缓存、内存注册、句柄选择与释放顺序",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
-      "path": "hcomm/src/base_comm/resources/endpoint_pairs/endpoint_pair.cc",
-      "topic": "按Engine及复用槽位创建或更新通道"
+      "path": "hcomm/src/coll_communicator_mgr/resource_mgr/local/my_rank/my_rank.cc",
+      "topic": "Socket、Endpoint、Channel创建/复用与一致性交换",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
-      "path": "hcomm/src/base_comm/primitives/api_c_adpt/hcomm_channel_c_adpt.cc",
-      "topic": "集合通信创建入口与公开创建入口的区别"
+      "path": "hcomm/src/legacy/ascend950/interface/aicpu_ts_thread_interface.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     },
     {
-      "path": "hcomm/src/base_comm/primitives/api_c_adpt/aicpu_ts_primitives_c_adpt.cc",
-      "topic": "本地/远端数据原语、通知、批提交与域使用保护"
+      "path": "hcomm/src/legacy/ascend950/unified_platform/resource/connection/aicpu/ub_conn_lite.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/legacy/ascend950/unified_platform/resource/connection/aicpu/ub_conn_lite.h",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/rtsq_a5.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/rtsq_base.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/sqe_build_a5.h",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/legacy/ascend950/unified_platform/resource/stream/aicpu/stream_lite.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
+    },
+    {
+      "path": "hcomm/src/legacy/ascend950/unified_platform/resource/transport/aicpu/ub_transport_lite_impl.cc",
+      "topic": "AllReduce主链相关函数与内部条件分支",
+      "lineGuide": "docs/allreduce/COVERAGE.zh-CN.md"
     }
   ]
 }

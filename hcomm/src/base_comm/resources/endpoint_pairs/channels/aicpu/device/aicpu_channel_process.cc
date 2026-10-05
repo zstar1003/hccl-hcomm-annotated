@@ -48,37 +48,66 @@ HcclResult CreateAndInsertTransport(
 }
 } // namespace
 
+// [中文导读] [AllReduce逐行 S51] AicpuChannelProcess::ParsePackData的接口声明：当前对象句柄；这些参数属于本函数调用边界。
 HcclResult AicpuChannelProcess::ParsePackData(std::vector<char>& data, ChannelHandle& handle)
+// [中文导读] [AllReduce逐行 S52] 进入AicpuChannelProcess::ParsePackData函数体：按打包TransportType创建 UB/RoCE/P2P设备传输对象，UB分支绑定缓存回调并输出对象句柄。
 {
+    // [中文导读] [AllReduce逐行 S53] 记录AicpuChannelProcess::ParsePackData的调试诊断；日志本身不执行传输。
     HCCL_DEBUG("[HcclCommAicpu][%s] data: ptr[%p], size[%u]", __func__, data.data(), data.size());
+    // [中文导读] [AllReduce逐行 S54] 调用binaryStream，使用资源标识序列化/反序列化流；对象涉及资源标识序列化/反序列化流。
     Hccl::BinaryStream binaryStream(data);
 
+    // [中文导读] [AllReduce逐行 S56] 准备待恢复的transport序列化标识的局部存储/结构描述，初始化方式以本行声明为准。
     std::vector<char> transpUniqueId;
+    // [中文导读] [AllReduce逐行 S57] 从通道资源包反序列化transport唯一标识字节数组，随后用此标识恢复设备传输对象。
     binaryStream >> transpUniqueId;
 
+    // [中文导读] [AllReduce逐行 S59] 调用binaryStreamForType，使用待恢复的transport序列化标识；对象涉及待恢复的transport序列化标识。
     Hccl::BinaryStream binaryStreamForType(transpUniqueId);
+    // [中文导读] [AllReduce逐行 S60] 准备序列化transport类型的局部存储/结构描述，初始化方式以本行声明为准。
     u32 transType;
+    // [中文导读] [AllReduce逐行 S61] 从transport唯一标识开头读取传输类型，用于选择UB/UBoE、RoCE或P2P具体设备对象。
     binaryStreamForType >> transType;
+    // [中文导读] [AllReduce逐行 S62] 记录AicpuChannelProcess::ParsePackData的状态/性能诊断，字段包含序列化transport类型；日志本身不执行传输。
     HCCL_INFO("[CollCommAicpu][ParsePackData] transType[%u]", transType);
+    // [中文导读] [AllReduce逐行 S63] 仅当`(transType == Hccl::TransportType::UB || transType == Hccl::TransportType::UBoE)`（序列化transport类型）成立时进入此分支。
     if (transType == Hccl::TransportType::UB || transType == Hccl::TransportType::UBoE) {
+        // [中文导读] [AllReduce逐行 S64] 准备`std::unique_ptr<Hccl::UbTransportLiteImpl> ubTransportLiteImpl`的局部存储/结构描述，初始化方式以本行声明为准。
         std::unique_ptr<Hccl::UbTransportLiteImpl> ubTransportLiteImpl;
+        // [中文导读] [AllReduce逐行 S65] 在异常捕获边界执行后续表达式；异常按后续处理语句转换成HCCL状态或提前返回。
         EXCEPTION_CATCH(
+            // [中文导读] [AllReduce逐行 S66] 为前述多行表达式补入`(ubTransportLiteImpl = std::make_unique<Hccl::UbTransportLiteImpl>(transpUniqueId)), return HCCL_E_PTR)`（待恢复的transport序列化标识）；本行是参数/结构化初始化续行。
             (ubTransportLiteImpl = std::make_unique<Hccl::UbTransportLiteImpl>(transpUniqueId)), return HCCL_E_PTR);
+        // [中文导读] [AllReduce逐行 S67] 检查`ubTransportLiteImpl`不是空对象；宏命中失败条件时立即返回对应指针错误。
         CHK_SMART_PTR_NULL(ubTransportLiteImpl);
+        // [中文导读] [AllReduce逐行 S68] 绑定设备任务缓存需求判断回调；返回非成功时由检查宏立即向上传递。
         CHK_RET(ubTransportLiteImpl->SetNeedCacheTaskCallback(hcomm::AicpuTaskCacheManager::NeedCacheTask));
+        // [中文导读] [AllReduce逐行 S69] 绑定设备任务缓存WQE数组保存回调；返回非成功时由检查宏立即向上传递。
         CHK_RET(ubTransportLiteImpl->SetAddWqeArrayCallback(hcomm::AicpuTaskCacheManager::AddWqeArray));
+        // [中文导读] [AllReduce逐行 S70] 把具体UbTransportLiteImpl对象地址编码为设备ChannelHandle；C原语随后以BaseTransportLiteImpl基类指针进行虚派发。
         handle = ReinterpretAs<uint64_t>(ubTransportLiteImpl.get());
+        // [中文导读] [AllReduce逐行 S71] 将UB对象所有权移入transportMap_，以刚输出的设备句柄为键保持其生命周期。
         transportMap_.insert({handle, std::move(ubTransportLiteImpl)});
+    // [中文导读] [AllReduce逐行 S72] 仅当`(transType == Hccl::TransportType::ROCE)`（序列化transport类型）成立时进入此分支。
     } else if (transType == Hccl::TransportType::ROCE) {
+        // [中文导读] [AllReduce逐行 S73] 执行本行包裹的资源/任务调用；返回非成功时由检查宏立即向上传递。
         CHK_RET(CreateAndInsertTransport<Hccl::RoceTransportLiteImpl>(transpUniqueId, handle, transportMap_));
+    // [中文导读] [AllReduce逐行 S74] 仅当`(transType == Hccl::TransportType::P2P)`（序列化transport类型）成立时进入此分支。
     } else if (transType == Hccl::TransportType::P2P) {
+        // [中文导读] [AllReduce逐行 S75] 执行本行包裹的资源/任务调用；返回非成功时由检查宏立即向上传递。
         CHK_RET(CreateAndInsertTransport<Hccl::P2PTransportLiteImpl>(transpUniqueId, handle, transportMap_));
+    // [中文导读] [AllReduce逐行 S76] 进入上一个条件未命中的替代路径，按本函数的资源/设备/协议分流继续处理。
     } else {
+        // [中文导读] [AllReduce逐行 S77] 记录AicpuChannelProcess::ParsePackData的错误诊断，字段包含序列化transport类型；日志本身不执行传输。
         HCCL_ERROR("[AicpuChannelProcess][%s] transType[%u] is invalid", __func__, transType);
+        // [中文导读] [AllReduce逐行 S78] 返回HCCL_E_PARA，表示参数不满足此分支要求；此路径停止本函数的后续处理。
         return HCCL_E_PARA;
+    // [中文导读] [AllReduce逐行 S79] 结束`if (transType == Hccl::TransportType::UB || transType == Hccl::TransportType::UBoE)`（序列化transport类型）分支/循环；控制流返回外层。
     }
 
+    // [中文导读] [AllReduce逐行 S81] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S82] 结束AicpuChannelProcess::ParsePackData函数体；控制流返回外层。
 }
 
 HcclResult AicpuChannelProcess::InitUrmaChannel(HcclChannelUrmaRes* commParam)

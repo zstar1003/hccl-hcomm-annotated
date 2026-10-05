@@ -205,36 +205,63 @@ HcclResult EndpointPair::GetSocket(
 // [中文导读] EndpointPair按Engine和reuseIdx缓存通道。没有可用槽位才调用HcommCollectiveChannelCreate。
 // [中文导读] 复用分支直接取原句柄，并按条件更新第一个句柄之后的附加内存；不等于每个算子都重建连接。
 // [中文导读] channelMtx_保护缓存表，UNREUSE使用新槽位；连接就绪与跨Rank一致性仍需跟踪MyRank后续步骤。
+// [中文导读] [AllReduce逐行 S208] EndpointPair::CreateChannel的接口声明：按引擎和 reuseIdx 创建或复用 Channel；复用时更新第0项之后的附加内存；这些参数属于本函数调用边界。
 HcclResult EndpointPair::CreateChannel(
+    // [中文导读] [AllReduce逐行 S209] EndpointPair::CreateChannel的接口声明：本地端点句柄、请求的通信引擎、本批通道或Socket复用槽位、域级通道描述数组；这些参数属于本函数调用边界。
     EndpointHandle endpointHandle, CommEngine engine, u32 reuseIdx, HcommChannelDesc* channelDescs,
+    // [中文导读] [AllReduce逐行 S210] EndpointPair::CreateChannel的接口声明：通道句柄出参数组；这些参数属于本函数调用边界。
     ChannelHandle* channels)
+// [中文导读] [AllReduce逐行 S211] 进入EndpointPair::CreateChannel函数体：按引擎和 reuseIdx 创建或复用 Channel；复用时更新第0项之后的附加内存。
 {
+    // [中文导读] [AllReduce逐行 S212] 调用lock；保持声明的局部对象用于后续处理。
     std::lock_guard<std::mutex> lock(channelMtx_);
     // [中文导读] 引擎尚无缓存或请求下标超出当前向量时创建新 Channel；输出句柄随后加入可复用槽位表。
+    // [中文导读] [AllReduce逐行 S214] 仅当`(channelHandles_.find(engine) == channelHandles_.end() || channelHandles_[engine].size() <= reuseIdx)`（按引擎分组的通道槽位缓存的find字段、请求的通信引擎、按引擎分组的通道槽位缓存的end字段、按引擎分组的通道槽位缓存、本批通道或Socket复用槽位）成立时进入此分支；读取容器登记项数。
     if (channelHandles_.find(engine) == channelHandles_.end() || channelHandles_[engine].size() <= reuseIdx) {
+        // [中文导读] [AllReduce逐行 S215] 执行本行包裹的资源/任务调用；返回非成功时由检查宏立即向上传递，UNAVAIL资源不足状态保持可识别。
         CHK_RET_UNAVAIL(
+            // [中文导读] [AllReduce逐行 S216] 为集合通信内部入口规范描述后创建Channel对象补入`static_cast<HcclResult>(HcommCollectiveChannelCreate(endpointHandle, engine, channelDescs, 1, channels)))`（本地端点句柄、请求的通信引擎、域级通道描述数组、通道句柄出参数组）；本行是参数/结构化初始化续行。
             static_cast<HcclResult>(HcommCollectiveChannelCreate(endpointHandle, engine, channelDescs, 1, channels)));
+        // [中文导读] [AllReduce逐行 S217] 将当前条目追加到对应数组/列表；传入/处理按引擎分组的通道槽位缓存、请求的通信引擎、通道句柄出参数组。
         channelHandles_[engine].push_back(channels[0]);
         // 记录真实槽位下标：UNREUSE 通道的入参 reuseIdx 为 0xFFFFFFFF，实际槽位是 push_back 后的下标
+        // [中文导读] [AllReduce逐行 S219] 设置句柄到引擎/真实槽位反查表、通道句柄出参数组为/按`{engine, static_cast<u32>(channelHandles_[engine].size() - 1)}`（请求的通信引擎、按引擎分组的通道槽位缓存）；读取容器登记项数。
         handleToLoc_[channels[0]] = {engine, static_cast<u32>(channelHandles_[engine].size() - 1)};
+        // [中文导读] [AllReduce逐行 S220] 记录EndpointPair::CreateChannel的状态/性能诊断；日志本身不执行传输。
         PLF_CONFIG_INFO(
+            // [中文导读] [AllReduce逐行 S221] 为前述多行表达式补入`PLF_CHANNEL, "EndpointPair::CreateChannel: engine[%s] reuseIdx[%u] channelHandle[0x%llx].",`；本行是参数/结构化初始化续行。
             PLF_CHANNEL, "EndpointPair::CreateChannel: engine[%s] reuseIdx[%u] channelHandle[0x%llx].",
+            // [中文导读] [AllReduce逐行 S222] 为把枚举转换成诊断名称补入`GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), reuseIdx,`（请求的通信引擎、本批通道或Socket复用槽位）；本行是参数/结构化初始化续行。
             GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), reuseIdx,
+            // [中文导读] [AllReduce逐行 S223] 为把枚举转换成诊断名称补入`static_cast<unsigned long long>(channels[0]))`（通道句柄出参数组）；本行是参数/结构化初始化续行。
             static_cast<unsigned long long>(channels[0]));
+        // [中文导读] [AllReduce逐行 S224] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
         return HCCL_SUCCESS;
+    // [中文导读] [AllReduce逐行 S225] 结束`if (channelHandles_.find(engine) == channelHandles_.end() || channelHandles_[engine].size() <= reuseIdx)`（按引擎分组的通道槽位缓存的find字段、请求的通信引擎、按引擎分组的通道槽位缓存的end字段、按引擎分组的通道槽位缓存、本批通道或Socket复用槽位）分支/循环；控制流返回外层。
     }
 
     // [中文导读] 缓存命中时返回槽位原句柄；额外内存从第 1 项开始更新，第 0 项按既有通道约定保留。
+    // [中文导读] [AllReduce逐行 S228] 设置通道句柄出参数组为/按`channelHandles_[engine][reuseIdx]`（按引擎分组的通道槽位缓存、请求的通信引擎、本批通道或Socket复用槽位）。
     channels[0] = channelHandles_[engine][reuseIdx];
+    // [中文导读] [AllReduce逐行 S229] 仅当`(channelDescs->memHandleNum > 1)`（域级通道描述数组的memHandleNum字段）成立时进入此分支。
     if (channelDescs->memHandleNum > 1) {
+        // [中文导读] [AllReduce逐行 S230] 执行本行包裹的资源/任务调用；返回非成功时由检查宏立即向上传递。
         CHK_RET(static_cast<HcclResult>(
+            // [中文导读] [AllReduce逐行 S231] 为复用Channel时更新第0项之后的附加注册内存补入`HcommChannelUpdateMemInfo(channelDescs->memHandles + 1, channelDescs->memHandleNum - 1, channels[0])))`（域级通道描述数组的memHandles字段、域级通道描述数组的memHandleNum字段、通道句柄出参数组）；本行是参数/结构化初始化续行。
             HcommChannelUpdateMemInfo(channelDescs->memHandles + 1, channelDescs->memHandleNum - 1, channels[0])));
+    // [中文导读] [AllReduce逐行 S232] 结束`if (channelDescs->memHandleNum > 1)`（域级通道描述数组的memHandleNum字段）分支/循环；控制流返回外层。
     }
+    // [中文导读] [AllReduce逐行 S233] 记录EndpointPair::CreateChannel的状态/性能诊断；日志本身不执行传输。
     PLF_CONFIG_INFO(
+        // [中文导读] [AllReduce逐行 S234] 为前述多行表达式补入`PLF_CHANNEL, "EndpointPair::CreateChannel: engine[%s] reuseIdx[%u] reuse channelHandle[0x%llx].",`；本行是参数/结构化初始化续行。
         PLF_CHANNEL, "EndpointPair::CreateChannel: engine[%s] reuseIdx[%u] reuse channelHandle[0x%llx].",
+        // [中文导读] [AllReduce逐行 S235] 为把枚举转换成诊断名称补入`GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), reuseIdx,`（请求的通信引擎、本批通道或Socket复用槽位）；本行是参数/结构化初始化续行。
         GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), reuseIdx,
+        // [中文导读] [AllReduce逐行 S236] 为把枚举转换成诊断名称补入`static_cast<unsigned long long>(channels[0]))`（通道句柄出参数组）；本行是参数/结构化初始化续行。
         static_cast<unsigned long long>(channels[0]));
+    // [中文导读] [AllReduce逐行 S237] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S238] 结束EndpointPair::CreateChannel函数体；控制流返回外层。
 }
 
 // 找到对应的channel handle，调用HcommChannelDestroy销毁平台层对象，并删除channelHandles_中的channelHandle元素

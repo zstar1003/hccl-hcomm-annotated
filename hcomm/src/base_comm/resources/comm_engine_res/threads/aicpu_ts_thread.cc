@@ -210,10 +210,15 @@ LocalNotify* AicpuTsThread::GetNotify(uint32_t index) const
 // A3 Stream
 Stream* AicpuTsThread::GetStream() const { return stream_.get(); }
 
+// [中文导读] [AllReduce逐行 S213] AicpuTsThread::LaunchTask的接口声明：把发射委托给 ThreadImp 的底层执行队列；这些参数属于本函数调用边界。
 void AicpuTsThread::LaunchTask() const
+// [中文导读] [AllReduce逐行 S214] 进入AicpuTsThread::LaunchTask函数体：把发射委托给 ThreadImp 的底层执行队列。
 {
+    // [中文导读] [AllReduce逐行 S215] 将已生成的任务提交到具体RTSQ队列，不等同于全部任务完成；传入/处理AICPU_TS底层线程接口的LaunchTask字段。
     pImpl_->LaunchTask();
+    // [中文导读] [AllReduce逐行 S216] 结束本次void调用，当前路径不再继续下发后续操作。
     return;
+// [中文导读] [AllReduce逐行 S217] 结束AicpuTsThread::LaunchTask函数体；控制流返回外层。
 }
 
 void AicpuTsThread::TryLaunchTask() const
@@ -229,28 +234,48 @@ HcclResult AicpuTsThread::LocalNotifyWait([[maybe_unused]] uint32_t notifyId) co
     return HCCL_E_NOT_SUPPORT;
 }
 
+// [中文导读] [AllReduce逐行 S232] AicpuTsThread::LocalNotifyRecord的接口声明：硬件通知ID；这些参数属于本函数调用边界。
 HcclResult AicpuTsThread::LocalNotifyRecord(uint32_t notifyId) const
+// [中文导读] [AllReduce逐行 S233] 进入AicpuTsThread::LocalNotifyRecord函数体：通过线程实现记录 notifyId 并填充本地通知观测槽。
 {
+    // [中文导读] [AllReduce逐行 S234] 设置设备轻量执行流为/按`GetStreamLitePtr()`；取得A5设备轻量执行流对象地址。
     void* streamLitePtr = GetStreamLitePtr();
+    // [中文导读] [AllReduce逐行 S235] 设置设备轻量执行流为/按`static_cast<Hccl::StreamLite*>(streamLitePtr)`（设备轻量执行流）。
     Hccl::StreamLite* streamLite = static_cast<Hccl::StreamLite*>(streamLitePtr);
+    // [中文导读] [AllReduce逐行 S236] 设置执行队列对象为/按`streamLite->GetRtsq()`（设备轻量执行流的GetRtsq字段）；返回当前StreamLite持有的具体执行队列。
     Hccl::RtsqBase* rtsq = streamLite->GetRtsq();
+    // [中文导读] [AllReduce逐行 S237] 设置当前任务编号为/按`rtsq->GetTaskId()`（执行队列对象的GetTaskId字段）；读取当前队列taskId，用于该操作与观测信息关联。
     u32 taskId = rtsq->GetTaskId();
 
+    // [中文导读] [AllReduce逐行 S239] 生成指定硬件ID的本地通知记录SQE；返回非成功时由检查宏立即向上传递。
     CHK_RET(pImpl_->NotifyRecordLoc(notifyId));
 
+    // [中文导读] [AllReduce逐行 S241] 设置诊断任务信息槽为/按`streamLite->NextTaskSlot()`（设备轻量执行流的NextTaskSlot字段）；取得下一条诊断任务信息槽。
     auto* slot = streamLite->NextTaskSlot();
+    // [中文导读] [AllReduce逐行 S242] 设置诊断任务信息槽的taskType字段为/按`Hccl::TaskParamTypeVal::TASK_NOTIFY_RECORD`。
     slot->taskType = Hccl::TaskParamTypeVal::TASK_NOTIFY_RECORD;
+    // [中文导读] [AllReduce逐行 S243] 设置诊断任务信息槽的sqId字段为/按`streamLite->GetSqId()`（设备轻量执行流的GetSqId字段）；读取硬件SQ编号。
     slot->sqId = streamLite->GetSqId();
+    // [中文导读] [AllReduce逐行 S244] 设置诊断任务信息槽的taskId字段为/按`taskId`（当前任务编号）。
     slot->taskId = taskId;
+    // [中文导读] [AllReduce逐行 S245] 设置const void* notifyRecordOpInfo为/按`streamLite->GetLatestDfxOpInfo()`（设备轻量执行流的GetLatestDfxOpInfo字段）；取得当前算子诊断上下文供任务关联。
     const void* notifyRecordOpInfo = streamLite->GetLatestDfxOpInfo();
+    // [中文导读] [AllReduce逐行 S246] 设置诊断任务信息槽的dfxOpInfo字段为/按`(notifyRecordOpInfo != nullptr) ? ReinterpretAs<u64>(notifyRecordOpInfo) : DFX_INVALID_U64`。
     slot->dfxOpInfo = (notifyRecordOpInfo != nullptr) ? ReinterpretAs<u64>(notifyRecordOpInfo) : DFX_INVALID_U64;
+    // [中文导读] [AllReduce逐行 S247] 设置诊断任务信息槽的linkType字段为/按`Hccl::DfxLinkTypeVal::LINK_ONCHIP`。
     slot->linkType = Hccl::DfxLinkTypeVal::LINK_ONCHIP;
+    // [中文导读] [AllReduce逐行 S248] 设置诊断任务信息槽的transportType字段为/按`static_cast<u8>(Hccl::DfxTransportType::DFX_TRANSPORT_TYPE_LOCAL)`。
     slot->transportType = static_cast<u8>(Hccl::DfxTransportType::DFX_TRANSPORT_TYPE_LOCAL);
+    // [中文导读] [AllReduce逐行 S249] 设置诊断任务信息槽的channelHandle字段为/按`DFX_INVALID_U64`。
     slot->channelHandle = DFX_INVALID_U64;
+    // [中文导读] [AllReduce逐行 S250] 设置诊断任务信息槽的taskPara.Notify.sqeAddr字段为/按`rtsq->GetSqeAddr()`（执行队列对象的GetSqeAddr字段）；取得刚生成SQE对应硬件环队列地址供DFX定位。
     slot->taskPara.Notify.sqeAddr = rtsq->GetSqeAddr();
+    // [中文导读] [AllReduce逐行 S251] 记录AicpuTsThread::LocalNotifyRecord的状态/性能诊断，字段包含诊断任务信息槽的Describe字段；日志本身不执行传输。
     PLF_CONFIG_INFO(Hccl::PLF_TASK, "[%s] %s", __func__, slot->Describe().c_str());
 
+    // [中文导读] [AllReduce逐行 S253] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S254] 结束AicpuTsThread::LocalNotifyRecord函数体；控制流返回外层。
 }
 
 HcclResult
@@ -260,28 +285,48 @@ AicpuTsThread::LocalNotifyRecord([[maybe_unused]] ThreadHandle dstThread, [[mayb
     return HCCL_E_NOT_SUPPORT;
 }
 
+// [中文导读] [AllReduce逐行 S263] AicpuTsThread::LocalNotifyWait的接口声明：硬件通知ID、超时秒数；这些参数属于本函数调用边界。
 HcclResult AicpuTsThread::LocalNotifyWait(uint32_t notifyId, uint32_t timeout) const
+// [中文导读] [AllReduce逐行 S264] 进入AicpuTsThread::LocalNotifyWait函数体：通过线程实现排入有秒级超时的本地通知等待并填充观测槽。
 {
+    // [中文导读] [AllReduce逐行 S265] 设置设备轻量执行流为/按`GetStreamLitePtr()`；取得A5设备轻量执行流对象地址。
     void* streamLitePtr = GetStreamLitePtr();
+    // [中文导读] [AllReduce逐行 S266] 设置设备轻量执行流为/按`static_cast<Hccl::StreamLite*>(streamLitePtr)`（设备轻量执行流）。
     Hccl::StreamLite* streamLite = static_cast<Hccl::StreamLite*>(streamLitePtr);
+    // [中文导读] [AllReduce逐行 S267] 设置执行队列对象为/按`streamLite->GetRtsq()`（设备轻量执行流的GetRtsq字段）；返回当前StreamLite持有的具体执行队列。
     Hccl::RtsqBase* rtsq = streamLite->GetRtsq();
+    // [中文导读] [AllReduce逐行 S268] 设置当前任务编号为/按`rtsq->GetTaskId()`（执行队列对象的GetTaskId字段）；读取当前队列taskId，用于该操作与观测信息关联。
     u32 taskId = rtsq->GetTaskId();
 
+    // [中文导读] [AllReduce逐行 S270] 生成指定硬件通知ID的等待SQE；返回非成功时由检查宏立即向上传递。
     CHK_RET(pImpl_->NotifyWait(notifyId, timeout));
 
+    // [中文导读] [AllReduce逐行 S272] 设置诊断任务信息槽为/按`streamLite->NextTaskSlot()`（设备轻量执行流的NextTaskSlot字段）；取得下一条诊断任务信息槽。
     auto* slot = streamLite->NextTaskSlot();
+    // [中文导读] [AllReduce逐行 S273] 设置诊断任务信息槽的taskType字段为/按`Hccl::TaskParamTypeVal::TASK_NOTIFY_WAIT`。
     slot->taskType = Hccl::TaskParamTypeVal::TASK_NOTIFY_WAIT;
+    // [中文导读] [AllReduce逐行 S274] 设置诊断任务信息槽的sqId字段为/按`streamLite->GetSqId()`（设备轻量执行流的GetSqId字段）；读取硬件SQ编号。
     slot->sqId = streamLite->GetSqId();
+    // [中文导读] [AllReduce逐行 S275] 设置诊断任务信息槽的taskId字段为/按`taskId`（当前任务编号）。
     slot->taskId = taskId;
+    // [中文导读] [AllReduce逐行 S276] 设置const void* notifyWaitOpInfo为/按`streamLite->GetLatestDfxOpInfo()`（设备轻量执行流的GetLatestDfxOpInfo字段）；取得当前算子诊断上下文供任务关联。
     const void* notifyWaitOpInfo = streamLite->GetLatestDfxOpInfo();
+    // [中文导读] [AllReduce逐行 S277] 设置诊断任务信息槽的dfxOpInfo字段为/按`(notifyWaitOpInfo != nullptr) ? ReinterpretAs<u64>(notifyWaitOpInfo) : DFX_INVALID_U64`。
     slot->dfxOpInfo = (notifyWaitOpInfo != nullptr) ? ReinterpretAs<u64>(notifyWaitOpInfo) : DFX_INVALID_U64;
+    // [中文导读] [AllReduce逐行 S278] 设置诊断任务信息槽的linkType字段为/按`Hccl::DfxLinkTypeVal::LINK_ONCHIP`。
     slot->linkType = Hccl::DfxLinkTypeVal::LINK_ONCHIP;
+    // [中文导读] [AllReduce逐行 S279] 设置诊断任务信息槽的transportType字段为/按`static_cast<u8>(Hccl::DfxTransportType::DFX_TRANSPORT_TYPE_LOCAL)`。
     slot->transportType = static_cast<u8>(Hccl::DfxTransportType::DFX_TRANSPORT_TYPE_LOCAL);
+    // [中文导读] [AllReduce逐行 S280] 设置诊断任务信息槽的channelHandle字段为/按`DFX_INVALID_U64`。
     slot->channelHandle = DFX_INVALID_U64;
+    // [中文导读] [AllReduce逐行 S281] 设置诊断任务信息槽的taskPara.Notify.sqeAddr字段为/按`rtsq->GetSqeAddr()`（执行队列对象的GetSqeAddr字段）；取得刚生成SQE对应硬件环队列地址供DFX定位。
     slot->taskPara.Notify.sqeAddr = rtsq->GetSqeAddr();
+    // [中文导读] [AllReduce逐行 S282] 记录AicpuTsThread::LocalNotifyWait的状态/性能诊断，字段包含诊断任务信息槽的Describe字段；日志本身不执行传输。
     PLF_CONFIG_INFO(Hccl::PLF_TASK, "[%s] %s", __func__, slot->Describe().c_str());
 
+    // [中文导读] [AllReduce逐行 S284] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S285] 结束AicpuTsThread::LocalNotifyWait函数体；控制流返回外层。
 }
 
 HcclResult AicpuTsThread::LocalCopyReport(uint32_t taskId, Hccl::StreamLite* sl, Hccl::RtsqBase* rtsq) const
@@ -323,56 +368,98 @@ HcclResult AicpuTsThread::LocalReduceReport(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S326] AicpuTsThread::LocalCopy的接口声明：操作目标地址、操作源地址、字节容量或单片字节数；这些参数属于本函数调用边界。
 HcclResult AicpuTsThread::LocalCopy(void* dst, const void* src, uint64_t size) const
+// [中文导读] [AllReduce逐行 S327] 进入AicpuTsThread::LocalCopy函数体：按 SDMA 最大字节长度分片并逐片构造本地拷贝任务与观测。
 {
+    // [中文导读] [AllReduce逐行 S328] 设置设备轻量执行流为/按`GetStreamLitePtr()`；取得A5设备轻量执行流对象地址。
     void* streamLitePtr = GetStreamLitePtr();
+    // [中文导读] [AllReduce逐行 S329] 设置设备轻量执行流为/按`static_cast<Hccl::StreamLite*>(streamLitePtr)`（设备轻量执行流）。
     Hccl::StreamLite* streamLite = static_cast<Hccl::StreamLite*>(streamLitePtr);
+    // [中文导读] [AllReduce逐行 S330] 设置执行队列对象为/按`streamLite->GetRtsq()`（设备轻量执行流的GetRtsq字段）；返回当前StreamLite持有的具体执行队列。
     Hccl::RtsqBase* rtsq = streamLite->GetRtsq();
 
+    // [中文导读] [AllReduce逐行 S332] 设置目标地址整数表示为/按`ReinterpretAs<uint64_t>(dst)`（操作目标地址）。
     uint64_t dstAddr = ReinterpretAs<uint64_t>(dst);
+    // [中文导读] [AllReduce逐行 S333] 设置源地址整数表示为/按`ReinterpretAs<uint64_t>(src)`（操作源地址）。
     uint64_t srcAddr = ReinterpretAs<uint64_t>(src);
+    // [中文导读] [AllReduce逐行 S334] 设置未处理字节数为/按`size`（字节容量或单片字节数）。
     uint64_t remainSize = size;
+    // [中文导读] [AllReduce逐行 S335] 设置已经处理的字节偏移为/按`0`。
     uint64_t doneSize = 0;
 
+    // [中文导读] [AllReduce逐行 S337] 在`(remainSize > 0)`（未处理字节数）条件下重复执行后续等待或分片处理。
     while (remainSize > 0) {
+        // [中文导读] [AllReduce逐行 S338] 设置当前SDMA分片字节数为/按`remainSize > SDMA_SEND_MAX_SIZE ? SDMA_SEND_MAX_SIZE : remainSize`（未处理字节数）。
         uint64_t realSize = remainSize > SDMA_SEND_MAX_SIZE ? SDMA_SEND_MAX_SIZE : remainSize;
+        // [中文导读] [AllReduce逐行 S339] 设置当前任务编号为/按`rtsq->GetTaskId()`（执行队列对象的GetTaskId字段）；读取当前队列taskId，用于该操作与观测信息关联。
         u32 taskId = rtsq->GetTaskId();
 
+        // [中文导读] [AllReduce逐行 S341] 按本端地址/字节长度生成SDMA复制SQE；返回非成功时由检查宏立即向上传递。
         CHK_RET(pImpl_->SdmaCopy(dstAddr + doneSize, srcAddr + doneSize, realSize));
+        // [中文导读] [AllReduce逐行 S342] 登记当前本地复制片的任务观测信息；返回非成功时由检查宏立即向上传递。
         CHK_RET(LocalCopyReport(taskId, streamLite, rtsq));
 
+        // [中文导读] [AllReduce逐行 S344] 增加已经处理的字节偏移为/按`realSize`（当前SDMA分片字节数）。
         doneSize += realSize;
+        // [中文导读] [AllReduce逐行 S345] 减去未处理字节数为/按`realSize`（当前SDMA分片字节数）。
         remainSize -= realSize;
+    // [中文导读] [AllReduce逐行 S346] 结束`while (remainSize > 0)`（未处理字节数）分支/循环；控制流返回外层。
     }
+    // [中文导读] [AllReduce逐行 S347] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S348] 结束AicpuTsThread::LocalCopy函数体；控制流返回外层。
 }
 
+// [中文导读] [AllReduce逐行 S350] AicpuTsThread::LocalReduce的接口声明：按 SDMA 最大长度分片并按指定数据类型/归约操作构造本地归约任务；这些参数属于本函数调用边界。
 HcclResult AicpuTsThread::LocalReduce(
+    // [中文导读] [AllReduce逐行 S351] AicpuTsThread::LocalReduce的接口声明：操作目标地址、操作源地址、字节容量或单片字节数、元素数据类型、归约操作；这些参数属于本函数调用边界。
     void* dst, const void* src, uint64_t size, HcommDataType dataType, HcommReduceOp reduceOp) const
+// [中文导读] [AllReduce逐行 S352] 进入AicpuTsThread::LocalReduce函数体：按 SDMA 最大长度分片并按指定数据类型/归约操作构造本地归约任务。
 {
+    // [中文导读] [AllReduce逐行 S353] 设置接口数据类型原始枚举为/按`static_cast<uint32_t>(dataType)`（元素数据类型）。
     uint32_t dataTypeRaw = static_cast<uint32_t>(dataType);
+    // [中文导读] [AllReduce逐行 S354] 设置设备轻量执行流为/按`GetStreamLitePtr()`；取得A5设备轻量执行流对象地址。
     void* streamLitePtr = GetStreamLitePtr();
+    // [中文导读] [AllReduce逐行 S355] 设置设备轻量执行流为/按`static_cast<Hccl::StreamLite*>(streamLitePtr)`（设备轻量执行流）。
     Hccl::StreamLite* streamLite = static_cast<Hccl::StreamLite*>(streamLitePtr);
+    // [中文导读] [AllReduce逐行 S356] 设置执行队列对象为/按`streamLite->GetRtsq()`（设备轻量执行流的GetRtsq字段）；返回当前StreamLite持有的具体执行队列。
     Hccl::RtsqBase* rtsq = streamLite->GetRtsq();
 
+    // [中文导读] [AllReduce逐行 S358] 设置目标地址整数表示为/按`ReinterpretAs<uint64_t>(dst)`（操作目标地址）。
     uint64_t dstAddr = ReinterpretAs<uint64_t>(dst);
+    // [中文导读] [AllReduce逐行 S359] 设置源地址整数表示为/按`ReinterpretAs<uint64_t>(src)`（操作源地址）。
     uint64_t srcAddr = ReinterpretAs<uint64_t>(src);
+    // [中文导读] [AllReduce逐行 S360] 设置未处理字节数为/按`size`（字节容量或单片字节数）。
     uint64_t remainSize = size;
+    // [中文导读] [AllReduce逐行 S361] 设置已经处理的字节偏移为/按`0`。
     uint64_t doneSize = 0;
 
+    // [中文导读] [AllReduce逐行 S363] 在`(remainSize > 0)`（未处理字节数）条件下重复执行后续等待或分片处理。
     while (remainSize > 0) {
+        // [中文导读] [AllReduce逐行 S364] 设置当前SDMA分片字节数为/按`remainSize > SDMA_SEND_MAX_SIZE ? SDMA_SEND_MAX_SIZE : remainSize`（未处理字节数）。
         uint64_t realSize = remainSize > SDMA_SEND_MAX_SIZE ? SDMA_SEND_MAX_SIZE : remainSize;
+        // [中文导读] [AllReduce逐行 S365] 设置当前任务编号为/按`rtsq->GetTaskId()`（执行队列对象的GetTaskId字段）；读取当前队列taskId，用于该操作与观测信息关联。
         u32 taskId = rtsq->GetTaskId();
 
+        // [中文导读] [AllReduce逐行 S367] 按本端地址/字节长度和归约方式生成SDMA归约SQE；返回非成功时由检查宏立即向上传递。
         CHK_RET(pImpl_->SdmaReduce(dstAddr + doneSize, srcAddr + doneSize, realSize, dataTypeRaw, reduceOp));
+        // [中文导读] [AllReduce逐行 S368] 登记当前本地归约片的任务观测信息；返回非成功时由检查宏立即向上传递。
         CHK_RET(LocalReduceReport(
+            // [中文导读] [AllReduce逐行 S369] 为登记当前本地归约片的任务观测信息补入`static_cast<uint8_t*>(dst) + doneSize, static_cast<const uint8_t*>(src) + doneSize, realSize, reduceOp,`（操作目标地址、已经处理的字节偏移、操作源地址、当前SDMA分片字节数、归约操作）；本行是参数/结构化初始化续行。
             static_cast<uint8_t*>(dst) + doneSize, static_cast<const uint8_t*>(src) + doneSize, realSize, reduceOp,
+            // [中文导读] [AllReduce逐行 S370] 为登记当前本地归约片的任务观测信息补入`taskId, streamLite, rtsq))`（当前任务编号、设备轻量执行流、执行队列对象）；本行是参数/结构化初始化续行。
             taskId, streamLite, rtsq));
 
+        // [中文导读] [AllReduce逐行 S372] 增加已经处理的字节偏移为/按`realSize`（当前SDMA分片字节数）。
         doneSize += realSize;
+        // [中文导读] [AllReduce逐行 S373] 减去未处理字节数为/按`realSize`（当前SDMA分片字节数）。
         remainSize -= realSize;
+    // [中文导读] [AllReduce逐行 S374] 结束`while (remainSize > 0)`（未处理字节数）分支/循环；控制流返回外层。
     }
+    // [中文导读] [AllReduce逐行 S375] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S376] 结束AicpuTsThread::LocalReduce函数体；控制流返回外层。
 }
 
 // Private functions

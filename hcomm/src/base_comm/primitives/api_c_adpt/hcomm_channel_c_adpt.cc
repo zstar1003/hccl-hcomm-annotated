@@ -393,79 +393,144 @@ HcommResult ProcessHcommChannelDescs(const HcommChannelDesc& channelDesc, HcommC
     return HCOMM_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S396] NormalizeHcommChannelDescs的接口声明：逐请求按 ABI 默认值规范字段并进行 QoS/UB/UB_MEM/RoCE 属性检查；这些参数属于本函数调用边界。
 HcommResult NormalizeHcommChannelDescs(
+    // [中文导读] [AllReduce逐行 S397] NormalizeHcommChannelDescs的接口声明：本地端点句柄、域级通道描述数组、通道请求条数；这些参数属于本函数调用边界。
     EndpointHandle endpointHandle, HcommChannelDesc* channelDescs, uint32_t channelNum,
+    // [中文导读] [AllReduce逐行 S398] NormalizeHcommChannelDescs的接口声明：规范后的通道描述数组、请求的通信引擎；这些参数属于本函数调用边界。
     std::vector<HcommChannelDesc>& channelDescFinals, CommEngine engine)
+// [中文导读] [AllReduce逐行 S399] 进入NormalizeHcommChannelDescs函数体：逐请求按 ABI 默认值规范字段并进行 QoS/UB/UB_MEM/RoCE 属性检查。
 {
+    // [中文导读] [AllReduce逐行 S400] 调用clear，使用规范后的通道描述数组的clear字段；传入/处理规范后的通道描述数组的clear字段。
     channelDescFinals.clear();
+    // [中文导读] [AllReduce逐行 S401] 调用reserve，使用规范后的通道描述数组的reserve字段、通道请求条数；传入/处理规范后的通道描述数组的reserve字段、通道请求条数。
     channelDescFinals.reserve(channelNum);
+    // [中文导读] [AllReduce逐行 S402] 设置本地端点位置类型为/按`ENDPOINT_LOC_TYPE_DEVICE`。
     EndpointLocType localLocType = ENDPOINT_LOC_TYPE_DEVICE;
     // [中文导读] 先取得本地 Endpoint 的位置类型，后续 RoCE 属性校验据此区分 Host 与 Device 要求。
+    // [中文导读] [AllReduce逐行 S404] 从Endpoint取得本地位置类型用于协议校验；返回非成功时由检查宏立即向上传递。
     CHK_RET(static_cast<HcclResult>(GetEndPointLocType(endpointHandle, localLocType)));
+    // [中文导读] [AllReduce逐行 S405] 按`(uint32_t idx = 0; idx < channelNum; ++idx)`（本轮槽位/数组索引、通道请求条数）遍历本批条目/分片；各次处理保持数组对应关系。
     for (uint32_t idx = 0; idx < channelNum; ++idx) {
+        // [中文导读] [AllReduce逐行 S406] 准备规范后的通道描述的局部存储/结构描述，初始化方式以本行声明为准。
         HcommChannelDesc channelDescFinal{};
+        // [中文导读] [AllReduce逐行 S407] 设置当前调用状态为/按`HcommChannelDescInit(&channelDescFinal, 1)`（规范后的通道描述）；调用HcommChannelDescInit，使用规范后的通道描述。
         HcommResult ret = HcommChannelDescInit(&channelDescFinal, 1);
+        // [中文导读] [AllReduce逐行 S408] 仅当`(ret != HCOMM_SUCCESS)`（当前调用状态）成立时进入此分支。
         if (ret != HCOMM_SUCCESS) {
+            // [中文导读] [AllReduce逐行 S409] 返回ret，表示保留当前调用的状态（可能成功或失败）；此路径停止本函数的后续处理。
             return ret;
+        // [中文导读] [AllReduce逐行 S410] 结束`if (ret != HCOMM_SUCCESS)`（当前调用状态）分支/循环；控制流返回外层。
         }
+        // [中文导读] [AllReduce逐行 S411] 设置当前调用状态为/按`ProcessHcommChannelDescs(channelDescs[idx], channelDescFinal)`（域级通道描述数组、本轮槽位/数组索引、规范后的通道描述）；把调用者ABI描述按当前实现支持字段规范化。
         ret = ProcessHcommChannelDescs(channelDescs[idx], channelDescFinal);
+        // [中文导读] [AllReduce逐行 S412] 仅当`(ret != HCOMM_SUCCESS)`（当前调用状态）成立时进入此分支。
         if (ret != HCOMM_SUCCESS) {
+            // [中文导读] [AllReduce逐行 S413] 记录NormalizeHcommChannelDescs的错误诊断，字段包含本轮槽位/数组索引、当前调用状态；日志本身不执行传输。
             HCCL_ERROR("[%s] failed to normalize channelDesc[%u], ret[%d].", __func__, idx, ret);
+            // [中文导读] [AllReduce逐行 S414] 返回ret，表示保留当前调用的状态（可能成功或失败）；此路径停止本函数的后续处理。
             return ret;
+        // [中文导读] [AllReduce逐行 S415] 结束`if (ret != HCOMM_SUCCESS)`（当前调用状态）分支/循环；控制流返回外层。
         }
         // [中文导读] 描述规范化后按 QoS、UB、UB_MEM、RoCE 分项检查，任一失败都不进入通道创建。
+        // [中文导读] [AllReduce逐行 S417] 设置当前调用状态为/按`CheckChannelDescQos(channelDescFinal)`（规范后的通道描述）；校验通道QoS字段。
         ret = CheckChannelDescQos(channelDescFinal);
+        // [中文导读] [AllReduce逐行 S418] 仅当`(ret != HCOMM_SUCCESS)`（当前调用状态）成立时进入此分支。
         if (ret != HCOMM_SUCCESS) {
+            // [中文导读] [AllReduce逐行 S419] 记录NormalizeHcommChannelDescs的错误诊断，字段包含当前调用状态；日志本身不执行传输。
             HCCL_ERROR("[%s] CheckChannelDescQos failed, ret[%d].", __func__, ret);
+            // [中文导读] [AllReduce逐行 S420] 返回ret，表示保留当前调用的状态（可能成功或失败）；此路径停止本函数的后续处理。
             return ret;
+        // [中文导读] [AllReduce逐行 S421] 结束`if (ret != HCOMM_SUCCESS)`（当前调用状态）分支/循环；控制流返回外层。
         }
+        // [中文导读] [AllReduce逐行 S422] 设置当前调用状态为/按`CheckUbAttr(channelDescFinal, engine)`（规范后的通道描述、请求的通信引擎）；检查UB协议属性/引擎配置。
         ret = CheckUbAttr(channelDescFinal, engine);
+        // [中文导读] [AllReduce逐行 S423] 仅当`(ret != HCOMM_SUCCESS)`（当前调用状态）成立时进入此分支。
         if (ret != HCOMM_SUCCESS) {
+            // [中文导读] [AllReduce逐行 S424] 记录NormalizeHcommChannelDescs的错误诊断，字段包含当前调用状态；日志本身不执行传输。
             HCCL_ERROR("[%s] CheckUbAttr failed, ret[%d].", __func__, ret);
+            // [中文导读] [AllReduce逐行 S425] 返回ret，表示保留当前调用的状态（可能成功或失败）；此路径停止本函数的后续处理。
             return ret;
+        // [中文导读] [AllReduce逐行 S426] 结束`if (ret != HCOMM_SUCCESS)`（当前调用状态）分支/循环；控制流返回外层。
         }
+        // [中文导读] [AllReduce逐行 S427] 设置当前调用状态为/按`CheckUbMemAttr(channelDescFinal)`（规范后的通道描述）；检查UB_MEM属性。
         ret = CheckUbMemAttr(channelDescFinal);
+        // [中文导读] [AllReduce逐行 S428] 仅当`(ret != HCOMM_SUCCESS)`（当前调用状态）成立时进入此分支。
         if (ret != HCOMM_SUCCESS) {
+            // [中文导读] [AllReduce逐行 S429] 记录NormalizeHcommChannelDescs的错误诊断，字段包含当前调用状态；日志本身不执行传输。
             HCCL_ERROR("[%s] CheckUbMemAttr failed, ret[%d].", __func__, ret);
+            // [中文导读] [AllReduce逐行 S430] 返回ret，表示保留当前调用的状态（可能成功或失败）；此路径停止本函数的后续处理。
             return ret;
+        // [中文导读] [AllReduce逐行 S431] 结束`if (ret != HCOMM_SUCCESS)`（当前调用状态）分支/循环；控制流返回外层。
         }
+        // [中文导读] [AllReduce逐行 S432] 设置当前调用状态为/按`CheckRoceAttr(channelDescFinal, localLocType)`（规范后的通道描述、本地端点位置类型）；按本地Host/Device位置校验RoCE属性。
         ret = CheckRoceAttr(channelDescFinal, localLocType);
+        // [中文导读] [AllReduce逐行 S433] 仅当`(ret != HCOMM_SUCCESS)`（当前调用状态）成立时进入此分支。
         if (ret != HCOMM_SUCCESS) {
+            // [中文导读] [AllReduce逐行 S434] 记录NormalizeHcommChannelDescs的错误诊断，字段包含当前调用状态；日志本身不执行传输。
             HCCL_ERROR("[%s] CheckRoceAttr failed, ret[%d].", __func__, ret);
+            // [中文导读] [AllReduce逐行 S435] 返回ret，表示保留当前调用的状态（可能成功或失败）；此路径停止本函数的后续处理。
             return ret;
+        // [中文导读] [AllReduce逐行 S436] 结束`if (ret != HCOMM_SUCCESS)`（当前调用状态）分支/循环；控制流返回外层。
         }
 
+        // [中文导读] [AllReduce逐行 S438] 将当前条目追加到对应数组/列表；传入/处理规范后的通道描述数组的push_back字段、规范后的通道描述。
         channelDescFinals.push_back(channelDescFinal);
+    // [中文导读] [AllReduce逐行 S439] 结束`for (uint32_t idx = 0; idx < channelNum; ++idx)`（本轮槽位/数组索引、通道请求条数）分支/循环；控制流返回外层。
     }
+    // [中文导读] [AllReduce逐行 S440] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCOMM_SUCCESS;
+// [中文导读] [AllReduce逐行 S441] 结束NormalizeHcommChannelDescs函数体；控制流返回外层。
 }
 } // namespace
 
 // 集合通信使用，待归一到HcommChannelCreate
 // [中文导读] HcclChannelAcquire内部EndpointPair调用的集合通信建链入口：先规范化描述，再交CreateChannelsLoop。
 // [中文导读] 当前不是直接转调下面的HcommChannelCreate；二者共享部分底层逻辑，但句柄准备路径不同。
+// [中文导读] [AllReduce逐行 S447] HcommCollectiveChannelCreate的接口声明：集合通信内部基础建链入口：规范 Hcomm 描述后直接交创建循环；这些参数属于本函数调用边界。
 HcommResult HcommCollectiveChannelCreate(
+    // [中文导读] [AllReduce逐行 S448] HcommCollectiveChannelCreate的接口声明：本地端点句柄、请求的通信引擎、域级通道描述数组、通道请求条数；这些参数属于本函数调用边界。
     EndpointHandle endpointHandle, CommEngine engine, HcommChannelDesc* channelDescs, uint32_t channelNum,
+    // [中文导读] [AllReduce逐行 S449] HcommCollectiveChannelCreate的接口声明：通道句柄出参数组；这些参数属于本函数调用边界。
     ChannelHandle* channels)
+// [中文导读] [AllReduce逐行 S450] 进入HcommCollectiveChannelCreate函数体：集合通信内部基础建链入口：规范 Hcomm 描述后直接交创建循环。
 {
+    // [中文导读] [AllReduce逐行 S451] 检查`channelDescs`（域级通道描述数组）不是空对象；宏命中失败条件时立即返回对应指针错误。
     CHK_PTR_NULL(channelDescs);
+    // [中文导读] [AllReduce逐行 S452] 检查`channels`（通道句柄出参数组）不是空对象；宏命中失败条件时立即返回对应指针错误。
     CHK_PTR_NULL(channels);
+    // [中文导读] [AllReduce逐行 S453] 开始带日志的条件错误处理：后续实参提供触发条件、诊断与返回状态；命中条件才提前返回。
     CHK_PRT_RET(
+        // [中文导读] [AllReduce逐行 S454] 指定条件命中时要返回的错误状态`(channelNum == 0), HCCL_ERROR("[%s] Invalid channelNum, channelNum[%u]", __func__, channelNum), HCCL_E_PARA)`（通道请求条数），未命中则继续原处理路径。
         (channelNum == 0), HCCL_ERROR("[%s] Invalid channelNum, channelNum[%u]", __func__, channelNum), HCCL_E_PARA);
+    // [中文导读] [AllReduce逐行 S455] 准备规范后的通道描述数组的局部存储/结构描述，初始化方式以本行声明为准。
     std::vector<HcommChannelDesc> channelDescFinals;
+    // [中文导读] [AllReduce逐行 S456] 执行本行包裹的资源/任务调用；返回非成功时由检查宏立即向上传递。
     CHK_RET(static_cast<HcclResult>(
+        // [中文导读] [AllReduce逐行 S457] 为按ABI与协议校验规范化基础描述数组补入`NormalizeHcommChannelDescs(endpointHandle, channelDescs, channelNum, channelDescFinals, engine)))`（本地端点句柄、域级通道描述数组、通道请求条数、规范后的通道描述数组、请求的通信引擎）；本行是参数/结构化初始化续行。
         NormalizeHcommChannelDescs(endpointHandle, channelDescs, channelNum, channelDescFinals, engine)));
+    // [中文导读] [AllReduce逐行 S458] 设置auto startut为/按`std::chrono::steady_clock::now()`；调用std::chrono::steady_clock::now。
     auto startut = std::chrono::steady_clock::now();
+    // [中文导读] [AllReduce逐行 S459] 记录HcommCollectiveChannelCreate的状态/性能诊断；日志本身不执行传输。
     HCCL_INFO(
+        // [中文导读] [AllReduce逐行 S460] 为当前HcommCollectiveChannelCreate诊断/异常表达式提供格式文本，将报告本地端点句柄；这一物理行没有数据搬运副作用。
         "[%s] START. endpointHandle[0x%llx], engine[%s], channelNum[%u].", __func__, endpointHandle,
+        // [中文导读] [AllReduce逐行 S461] 为把枚举转换成诊断名称补入`GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), channelNum)`（请求的通信引擎、通道请求条数）；本行是参数/结构化初始化续行。
         GetEnumToString(GetCommEngineStatusStrMap(), engine).c_str(), channelNum);
     // [中文导读] 集合通信入口直接创建规范化后的通道对象，并原样返回创建状态；用户句柄准备属于另一入口路径。
+    // [中文导读] [AllReduce逐行 S463] 准备当前调用状态的局部存储/结构描述，初始化方式以本行声明为准。
     HcommResult ret
+        // [中文导读] [AllReduce逐行 S464] 逐项建立具体Channel并插入Host/Device映射；传入/处理本地端点句柄、请求的通信引擎、规范后的通道描述数组的data字段、通道请求条数、通道句柄出参数组。
         = ChannelProcess::CreateChannelsLoop(endpointHandle, engine, channelDescFinals.data(), channelNum, channels);
+    // [中文导读] [AllReduce逐行 S465] 记录HcommCollectiveChannelCreate的状态/性能诊断；日志本身不执行传输。
     HCCL_INFO(
+        // [中文导读] [AllReduce逐行 S466] 为当前HcommCollectiveChannelCreate诊断/异常表达式提供格式文本，将报告通道请求条数；这一物理行没有数据搬运副作用。
         "[%s] END. channelNum[%u], take time [%lld]us.", __func__, channelNum,
+        // [中文导读] [AllReduce逐行 S467] 为调用std::chrono::steady_clock::now, count，使用通道请求条数补入`std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - startut).count())`；本行是参数/结构化初始化续行。
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - startut).count());
+    // [中文导读] [AllReduce逐行 S468] 返回ret，表示保留当前调用的状态（可能成功或失败）；此路径停止本函数的后续处理。
     return ret;
+// [中文导读] [AllReduce逐行 S469] 结束HcommCollectiveChannelCreate函数体；控制流返回外层。
 }
 
 // [中文导读] 为已有Channel更新注册内存信息，供复用通道绑定附加内存；不负责申请用户数据缓冲区。

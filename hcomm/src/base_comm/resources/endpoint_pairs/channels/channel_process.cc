@@ -86,50 +86,86 @@ HcclResult ChannelProcess::WithChannelByHandleLocked(ChannelHandle inHandle, Fun
     return std::forward<Func>(func)(*channelPtr);
 }
 
+// [中文导读] [AllReduce逐行 S89] ChannelProcess::CreateChannelsLoop的接口声明：逐条创建具体 Channel 并建立共享持有与 Host/Device 初始映射；这些参数属于本函数调用边界。
 HcclResult ChannelProcess::CreateChannelsLoop(
+    // [中文导读] [AllReduce逐行 S90] ChannelProcess::CreateChannelsLoop的接口声明：本地端点句柄、请求的通信引擎、域级通道描述数组、通道请求条数；这些参数属于本函数调用边界。
     EndpointHandle endpointHandle, CommEngine engine, HcommChannelDesc* channelDescs, uint32_t channelNum,
+    // [中文导读] [AllReduce逐行 S91] ChannelProcess::CreateChannelsLoop的接口声明：Host句柄出参数组、是否启用共享队列；这些参数属于本函数调用边界。
     ChannelHandle* outHandles, bool isSharedQueue)
+// [中文导读] [AllReduce逐行 S92] 进入ChannelProcess::CreateChannelsLoop函数体：逐条创建具体 Channel 并建立共享持有与 Host/Device 初始映射。
 {
+    // [中文导读] [AllReduce逐行 S93] 检查`endpointHandle`（本地端点句柄）不是空对象；宏命中失败条件时立即返回对应指针错误。
     CHK_PTR_NULL(endpointHandle);
 
+    // [中文导读] [AllReduce逐行 S95] 设置int32_t deviceId为/按`0`。
     int32_t deviceId = 0;
+    // [中文导读] [AllReduce逐行 S96] 读取当前运行时逻辑设备编号；返回非成功时由检查宏立即向上传递。
     CHK_RET(hrtGetDevice(&deviceId));
 
+    // [中文导读] [AllReduce逐行 S98] 按`(uint32_t i = 0; i < channelNum; ++i)`（本批条目下标、通道请求条数）遍历本批条目/分片；各次处理保持数组对应关系。
     for (uint32_t i = 0; i < channelNum; ++i) {
+        // [中文导读] [AllReduce逐行 S99] 设置当前共享Channel对象为/按`nullptr`。
         std::shared_ptr<Channel> tmpPtr = nullptr;
+        // [中文导读] [AllReduce逐行 S100] 进入EndpointPair或具体Channel工厂的创建/复用逻辑；返回非成功时由检查宏立即向上传递，UNAVAIL资源不足状态保持可识别。
         CHK_RET_UNAVAIL(Channel::CreateChannel(endpointHandle, engine, channelDescs[i], tmpPtr, isSharedQueue));
+        // [中文导读] [AllReduce逐行 S101] 检查`tmpPtr`（当前共享Channel对象）不是空对象；宏命中失败条件时立即返回对应指针错误。
         CHK_SMART_PTR_NULL(tmpPtr);
 
+        // [中文导读] [AllReduce逐行 S103] 把内建Channel操作表与对象上下文绑定；传入/处理当前共享Channel对象的SetNicChannelCtx字段、当前共享Channel对象的get字段。
         tmpPtr->SetNicChannelCtx(&g_BuiltinChannelOps, tmpPtr.get());
 
+        // [中文导读] [AllReduce逐行 S105] 设置当前对象句柄为/按`ReinterpretAs<ChannelHandle>(tmpPtr.get())`（当前共享Channel对象的get字段）；调用get，使用当前共享Channel对象的get字段。
         ChannelHandle handle = ReinterpretAs<ChannelHandle>(tmpPtr.get());
+        // [中文导读] [AllReduce逐行 S106] 设置Host句柄出参数组、本批条目下标为/按`handle`（当前对象句柄）。
         outHandles[i] = handle;
+        // [中文导读] [AllReduce逐行 S107] 记录ChannelProcess::CreateChannelsLoop的状态/性能诊断，字段包含当前对象句柄、当前共享Channel对象的get字段；日志本身不执行传输。
         HCCL_INFO("%s deviceId[%d], handle[0x%llx], ptr[%p]", __func__, deviceId, handle, tmpPtr.get());
 
         // 仅在修改全局表时持锁
+        // [中文导读] [AllReduce逐行 S110] 开始`for (uint32_t i = 0; i < channelNum; ++i)`（本批条目下标、通道请求条数）分支/循环。
         {
+            // [中文导读] [AllReduce逐行 S111] 调用lock；保持声明的局部对象用于后续处理。
             std::lock_guard<std::mutex> lock(g_ChannelMapMtx);
 
+            // [中文导读] [AllReduce逐行 S113] 仅当`(g_ChannelMap.find(handle) != g_ChannelMap.end())`（当前对象句柄）成立时进入此分支；调用find, end，使用当前对象句柄。
             if (g_ChannelMap.find(handle) != g_ChannelMap.end()) {
+                // [中文导读] [AllReduce逐行 S114] 记录ChannelProcess::CreateChannelsLoop的错误诊断，字段包含当前对象句柄；日志本身不执行传输。
                 HCCL_ERROR("[%s] channel handle already exists [0x%llx] in ChannelMap", __func__, handle);
+                // [中文导读] [AllReduce逐行 S115] 返回HCCL_E_INTERNAL，表示内部处理失败；此路径停止本函数的后续处理。
                 return HCCL_E_INTERNAL;
+            // [中文导读] [AllReduce逐行 S116] 结束`if (g_ChannelMap.find(handle) != g_ChannelMap.end())`（当前对象句柄）分支/循环；控制流返回外层。
             }
+            // [中文导读] [AllReduce逐行 S117] 准备当前对象句柄的局部存储/结构描述，初始化方式以本行声明为准。
             DeviceChannelKey key{deviceId, handle};
+            // [中文导读] [AllReduce逐行 S118] 仅当`(g_ChannelD2HMap.find(key) != g_ChannelD2HMap.end())`成立时进入此分支；调用find, end。
             if (g_ChannelD2HMap.find(key) != g_ChannelD2HMap.end()) {
+                // [中文导读] [AllReduce逐行 S119] 记录ChannelProcess::CreateChannelsLoop的错误诊断；日志本身不执行传输。
                 HCCL_ERROR(
+                    // [中文导读] [AllReduce逐行 S120] 为当前ChannelProcess::CreateChannelsLoop诊断/异常表达式提供格式文本；这一物理行没有数据搬运副作用。
                     "[%s] channel handle already exists deviceId[%d], handle[0x%llx] in g_ChannelD2HMap", __func__,
+                    // [中文导读] [AllReduce逐行 S121] 为前述多行表达式补入`deviceId, handle)`（当前对象句柄）；本行是参数/结构化初始化续行。
                     deviceId, handle);
+                // [中文导读] [AllReduce逐行 S122] 返回HCCL_E_INTERNAL，表示内部处理失败；此路径停止本函数的后续处理。
                 return HCCL_E_INTERNAL;
+            // [中文导读] [AllReduce逐行 S123] 结束`if (g_ChannelD2HMap.find(key) != g_ChannelD2HMap.end())`分支/循环；控制流返回外层。
             }
 
+            // [中文导读] [AllReduce逐行 S125] 调用emplace, std::move，使用当前对象句柄、当前共享Channel对象；传入/处理当前对象句柄、当前共享Channel对象。
             g_ChannelMap.emplace(handle, std::move(tmpPtr));
+            // [中文导读] [AllReduce逐行 S126] 调用emplace，使用当前对象句柄；传入/处理当前对象句柄。
             g_ChannelD2HMap.emplace(key, handle);
             // 同步维护 H2D 反向映射（host 句柄恒等映射，后续 kernel 回写真实 device 句柄时覆盖）
+            // [中文导读] [AllReduce逐行 S128] 准备当前对象句柄的局部存储/结构描述，初始化方式以本行声明为准。
             DeviceChannelKey h2dKey{deviceId, handle};
+            // [中文导读] [AllReduce逐行 S129] 调用emplace，使用当前对象句柄；传入/处理当前对象句柄。
             g_ChannelH2DMap.emplace(h2dKey, handle);
+        // [中文导读] [AllReduce逐行 S130] 结束当前局部作用域；控制流返回外层。
         }
+    // [中文导读] [AllReduce逐行 S131] 结束`for (uint32_t i = 0; i < channelNum; ++i)`（本批条目下标、通道请求条数）分支/循环；控制流返回外层。
     }
+    // [中文导读] [AllReduce逐行 S132] 当前路径返回成功状态；仅说明本函数处理/任务组织成功，完成语义由其具体调用职责决定。
     return HCCL_SUCCESS;
+// [中文导读] [AllReduce逐行 S133] 结束ChannelProcess::CreateChannelsLoop函数体；控制流返回外层。
 }
 
 HcclResult ChannelProcess::InsertPluginChannelToMap(ChannelHandle handle, std::shared_ptr<Channel> channelPtr)
@@ -778,12 +814,19 @@ HcclResult ChannelProcess::LaunchChannelKernelCommon(
     return HCCL_SUCCESS;
 }
 
+// [中文导读] [AllReduce逐行 S781] ChannelProcess::ChannelKernelLaunchForComm的接口声明：集合通信域使用的设备通道初始化 Kernel 包装入口；这些参数属于本函数调用边界。
 HcclResult ChannelProcess::ChannelKernelLaunchForComm(
+    // [中文导读] [AllReduce逐行 S782] ChannelProcess::ChannelKernelLaunchForComm的接口声明：引擎侧通道句柄数组、Host控制对象句柄容器、基础层通道描述；这些参数属于本函数调用边界。
     ChannelHandle* channelHandles, ChannelHandle* hostChannelHandles, HcommChannelDesc* hcommDesc, uint32_t listNum,
+    // [中文导读] [AllReduce逐行 S783] ChannelProcess::ChannelKernelLaunchForComm的接口声明：通信域标识；这些参数属于本函数调用边界。
     const std::string& commTag, aclrtBinHandle binHandle)
+// [中文导读] [AllReduce逐行 S784] 进入ChannelProcess::ChannelKernelLaunchForComm函数体：集合通信域使用的设备通道初始化 Kernel 包装入口。
 {
+    // [中文导读] [AllReduce逐行 S785] 直接返回`LaunchChannelKernelCommon(`；打包Host通道资源并发射指定设备通道初始化Kernel。
     return LaunchChannelKernelCommon(
+        // [中文导读] [AllReduce逐行 S786] 为打包Host通道资源并发射指定设备通道初始化Kernel补入`channelHandles, hostChannelHandles, hcommDesc, listNum, commTag, binHandle, "RunAicpuIndOpChannelInitV2", true)`（引擎侧通道句柄数组、Host控制对象句柄容器、基础层通道描述、通信域标识）；本行是参数/结构化初始化续行。
         channelHandles, hostChannelHandles, hcommDesc, listNum, commTag, binHandle, "RunAicpuIndOpChannelInitV2", true);
+// [中文导读] [AllReduce逐行 S787] 结束ChannelProcess::ChannelKernelLaunchForComm函数体；控制流返回外层。
 }
 
 HcclResult ChannelProcess::ChannelKernelLaunchForBase(
