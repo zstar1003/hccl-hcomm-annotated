@@ -28,6 +28,12 @@ rg -n '\[中文导读\]' hccl/src hcomm/src
 
 [查看 16:9 图片](docs/images/aicpu-task-dispatch-and-dma.png) / [资料与源码核对说明](docs/AICPU_DISPATCH_DMA_VERIFICATION.zh-CN.md)。图片去除左上标题和底部释义小字，术语解释保留在配套核对说明中。保留原图的Host、Device OS与AICPU元素，局部澄清RTSQ中的SQE、传输SQ中的WQE以及独立的SDMA执行路径；跨线弧表示两条线不连接。此图为非官方机制示意，核与进程布局沿用原图，不代表所有型号；UB与RoCE的Doorbell编码、具体执行路径随平台及软件版本而异。
 
+## 常见通信算子一图流
+
+![HCCL常见通信算子一图流](docs/images/collective-operators-overview.png)
+
+[查看原图](docs/images/collective-operators-overview.png) / [逐项核对与接口依据](docs/COLLECTIVE_OPERATORS_OVERVIEW.zh-CN.md)。以3个Rank展示广播、散射、收集、归约、全互换、点对点收发及屏障同步；12组语义覆盖15个接口，不代表只有12个算子。归约示例统一使用SUM，变长接口单独说明。
+
 ## 来源与版本
 
 用户提供的官方项目入口在GitCode。源码实际从GitHub第三方镜像克隆；选取的提交及Git树哈希已与此前取得的GitCode官方源码副本核对一致。**镜像不标为官方，固定快照不宣称是最新版本。**
