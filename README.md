@@ -26,7 +26,7 @@ rg -n '\[中文导读\]' hccl/src hcomm/src
 
 ![AICPU任务下发与硬件搬运](docs/images/aicpu-task-dispatch-and-dma.png)
 
-[查看原尺寸图片](docs/images/aicpu-task-dispatch-and-dma.png)。左侧展示Host、Device OS与AICPU，右侧展示RTSQ、STARS及SDMA和网络DMA路径。此图为非官方机制示意，核与进程布局不代表所有型号；具体实现随芯片及软件版本而异。
+[查看 16:9 图片](docs/images/aicpu-task-dispatch-and-dma.png) / [资料与源码核对说明](docs/AICPU_DISPATCH_DMA_VERIFICATION.zh-CN.md)。图片去除左上标题和底部释义小字，术语解释保留在配套核对说明中。保留原图的Host、Device OS与AICPU元素，局部澄清RTSQ中的SQE、传输SQ中的WQE以及独立的SDMA执行路径；跨线弧表示两条线不连接。此图为非官方机制示意，核与进程布局沿用原图，不代表所有型号；UB与RoCE的Doorbell编码、具体执行路径随平台及软件版本而异。
 
 ## 来源与版本
 
