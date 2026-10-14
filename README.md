@@ -28,6 +28,12 @@ rg -n '\[中文导读\]' hccl/src hcomm/src
 
 [查看 16:9 图片](docs/images/aicpu-task-dispatch-and-dma.png) / [资料与源码核对说明](docs/AICPU_DISPATCH_DMA_VERIFICATION.zh-CN.md)。图片去除左上标题和底部释义小字，术语解释保留在配套核对说明中。保留原图的Host、Device OS与AICPU元素，局部澄清RTSQ中的SQE、传输SQ中的WQE以及独立的SDMA执行路径；跨线弧表示两条线不连接。此图为非官方机制示意，核与进程布局沿用原图，不代表所有型号；UB与RoCE的Doorbell编码、具体执行路径随平台及软件版本而异。
 
+## 集合通信展开方式对比
+
+![AIV、AICPU、CCU MS与CCU Sched四象限对比](docs/images/collective-expansion-four-quadrants.png)
+
+[查看最终图片](docs/images/collective-expansion-four-quadrants.png) / [对比依据与适用边界](docs/COLLECTIVE_EXPANSION_COMPARISON.zh-CN.md)。对照四种展开方式的执行路径、资源占用、优势与限制，区分CCU MS片上缓冲中转和CCU Sched调度UB引擎直传。
+
 ## 常见通信算子一图流
 
 ![HCCL常见通信算子一图流](docs/images/collective-operators-overview.png)
