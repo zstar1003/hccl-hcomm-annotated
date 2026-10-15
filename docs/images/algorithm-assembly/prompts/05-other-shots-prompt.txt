@@ -1,0 +1,10 @@
+Use case: scientific-educational. Generate a sharp high-resolution 16:9 Chinese diagram for a source-based collective communication manual. White background, dark navy text, blue boundaries, A blue, B teal, C orange, D pink data segments. Flat precise engineering drawing, no photographs, 3D, watermark. Title “TwoShot 不只用于 AllReduce：Reduce 与 Broadcast”.
+Two equal columns. Small top strip: “4 Rank；root = R0；左侧 SUM，右侧不做归约”.
+LEFT heading “Reduce：ReduceScatter → Gather”.
+At top a compact conceptual comparison strip “直接方案：其他 Rank 的整份输入汇向 root，再归约” with 3 thin arrows into R0. Label “概念上的一阶段对照”.
+Main diagram: four small input rows R0 [A0 B0 C0 D0], R1 [A1 B1 C1 D1], R2 [A2 B2 C2 D2], R3 [A3 B3 C3 D3]. Down arrow into stage “① ReduceScatter”. Intermediate exact rows R0 [AΣ], R1 [BΣ], R2 [CΣ], R3 [DΣ]. Arrows gather all four pieces into stage “② Gather 到 root”. Final R0 [AΣ BΣ CΣ DΣ]. Below “其他 Rank 不要求得到完整结果”. Important do NOT put final full result on R1/R2/R3.
+RIGHT heading “Broadcast：Scatter → AllGather”.
+At top a compact conceptual strip “直接方案：root 向每个对端发送整份数据” with R0 branching to three peers. Label “概念上的一阶段对照”.
+Main start R0 [A B C D] labelled “root 原始数据”. Stage “① Scatter，并预发 root 自己的 A 段”. Exact intermediate rows R0 [A B C D], R1 [A B], R2 [A C], R3 [A D]. Make clear R0 retains its full original input. Stage “② 非 root 间交换 B / C / D”. Exact final rows R0 [A B C D], R1 [A B C D], R2 [A B C D], R3 [A B C D]. Label “对应当前 AICPU 模板的 root 优化”.
+Footer “两阶段的内容随算子语义变化；只有 AllReduce 的此类分解是 ReduceScatter + AllGather”. Tiny caption but legible “直接方案用于概念对照，不表示源码一定存在 OneShot 同名注册”.
+All intermediate contents must match EXACTLY. Avoid crossing arrows by merging arrows into stage bands. Fit all text cleanly with no clutter.

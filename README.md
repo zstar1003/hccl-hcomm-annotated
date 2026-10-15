@@ -12,6 +12,7 @@
 4. [精确覆盖清单](docs/ANNOTATION_COVERAGE.md)：哪些文件补过、哪些内容尚未覆盖。
 5. [验证说明](docs/VERIFICATION.md)：如何确认去除新增注释后恢复原始代码文本。
 6. [HCCL原始文档](hccl/README.md) / [HCOMM原始文档](hcomm/README.md)：构建、接口和平台要求以各仓文档为准。
+7. [集合通信算法组装详解](docs/ALGORITHM_ASSEMBLY.zh-CN.md)：从注册、选择器、Executor到Template与HCOMM；六张图解释不同算子的OneShot/TwoShot、Parallel/Concur和流水线，附固定提交的源码入口。
 
 ```bash
 git lfs install

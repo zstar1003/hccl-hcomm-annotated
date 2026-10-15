@@ -1,0 +1,9 @@
+Use case: infographic-diagram. Create a crisp high-resolution Chinese technical architecture diagram, landscape 16:9, white background, thin blue group boundaries, dark navy readable typography, restrained orange and teal highlights. Flat engineering drawing, no real hardware photographs, no decorative 3D, no watermark. Dense but meticulously aligned, clean routed arrows, small balanced gutters. Title: “集合通信算法的组装链”.
+The diagram must distinguish a static registration row from the runtime path.
+Top horizontal strip labeled “预先注册的组合”: five joined components “执行引擎”, “算子语义”, “Executor 编排”, “TopoMatch 分组”, “Template 模板”. A downward arrow from this strip leads to a small central table labeled “注册表：算法名 → 已绑定的实现”. Small note in this strip: “组合由代码注册，运行时选择”.
+Middle left-to-right path, three substantial regions:
+1 “选择算法” containing inputs “拓扑 · Rank · 数据量 · 数据类型” and two alternative branches “规则选择” and “成本选择”, merging into “algName”.
+2 “创建执行器” containing the registration table and a label “GetAlgExec”; outputs one composite Executor containing TopoMatch and Templates.
+3 “准备资源” containing vertically connected “TopoMatch：划分子通信域” → “CalcRes：统计线程、通知、通道、缓冲” → “HCOMM：申请或复用资源”. Route algName into registration table then output into resource region. No loops.
+Bottom full-width region labeled “AICPU_TS 执行示例” with a clear left-to-right flow from the resources above: “启动 AICPU” → “Orchestrate 编排阶段与数据片” → “Template / KernelRun 展开通信步骤” → “读写 · 归约 · Notify 同步” → “HCOMM 提交任务” → “硬件执行”.
+Use a soft blue band behind the bottom execution chain and compact orange small data-block illustrations between template and communication primitives to convey segmentation. At bottom a short exact note: “任务提交不等于完成；依赖由同步机制保证”. No other claims, no invented functions, no SQE/WQE hardware details. All labels spelled exactly, no overflowing text.
